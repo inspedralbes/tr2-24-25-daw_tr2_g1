@@ -10,9 +10,9 @@ L'aplicació permetrà als docents importar documents, analitzar-los automàtica
 
 ## 👥 Equip de Desenvolupament
 * **Oleksiy Prochko Yatsko**
-* **Bryan Briones Erazo**
-* **Jauma Hurtado Gonzalez**
-* **Amin Oulat Abid**
+* **Brian Briones Erazo**
+* **Jaume Hurtado Gonzalez**
+* **Amin Oulad Abid**
 * **Pol Molina Muñoz**
 
 ---
