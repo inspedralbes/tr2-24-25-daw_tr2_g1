@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
-// 1. IMPORTANTE: Importamos el composable de la IA
+
+// Importamos lo necesario del composable
 import { useGemini } from "../composables/useGemeni";
 
 // Instanciamos el composable
@@ -14,7 +15,7 @@ const {
 
 const extractedText = ref("");
 const isLoading = ref(false);
-const pdfError = ref(null); // Renombrado para claridad
+const pdfError = ref(null);
 const copySuccess = ref(false);
 
 const handleFileUpload = async (event) => {
