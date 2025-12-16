@@ -1,26 +1,42 @@
-# Esquema mínim de carpetes pels projectes transversals
+# Projecte de Gestió de PI (Plans de Suport Individualitzat)
 
-- Pendiente de terminar...
+> **Estat del projecte:** En desenvolupament (Fase de Disseny i Prototipatge)
+Aquest projecte té com a objectiu desenvolupar una aplicació web que utilitza **Intel·ligència Artificial** per facilitar el traspàs i la gestió dels Plans de Suport Individualitzat (PI) dels alumnes que transiten de secundària a la Formació Professional.
 
-# Nom dels integrants
+L'aplicació permetrà als docents importar documents, analitzar-los automàticament i gestionar les adaptacions necessàries per a alumnes amb necessitats educatives especials.
 
-- Oleksiy Prochko Yatsko
-- Bryan Briones Erazo
-- Jauma Hurtado Gonzalez
-- Amin Oulat Abid
-- Pol Molina Muñoz
+---
 
-# Nom del projecte
+## 👥 Equip de Desenvolupament
+* **Oleksiy Prochko Yatsko**
+* **Bryan Briones Erazo**
+* **Jauma Hurtado Gonzalez**
+* **Amin Oulat Abid**
+* **Pol Molina Muñoz**
 
-- Projecte de gestió de PI (Pla de suport individualitzat)
+---
 
-# Petita descripció
+## 🔗 Enllaços d'Interès
+*  **Gestió del projecte:** [Taiga](https://tree.taiga.io/project/a24jauhurgon-tr2-plans-individuals/backlog)
+*  **Prototipatge UI/UX:** [Figma](https://www.figma.com/design/RFnK1qmbGQKqaRA4oTsH3B/Projecte-2-Transversal?node-id=0-1&p=f&t=3JlQVbeog2CsNQfD-0)
+*  **Entorn de Producció:** [PI App](Per determinar)
 
-Aquest projecte té com a objectiu desenvolupar una aplicació web per a la gestió de Plans de Suport Individualitzat (PI) per a alumnes amb necessitats educatives especials. L'aplicació permetrà als docents crear, editar i gestionar els PI dels seus alumnes, així com fer un seguiment del seu progrés.
+---
 
-# Enllaços d'interès
+## 🛠️ Documentació Tècnica i Disseny
 
-- Gestor de tasques: [Taiga](https://tree.taiga.io/project/a24jauhurgon-tr2-plans-individuals/timeline)
-- Prototip gràfic: [Figma](https://www.figma.com/design/RFnK1qmbGQKqaRA4oTsH3B/Projecte-2-Transversal?node-id=0-1&p=f)
-- URL de producció: [PI App](....)
-- Estat: En desenvolupament. Actualment estem treballant en la implementació de les funcionalitats bàsiques per a la creació i edició dels PI, així com en el disseny de la interfície d'usuari.
+### 1. Disseny de la Interfície (Mockup)
+Hem dissenyat una interfície neta i funcional, seguint l'estil visual institucional (Generalitat de Catalunya) per facilitar l'adopció per part del professorat. El disseny prioritza la claredat en la visualització de les dades extretes per la IA.
+
+![Mockup de la Pantalla Principal](<img width="609" height="558" alt="Captura de pantalla de 2025-12-16 08-36-13" src="https://github.com/user-attachments/assets/8bb4bb78-b159-40a9-9575-f3dcb6ab6da1" />
+)
+*Figura 1: Vista del tauler principal on el docent pot veure el llistat d'alumnes i l'estat dels seus plans individualitzats.*
+
+### 2. Diagrama de Casos d'ús (UML)
+El sistema s'estructura en dos grans fluxos de treball: la importació d'expedients (per a nous alumnes) i la consulta/edició de dades processades. El diagrama mostra la interacció entre el **Professor** i el sistema de **IA Generativa**.
+
+![Diagrama de Casos d'Ús](<img width="609" height="558" alt="Captura de pantalla de 2025-12-16 08-55-49" src="https://github.com/user-attachments/assets/453bdf94-bdea-4345-8050-3bd96b59d685" />
+)
+*Figura 2: Esquema lògic que detalla les funcionalitats principals: Importar, Consultar, Visualitzar l'anàlisi de la IA i Validar els informes.*
+
+---
