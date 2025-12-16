@@ -1,0 +1,45 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ "main" ] # O "master", según tu rama principal
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Construir y subir imagen del Frontend
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./front
+          file: ./front/Dockerfile.prod
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+
+      # Construir y subir imagen del Backend
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./back
+          file: ./back/Dockerfile.prod
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
