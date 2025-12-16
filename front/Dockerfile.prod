@@ -5,8 +5,8 @@ WORKDIR /app
 # Copia archivos de dependencias
 COPY package*.json ./
 
-# Instala dependencias
-RUN npm ci --only=production
+# Instala TODAS las dependencias (necesarias para el build)
+RUN npm ci
 
 # Copia el código fuente
 COPY . .
