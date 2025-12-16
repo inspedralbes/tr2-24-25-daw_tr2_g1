@@ -28,15 +28,15 @@ L'aplicació permetrà als docents importar documents, analitzar-los automàtica
 ### 1. Disseny de la Interfície (Mockup)
 Hem dissenyat una interfície neta i funcional, seguint l'estil visual institucional (Generalitat de Catalunya) per facilitar l'adopció per part del professorat. El disseny prioritza la claredat en la visualització de les dades extretes per la IA.
 
-![Mockup de la Pantalla Principal](<img width="609" height="558" alt="Captura de pantalla de 2025-12-16 08-36-13" src="https://github.com/user-attachments/assets/8bb4bb78-b159-40a9-9575-f3dcb6ab6da1" />
-)
+![Mockup de la Pantalla Principal](file:///home/a24amioulabi/Imatges/Captures%20de%20pantalla/Captura%20de%20pantalla%20de%202025-12-16%2009-06-44.png)
+
 *Figura 1: Vista del tauler principal on el docent pot veure el llistat d'alumnes i l'estat dels seus plans individualitzats.*
 
 ### 2. Diagrama de Casos d'ús (UML)
 El sistema s'estructura en dos grans fluxos de treball: la importació d'expedients (per a nous alumnes) i la consulta/edició de dades processades. El diagrama mostra la interacció entre el **Professor** i el sistema de **IA Generativa**.
 
-![Diagrama de Casos d'Ús](<img width="609" height="558" alt="Captura de pantalla de 2025-12-16 08-55-49" src="https://github.com/user-attachments/assets/453bdf94-bdea-4345-8050-3bd96b59d685" />
-)
+![Diagrama de Casos d'Ús](file:///home/a24amioulabi/Imatges/Captures%20de%20pantalla/Captura%20de%20pantalla%20de%202025-12-16%2008-36-13.png)
+
 *Figura 2: Esquema lògic que detalla les funcionalitats principals: Importar, Consultar, Visualitzar l'anàlisi de la IA i Validar els informes.*
 
 ---
