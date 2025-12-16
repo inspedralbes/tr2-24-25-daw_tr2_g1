@@ -1,10 +1,9 @@
-FROM node:20-alpine
+FROM node:20
 
 WORKDIR /usr/src/app
 
 # Instala dependencias
 COPY package*.json ./
-RUN npm install
 
 # Copia el código
 COPY . .
@@ -12,4 +11,4 @@ COPY . .
 # Expone el puerto por defecto del backend
 EXPOSE 3000
 
-# El comando de inicio está en docker-compose.yml
+CMD ["npm", "run", "dev"]

@@ -22,14 +22,14 @@ services:
       # Conexión al backend usando el nombre del servicio 'backend'
       VITE_SOCKET_URL: http://backend:3000 
     ports:
-      - "5173:5173" # Puerto de desarrollo de Vite
+      - "5173:3000" # Puerto de desarrollo de nuxt
     volumes:
       # Monta el código fuente de 'front' para hot-reloading
       - ./front:/app 
       # Volumen anónimo para preservar node_modules del contenedor
       - /app/node_modules 
     # Asegúrate de que tu package.json en 'front' tenga un script 'dev'
-    command: npm run dev
+    command: sh -c "npm install && npm run dev"
     networks:
       - plapi-network
 
@@ -60,7 +60,7 @@ services:
       - /usr/src/app/node_modules 
     # Comando para iniciar el servidor de desarrollo (nodemon o similar)
     # Asegúrate de que tu package.json en 'back' tenga un script 'dev'
-    command: npm run dev 
+    command: sh -c "npm install && npm run dev" 
     depends_on:
       # Espera a que MySQL esté saludable antes de iniciar el backend
       mysql:

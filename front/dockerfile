@@ -1,15 +1,14 @@
-FROM node:20-alpine
+FROM node:20
 
 WORKDIR /app
 
 # Instala dependencias
 COPY package*.json ./
-RUN npm install
 
 # Copia el código
 COPY . .
 
-# Expone el puerto por defecto de Vite
-EXPOSE 5173
+# El puerto 3000 es el interno de Nuxt
+EXPOSE 3000
 
-# El comando de inicio está en docker-compose.yml
+CMD ["npm", "run", "dev"]
