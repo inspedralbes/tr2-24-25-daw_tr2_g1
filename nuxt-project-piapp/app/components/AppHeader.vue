@@ -1,7 +1,23 @@
 <script>
 export default {
-  name: "HeaderGencat",
-};
+  name: 'HeaderGencat',
+  data() {
+    return {
+      menuItems: [
+        { nombre: 'Inici',            path: '/' },
+        { nombre: 'Requisits previs', path: '/requisits' },
+        { nombre: 'Disseny gràfic',   path: '/disseny' },
+      ]
+    }
+  },
+  computed: {
+    tituloActual() {
+      const rutaActual = this.$route.path;
+      const itemEncontrado = this.menuItems.find(item => item.path === rutaActual);
+      return itemEncontrado ? itemEncontrado.nombre : 'Guia web';
+    }
+  }
+}
 </script>
 
 <template>
@@ -41,20 +57,27 @@ export default {
 
     <div class="main-nav-bar">
       <div class="container">
-        <h1 class="site-title">Inici</h1>
+        <h1 class="site-title">{{ tituloActual }}</h1>
       </div>
     </div>
 
-    <div class="bottom-nav-bar">
+ <div class="bottom-nav-bar">
       <div class="container">
         <nav class="main-nav">
-          <a href="#">Inici</a>
-          <span>|</span>
-          <a href="#">Requisits previs</a>
-          <span>|</span>
-          <a href="#">Disseny gràfic</a>
-          <span>|</span>
-          <a href="#">Estructura</a>
+          
+          <template v-for="(item, index) in menuItems" :key="item.nombre">
+            
+            <NuxtLink 
+              :to="item.path"
+              class="nav-item"
+            >
+              {{ item.nombre }}
+            </NuxtLink>
+
+            <span v-if="index < menuItems.length - 1" class="sep-menu">|</span>
+
+          </template>
+
         </nav>
       </div>
     </div>
@@ -211,5 +234,27 @@ header {
   color: #d00000;
   border-bottom-color: #d00000;
   font-weight: bold;
+}
+
+.sep-menu {
+  color: #ccc;
+  margin: 0 15px; 
+  user-select: none; 
+}
+
+.nav-item {
+  text-decoration: none;
+  color: #333;
+  padding: 15px 0;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.nav-item.router-link-active, 
+.nav-item.router-link-exact-active {
+  color: #d00000;
+  border-bottom-color: #d00000;
+  font-weight: 700;
 }
 </style>
