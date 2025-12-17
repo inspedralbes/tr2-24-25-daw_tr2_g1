@@ -118,6 +118,21 @@ services:
     networks:
       - plapi-network
 
+  # ----------------------------------------
+  # 5. Servicio phpMyAdmin
+  # ----------------------------------------
+  phpmyadmin:
+    container_name: plapi_phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+    depends_on:
+      - mysql
+    networks:
+      - plapi-network
+
 # ----------------------------------------
 # Definición de la red y volúmenes
 # ----------------------------------------
