@@ -2,7 +2,7 @@
 import { ref } from "vue";
 
 // Importamos lo necesario del composable
-import { useGemini } from "../composables/useGemeni";
+import { useGemini } from "../../composables/useGemeni";
 
 // Instanciamos el composable
 // Renombramos 'error' a 'aiError' para que no choque con el error del PDF

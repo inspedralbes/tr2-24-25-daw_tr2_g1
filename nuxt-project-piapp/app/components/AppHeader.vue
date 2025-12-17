@@ -1,15 +1,19 @@
+<script>
+export default {
+  name: "HeaderGencat",
+};
+</script>
 
+<template>
   <header>
     <div class="top-bar">
       <div class="container">
-        <div class="logo">
-          <b>::</b>gencat
-        </div>
+        <div class="logo"><b>::</b>gencat</div>
         <nav class="top-nav">
           <a href="#">Contacte</a>
           <span>|</span>
           <div class="selector-idioma">
-            <input type="checkbox" id="check-idioma">
+            <input type="checkbox" id="check-idioma" />
             <label for="check-idioma" class="boton-ca">CA ▾</label>
             <div class="desplegable">
               <a href="#">Català (CA)</a>
@@ -19,7 +23,14 @@
           </div>
           <span>|</span>
           <a href="#" class="search-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
@@ -48,19 +59,16 @@
       </div>
     </div>
   </header>
-<script>
-export default {
-  name: 'HeaderGencat'
-}
-</script>
+</template>
 
 <style scooped>
-body, html {
+body,
+html {
   margin: 0 !important;
   padding: 0 !important;
   width: 100%;
   overflow-x: hidden;
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
 }
 
 header {
@@ -96,7 +104,10 @@ header {
   font-size: 16px;
   letter-spacing: -0.5px;
 }
-.logo b { color: #fff; margin-right: 2px; }
+.logo b {
+  color: #fff;
+  margin-right: 2px;
+}
 
 .top-nav {
   display: flex;
@@ -111,15 +122,22 @@ header {
   gap: 5px;
 }
 
-.top-nav span { margin: 0 20px; color: #666; }
+.top-nav span {
+  margin: 0 20px;
+  color: #666;
+}
 
 .search-icon svg {
   width: 16px;
   height: 16px;
 }
 
-.selector-idioma { position: relative; }
-#check-idioma { display: none; }
+.selector-idioma {
+  position: relative;
+}
+#check-idioma {
+  display: none;
+}
 
 .boton-ca {
   cursor: pointer;
@@ -133,12 +151,14 @@ header {
   left: -10px;
   background: white;
   min-width: 150px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   z-index: 999;
   border-top: 2px solid #d00000;
 }
 
-#check-idioma:checked ~ .desplegable { display: block; }
+#check-idioma:checked ~ .desplegable {
+  display: block;
+}
 
 .desplegable a {
   color: #333 !important;
@@ -146,7 +166,9 @@ header {
   padding: 10px 15px;
   font-weight: normal;
 }
-.desplegable a:hover { background-color: #f0f0f0; }
+.desplegable a:hover {
+  background-color: #f0f0f0;
+}
 
 .main-nav-bar {
   background-color: #444444;
