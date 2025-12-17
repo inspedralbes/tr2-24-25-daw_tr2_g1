@@ -1,10 +1,10 @@
-<script setup>
-</script>
+<script setup></script>
 
 <template>
-  <header />
   <div>
-    <h1>Index</h1>
-    <NuxtLink to="/pdfreader">Iniciar</NuxtLink>
+    <h1>Home</h1>
+    <NuxtLink to="/pdfreader">Opcion A</NuxtLink>
+    <br />
+    <NuxtLink to="/searchAlumne">Opcion B</NuxtLink>
   </div>
 </template>
