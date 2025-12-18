@@ -2,7 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [ "main" ] # O "master", según tu rama principal
+    branches: [ "main" ] 
 
 env:
   REGISTRY: ghcr.io
@@ -26,7 +26,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Construir y subir imagen del Frontend
+      # Construir y subir imagen del Frontend (Incluyendo variables de construcción)
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
@@ -34,6 +34,9 @@ jobs:
           file: ./front/Dockerfile.prod
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+          build-args: |
+            NODE_ENV=production
+            VITE_SOCKET_URL=${{ secrets.FRONTEND_URL }}
 
       # Construir y subir imagen del Backend
       - name: Build and push Backend
@@ -43,3 +46,61 @@ jobs:
           file: ./back/Dockerfile.prod
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Configuración de rutas
+            PROJECT_PATH="/var/www/html/tr2-24-25-daw_tr2_g1"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            BRANCH="main"
+
+            # 1. Clonar o actualizar el repositorio
+            if [ -d "$PROJECT_PATH/.git" ]; then
+              echo "El repositorio ya existe. Actualizando..."
+              cd $PROJECT_PATH
+              git reset --hard
+              git clean -fd
+              git checkout $BRANCH
+              git pull origin $BRANCH
+            else
+              echo "Clonando el repositorio por primera vez..."
+              rm -rf $PROJECT_PATH
+              git clone --branch $BRANCH $REPO_URL $PROJECT_PATH
+              cd $PROJECT_PATH
+            fi
+
+            # 2. Crear archivo .env con los secretos de producción
+            echo "Generando archivo .env..."
+            
+            # Variables para MySQL y Backend (según tu docker-compose.prod.yml)
+            echo "DB_USER=${{ secrets.DB_USER }}" > .env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+            echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+            
+            # Variable crítica para que Docker encuentre tus imágenes en GHCR
+            echo "GITHUB_REPOSITORY=${{ github.repository }}" >> .env
+            
+            # Otras variables útiles
+            echo "NODE_ENV=production" >> .env
+
+            # 3. Desplegar con Docker Compose
+            echo "Iniciando despliegue..."
+            
+            # Descargar las imágenes nuevas que acabamos de subir en el job anterior
+            docker compose -f docker-compose.prod.yml pull
+            
+            # Levantar los servicios (recreando contenedores si es necesario)
+            docker compose --env-file .env -f docker-compose.prod.yml up -d --remove-orphans
+            
+            # Limpiar imágenes antiguas para ahorrar espacio
+            docker image prune -f
