@@ -5,7 +5,7 @@ services:
     container_name: plapi_frontend
     restart: always
     ports:
-      - "80:80" # El frontend se sirve en el puerto estándar web
+      - "8050:80" # Cambiado a 8050 para no chocar con HestiaCP
     depends_on:
       - backend
     networks:
