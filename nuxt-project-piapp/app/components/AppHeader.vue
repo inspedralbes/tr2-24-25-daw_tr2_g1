@@ -11,7 +11,7 @@ export default {
         '/pi/new': 'Crear PI',
       };
 
-      return titulos[ruta] || 'Guia web';
+      return titulos[ruta] || 'Sin nombre';
     }
   }
 }
