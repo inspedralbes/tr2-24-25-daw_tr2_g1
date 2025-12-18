@@ -1,20 +1,17 @@
 <script>
 export default {
   name: 'HeaderGencat',
-  data() {
-    return {
-      menuItems: [
-        { nombre: 'Inici',            path: '/' },
-        { nombre: 'Requisits previs', path: '/requisits' },
-        { nombre: 'Disseny gràfic',   path: '/disseny' },
-      ]
-    }
-  },
   computed: {
-    tituloActual() {
-      const rutaActual = this.$route.path;
-      const itemEncontrado = this.menuItems.find(item => item.path === rutaActual);
-      return itemEncontrado ? itemEncontrado.nombre : 'Guia web';
+    tituloDinamico() {
+      const ruta = this.$route.path;
+
+      const titulos = {
+        '/': 'Traspàs de PIs', 
+        '/temporal/formPage': 'Registrar Nuevo PI', 
+        '/pi/new': 'Crear PI',
+      };
+
+      return titulos[ruta] || 'Guia web';
     }
   }
 }
@@ -24,7 +21,9 @@ export default {
   <header>
     <div class="top-bar">
       <div class="container">
-        <div class="logo"><b>::</b>gencat</div>
+        <NuxtLink to="/" class="logo-link">
+          <img src="/gencat_logo.svg" alt="Generalitat de Catalunya" class="logo-img">
+        </NuxtLink>
         <nav class="top-nav">
           <a href="#">Contacte</a>
           <span>|</span>
@@ -57,7 +56,7 @@ export default {
 
     <div class="main-nav-bar">
       <div class="container">
-        <h1 class="site-title">{{ tituloActual }}</h1>
+        <h1 class="site-title">{{ tituloDinamico }}</h1>
       </div>
     </div>
 
