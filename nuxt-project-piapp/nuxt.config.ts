@@ -3,6 +3,8 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
 
+  modules: ['@nuxt/ui'],
+
   // Add this section to disable Server-Side Rendering (SSR) for the pdf reader page
   routeRules: {
     // Assuming your file is named 'pdfreader.vue' inside the 'pages' folder
