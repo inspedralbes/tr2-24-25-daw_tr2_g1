@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/dev
 # Projecte de Gestió de PI (Plans de Suport Individualitzat)
 
 > **Estat del projecte:** En desenvolupament (Fase de Disseny i Prototipatge)
@@ -41,6 +44,7 @@ El sistema s'estructura en dos grans fluxos de treball: la importació d'expedie
 
 *Figura 2: Esquema lògic que detalla les funcionalitats principals: Importar, Consultar, Visualitzar l'anàlisi de la IA i Validar els informes.*
 
+<<<<<<< HEAD
 ---
 =======
 # Esquema mínim de carpetes pels projectes transversals
@@ -70,3 +74,6 @@ Aquest projecte té com a objectiu desenvolupar una aplicació web per a la gest
 - URL de producció: [PI App](....)
 - Estat: En desenvolupament. Actualment estem treballant en la implementació de les funcionalitats bàsiques per a la creació i edició dels PI, així com en el disseny de la interfície d'usuari.
 >>>>>>> origin/nuxt-nav-Alex#1
+=======
+---
+>>>>>>> origin/dev
