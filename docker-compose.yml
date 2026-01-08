@@ -84,6 +84,7 @@ services:
     volumes:
       # Persistencia de los datos
       - plapi-mysql-data:/var/lib/mysql 
+      - ./db:/docker-entrypoint-initdb.d
     healthcheck:
       test:
         [
