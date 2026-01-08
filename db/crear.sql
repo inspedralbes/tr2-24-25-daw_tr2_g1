@@ -7,7 +7,24 @@ USE `db_plapi_dev`;
 
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS `pis`;
+DROP TABLE IF EXISTS `professors`;
 DROP TABLE IF EXISTS `alumnes`;
+DROP TABLE IF EXISTS `centres`;
+
+CREATE TABLE `centres` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `codi_centre` varchar(10) NOT NULL,
+  `denominacio_completa` varchar(255) NOT NULL,
+  `email_centre` varchar(100),
+  `telefon` varchar(20),
+  `nom_naturalesa` varchar(50),
+  `codi_postal` varchar(10),
+  `adreca` varchar(255),
+  `nom_municipi` varchar(100),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `alumnes` (
   `id` int NOT NULL AUTO_INCREMENT,
   `nom` varchar(50) NOT NULL,
@@ -21,17 +38,17 @@ CREATE TABLE `alumnes` (
   CONSTRAINT `alumnes_ibfk_1` FOREIGN KEY (`centre_procedencia_id`) REFERENCES `centres` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-
-DROP TABLE IF EXISTS `centres`;
-CREATE TABLE `centres` (
+CREATE TABLE `professors` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `nom` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `codi` int NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `nom` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `centre_id` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `centre_id` (`centre_id`),
+  CONSTRAINT `professors_ibfk_1` FOREIGN KEY (`centre_id`) REFERENCES `centres` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-
-DROP TABLE IF EXISTS `pis`;
 CREATE TABLE `pis` (
   `id` int NOT NULL AUTO_INCREMENT,
   `alumne_id` int NOT NULL,
@@ -46,17 +63,3 @@ CREATE TABLE `pis` (
   CONSTRAINT `pis_ibfk_1` FOREIGN KEY (`alumne_id`) REFERENCES `alumnes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `pis_ibfk_2` FOREIGN KEY (`professor_id`) REFERENCES `professors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-
-DROP TABLE IF EXISTS `professors`;
-CREATE TABLE `professors` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `nom` varchar(100) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `centre_id` int NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `centre_id` (`centre_id`),
-  CONSTRAINT `professors_ibfk_1` FOREIGN KEY (`centre_id`) REFERENCES `centres` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
