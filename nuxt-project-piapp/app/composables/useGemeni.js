@@ -1,4 +1,4 @@
-// useGemini.js
+// composables/useGemini.js
 import { ref } from "vue";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -10,31 +10,31 @@ export const useGemini = () => {
   const isGenerating = ref(false);
   const error = ref(null);
 
-  // Cambiamos el argumento para recibir el texto del PDF
-  const analyzePdfContent = async (pdfText) => {
+  const analyzePdfContent = async (pdfText, studentName) => {
     isGenerating.value = true;
     error.value = null;
     aiResponse.value = "";
 
     try {
+      // Usamos flash para rapidez, o pro para mayor razonamiento
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-      // --- EL PROMPT ---
-      // Instrucciones claras para limpiar y resumir
       const prompt = `
-        Actúa como un analista experto y conciso. 
-        A continuación te paso el texto crudo extraído de un archivo PDF. 
-        El texto puede contener errores de formato, números de página o encabezados desordenados.
-
-        Tu tarea es:
-        1. Identificar de qué trata el documento.
-        2. Extraer los puntos clave más importantes.
-        3. Explicarlo todo en un lenguaje simple, directo y fácil de leer (una "respuesta corriente").
+        Actúa como un psicopedagogo experto. He extraído el texto de un informe escolar/psicológico del alumno ${
+          studentName || "desconocido"
+        }.
         
-        Si el texto es ilegible o muy corto, indícalo.
+        Tu tarea es analizar el texto y generar un resumen estructurado para un Plan Individualizado (PI).
+        Ignora encabezados, pies de página o texto basura.
+
+        Estructura la respuesta obligatoriamente en estas secciones:
+        1. **Diagnóstico/Necesidades Detectadas**: (Resumen breve de la situación).
+        2. **Puntos Fuertes**: (Qué se le da bien al alumno).
+        3. **Barreras/Dificultades**: (Qué le cuesta).
+        4. **Propuestas de Medidas**: (Sugerencias prácticas para el aula basadas en el texto).
 
         --- TEXTO DEL PDF ---
-        "${pdfText}"
+        "${pdfText.substring(0, 30000)}" // Limitamos caracteres por seguridad
       `;
 
       const result = await model.generateContent(prompt);
@@ -42,18 +42,7 @@ export const useGemini = () => {
       aiResponse.value = response.text();
     } catch (e) {
       console.error("Gemini Error:", e);
-
-      if (e.message?.includes("404")) {
-        error.value = `Error (404): Modelo no encontrado. Intenta cambiar a 'gemini-1.5-flash'.`;
-      } else if (e.message?.includes("400") || e.message?.includes("API key")) {
-        error.value = `Error de API Key: Verifica tu archivo .env`;
-      } else if (e.message?.includes("429")) {
-        error.value = `Error (429): Has superado la cuota de peticiones.`;
-      } else if (e.message?.includes("SAFETY")) {
-        error.value = `El contenido fue bloqueado por filtros de seguridad.`;
-      } else {
-        error.value = `Error desconocido: ${e.message}`;
-      }
+      error.value = "Error al conectar con la IA.";
     } finally {
       isGenerating.value = false;
     }

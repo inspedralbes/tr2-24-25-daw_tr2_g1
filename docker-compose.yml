@@ -20,14 +20,14 @@ services:
       # Configuración específica de desarrollo
       VITE_NODE_ENV: development
       # Conexión al backend usando el nombre del servicio 'backend'
-      VITE_SOCKET_URL: http://backend:3000 
+      VITE_SOCKET_URL: http://backend:3000
     ports:
       - "5173:3000" # Puerto de desarrollo de nuxt
     volumes:
       # Monta el código fuente de 'front' para hot-reloading
-      - ./front:/app 
+      - ./front:/app
       # Volumen anónimo para preservar node_modules del contenedor
-      - /app/node_modules 
+      - /app/node_modules
     # Asegúrate de que tu package.json en 'front' tenga un script 'dev'
     command: sh -c "npm install && npm run dev"
     networks:
@@ -40,13 +40,13 @@ services:
     container_name: plapi_backend
     build:
       # Contexto: La carpeta 'back' donde está el código
-      context: ./back 
+      context: ./back
       dockerfile: Dockerfile
     environment:
       # Configuración de desarrollo
       NODE_ENV: development
       # El host de la DB es el nombre del servicio: 'mysql'
-      DB_HOST: mysql 
+      DB_HOST: mysql
       # Otras variables que necesite tu backend
       DB_USER: user_dev
       DB_PASSWORD: password_dev
@@ -55,12 +55,12 @@ services:
       - "3000:3000"
     volumes:
       # Monta el código fuente de 'back' para hot-reloading (nodemon)
-      - ./back:/usr/src/app 
+      - ./back:/usr/src/app
       # Evita sobreescribir node_modules del contenedor
-      - /usr/src/app/node_modules 
+      - /usr/src/app/node_modules
     # Comando para iniciar el servidor de desarrollo (nodemon o similar)
     # Asegúrate de que tu package.json en 'back' tenga un script 'dev'
-    command: sh -c "npm install && npm run dev" 
+    command: sh -c "npm install && npm run dev"
     depends_on:
       # Espera a que MySQL esté saludable antes de iniciar el backend
       mysql:
@@ -83,7 +83,7 @@ services:
       MYSQL_PASSWORD: password_dev
     volumes:
       # Persistencia de los datos
-      - plapi-mysql-data:/var/lib/mysql 
+      - plapi-mysql-data:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
     healthcheck:
       test:
@@ -118,7 +118,6 @@ services:
       - mysql
     networks:
       - plapi-network
-
 
   # ----------------------------------------
   # 5. Servicio phpMyAdmin
