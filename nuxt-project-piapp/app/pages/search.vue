@@ -72,7 +72,7 @@ const filteredStudents = computed(() => {
               </div>
               
               <NuxtLink :to="`/student/${student.ralc}`" class="btn-primary btn-full">
-                Veure pla individualitzat complet
+                Veure pla individualitzat complet.
               </NuxtLink>
             </div>
           </div>
