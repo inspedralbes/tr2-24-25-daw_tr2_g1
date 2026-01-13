@@ -13,13 +13,13 @@ const pdfs = ref([])
 // DATOS DE EJEMPLO - Reemplazar con llamada a BD
 const datosEjemplo = {
   '101': {
-    id: '101',
-    nombre: 'Ana',
-    apellidos: 'García',
-    nia: '101',
-    curso: '2º DAM',
-    centroEstudios: 'INS Pedralbes',
-    fechaNacimiento: '2005-03-15',
+    ralc: '101',
+    nom: 'Ana',
+    cognoms: 'García López',
+    dni: '12345678A',
+    dataNaixement: '2005-03-15',
+    curs: '3r ESO',
+    grup: 'A',
     tutor: 'Sr. Pérez',
     email: 'ana.garcia@example.com',
     telefono: '612345678',
@@ -43,13 +43,13 @@ const datosEjemplo = {
     observaciones: 'Alumna amb excel·lent actitud i participació a classe. Necessita seguiment personalitzat en matèries tècniques.'
   },
   '102': {
-    id: '102',
-    nombre: 'Carlos',
-    apellidos: 'Ruíz',
-    nia: '102',
-    curso: '1º DAW',
-    centroEstudios: 'IES Barcelona',
-    fechaNacimiento: '2006-07-22',
+    ralc: '102',
+    nom: 'Carlos',
+    cognoms: 'Ruíz Martínez',
+    dni: '23456789B',
+    dataNaixement: '2006-07-22',
+    curs: '4t ESO',
+    grup: 'B',
     tutor: 'Sra. Martínez',
     email: 'carlos.ruiz@example.com',
     telefono: '623456789',
@@ -66,13 +66,13 @@ const datosEjemplo = {
     observaciones: 'Alumne molt motivat però necessita més pràctica en els conceptes de backend.'
   },
   '103': {
-    id: '103',
-    nombre: 'Lucía',
-    apellidos: 'Méndez',
-    nia: '103',
-    curso: '2º DAM',
-    centroEstudios: 'INS Pedralbes',
-    fechaNacimiento: '2005-11-08',
+    ralc: '103',
+    nom: 'Lucía',
+    cognoms: 'Méndez Sánchez',
+    dni: '34567890C',
+    dataNaixement: '2005-11-08',
+    curs: '3r ESO',
+    grup: 'A',
     tutor: 'Sr. López',
     email: 'lucia.mendez@example.com',
     telefono: '634567890',
@@ -249,8 +249,8 @@ onMounted(() => {
       <!-- Cabecera -->
       <div class="header">
         <div>
-          <h1>{{ student.nombre }} {{ student.apellidos }}</h1>
-          <p class="subtitle">NIA: {{ student.nia }} | {{ student.curso }}</p>
+          <h1>{{ student.nom }} {{ student.cognoms }}</h1>
+          <p class="subtitle">RALC: {{ student.ralc }} | {{ student.curs }} {{ student.grup }}</p>
         </div>
       </div>
 
@@ -259,10 +259,16 @@ onMounted(() => {
         <h2>Informació General</h2>
         <div class="info-grid">
           <div class="info-item">
-            <strong>Centre d'Estudis:</strong> {{ student.centroEstudios }}
+            <strong>DNI / TIE:</strong> {{ student.dni }}
           </div>
           <div class="info-item">
-            <strong>Data de Naixement:</strong> {{ student.fechaNacimiento }}
+            <strong>Data de Naixement:</strong> {{ student.dataNaixement }}
+          </div>
+          <div class="info-item">
+            <strong>Curs:</strong> {{ student.curs }}
+          </div>
+          <div class="info-item">
+            <strong>Grup:</strong> {{ student.grup }}
           </div>
           <div class="info-item">
             <strong>Tutor/a:</strong> {{ student.tutor }}

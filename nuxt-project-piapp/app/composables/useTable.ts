@@ -1,90 +1,53 @@
 import { ref } from 'vue'
 
 export const useTable = () => {
-  // Datos de ejemplo - TODO: Reemplazar con consulta real a BD
-  // Ejemplo con Supabase:
-  // const { data: students } = await supabase.from('students').select('*')
-  
-  const students = ref([
-    { 
-      id: '101', 
-      name: 'Ana García', 
-      course: '2º DAM', 
-      instituto: 'INS Pedralbes', 
-      status: 'Completo', 
-      lastUpdate: '12/10/2023' 
-    },
-    { 
-      id: '102', 
-      name: 'Carlos Ruíz', 
-      course: '1º DAW', 
-      instituto: 'IES Barcelona', 
-      status: 'Pendiente', 
-      lastUpdate: '01/11/2023' 
-    },
-    { 
-      id: '103', 
-      name: 'Lucía Méndez', 
-      course: '2º DAM', 
-      instituto: 'INS Pedralbes', 
-      status: 'En Revisión', 
-      lastUpdate: 'Hoy' 
-    },
-  ])
+  const students = ref([])
 
   // Columnas de la tabla
   const columns = [
     { 
-      key: 'id', 
-      label: 'NIA',
+      key: 'ralc', 
+      label: 'RALC',
       sortable: true,
-      id: 'id'
+      id: 'ralc'
     },
     { 
-      key: 'name', 
+      key: 'nom', 
       label: 'Nom',
       sortable: true,
-      id: 'name'
+      id: 'nom'
     },
     { 
-      key: 'course', 
+      key: 'cognoms', 
+      label: 'Cognoms',
+      sortable: true,
+      id: 'cognoms'
+    },
+    { 
+      key: 'curs', 
       label: 'Curs',
-      id: 'course'
-    },
-    { 
-      key: 'instituto', 
-      label: 'Institut',
-      id: 'instituto'
-    },
-    { 
-      key: 'status', 
-      label: 'Estat PI',
-      id: 'status'
+      id: 'curs'
     }
   ]
 
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // Función para cargar datos de la BD (placeholder)
+  // Función para cargar datos de la BD
   const loadStudents = async () => {
     isLoading.value = true
     error.value = null
     
     try {
-      // TODO: Implementar llamada real a BD
-      // const { data, error: dbError } = await supabase
-      //   .from('students')
-      //   .select('*')
-      //   .order('name', { ascending: true })
-      // 
-      // if (dbError) throw dbError
-      // students.value = data
+      const response = await $fetch('http://localhost:3000/api/alumnes')
       
-      // Simulación de delay
-      await new Promise(resolve => setTimeout(resolve, 300))
+      if (response.success) {
+        students.value = response.data
+      } else {
+        throw new Error(response.error || 'Error carregant alumnes')
+      }
     } catch (err: any) {
-      error.value = err.message
+      error.value = err.message || 'Error de connexió amb el servidor'
       console.error('Error loading students:', err)
     } finally {
       isLoading.value = false

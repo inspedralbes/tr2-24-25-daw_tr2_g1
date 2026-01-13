@@ -1,138 +1,281 @@
 <script setup lang="ts">
 const searchQuery = ref('')
 
-// Usar el composable useTable
+// Utilitzar el composable useTable
 const { students, columns, isLoading, error, loadStudents } = useTable()
 
-// Cargar datos al montar el componente
+// Carregar dades al muntar el component
 onMounted(() => {
   loadStudents()
 })
 
-// --- Lógica de Filtrado ---
-// Filtramos automáticamente según lo que escribas en el buscador
+// --- Lògica de Filtratge ---
+// Només cercar per RALC exacte - la taula només apareix quan hi ha coincidència completa
 const filteredStudents = computed(() => {
-  if (!searchQuery.value) return toRaw(students.value)
+  if (!searchQuery.value) return []
   
-  const q = searchQuery.value.toLowerCase()
   return toRaw(students.value).filter((s: any) => 
-    s.name.toLowerCase().includes(q) || 
-    s.id.includes(q)
+    s.ralc === searchQuery.value
   )
 })
 </script>
 
 <template>
-  <div>
-    
-    <div>
-      <div>
-        <h1>Buscar Alumno</h1>
-        <p>Consulta los Planes Individualizados (PI) existentes.</p>
+  <div class="search-page">
+    <div class="search-hero">
+      <div class="hero-content">
+        <div class="hero-left">
+          <div class="gencat-logo">gencat.cat</div>
+          
+          <h1 class="hero-title">Cerca de plans individualitzats per RALC</h1>
+          
+          <NuxtLink to="/ajuda/com-fer-cerca" class="help-link">
+            Com fer la cerca?
+          </NuxtLink>
+          
+          <div class="search-box">
+            <input 
+              v-model="searchQuery"
+              type="text" 
+              placeholder="Introdueix el RALC de l'alumne..."
+              class="search-input"
+            />
+          </div>
+        </div>
+        
+        <div class="hero-right">
+          <!-- Informació de l'alumne - apareix on estava el vídeo -->
+          <div v-if="filteredStudents.length > 0" class="results-card">
+            <div v-for="student in filteredStudents" :key="student.ralc" class="student-info">
+              <h2>Informació de l'alumne</h2>
+              
+              <div class="info-list">
+                <div class="info-item">
+                  <span class="info-label">RALC:</span>
+                  <span class="info-value">{{ student.ralc }}</span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">Nom:</span>
+                  <span class="info-value">{{ student.nom }}</span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">Cognoms:</span>
+                  <span class="info-value">{{ student.cognoms }}</span>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">Curs:</span>
+                  <span class="info-value">{{ student.curs }}</span>
+                </div>
+              </div>
+              
+              <NuxtLink :to="`/student/${student.ralc}`" class="btn-primary btn-full">
+                Veure pla individualitzat complet
+              </NuxtLink>
+            </div>
+          </div>
+
+          <!-- Missatge quan no hi ha resultats -->
+          <div v-else-if="searchQuery && filteredStudents.length === 0" class="info-card">
+            <p>No s'ha trobat cap alumne amb el RALC: <strong>{{ searchQuery }}</strong></p>
+          </div>
+
+          <!-- Placeholder inicial -->
+          <div v-else class="info-card placeholder">
+            <p>Introdueix el RALC per veure la informació de l'alumne</p>
+          </div>
+        </div>
       </div>
     </div>
-
-    <div>
-      <input 
-        v-model="searchQuery"
-        type="text" 
-        placeholder="Buscar por nombre, NIA o expediente..." 
-      />
-    </div>
-
-    <!-- Tabla de alumnos -->
-    <div v-if="filteredStudents.length > 0" class="table-container">
-      <table class="students-table">
-        <thead>
-          <tr>
-            <th v-for="col in columns" :key="col.key">{{ col.label }}</th>
-            <th>Accions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="student in filteredStudents" :key="student.id">
-            <td>{{ student.id }}</td>
-            <td>{{ student.name }}</td>
-            <td>{{ student.course }}</td>
-            <td>{{ student.instituto }}</td>
-            <td>{{ student.status }}</td>
-            <td>
-              <NuxtLink :to="`/student/${student.id}`" class="btn-view">
-                Veure detall
-              </NuxtLink>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Sin resultados -->
-    <div v-else>
-      <p>No se encontraron alumnos con ese criterio.</p>
-      <NuxtLink to="/pi/new">
-        Crear nuevo PI
-      </NuxtLink>
-    </div>
-
   </div>
 </template>
 
 <style scoped>
-.table-container {
+.search-page {
+  background-color: #e8e8e8;
+  min-height: calc(100vh - 140px);
+}
+
+.search-hero {
+  padding: 60px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.hero-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+.hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.gencat-logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: #c8102e;
+  font-family: "Open Sans", sans-serif;
+  margin-bottom: 10px;
+}
+
+.hero-title {
+  font-family: "Open Sans", sans-serif;
+  font-weight: 300;
+  font-size: 48px;
+  line-height: 1.2;
+  color: #333;
+  margin: 0;
+}
+
+.help-link {
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  color: #333;
+  text-decoration: underline;
+  transition: color 0.2s;
+  width: fit-content;
+}
+
+.help-link:hover {
+  color: #c8102e;
+}
+
+.search-box {
   margin-top: 20px;
-  overflow-x: auto;
 }
 
-.students-table {
+.search-input {
   width: 100%;
-  border-collapse: collapse;
-  background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 16px 20px;
+  font-size: 18px;
+  font-family: "Open Sans", sans-serif;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+  background-color: white;
 }
 
-.students-table th,
-.students-table td {
-  padding: 12px 16px;
-  text-align: left;
+.search-input:focus {
+  outline: none;
+  border-color: #333;
+}
+
+.hero-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.results-card,
+.info-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.student-info h2 {
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  color: #333;
+  margin-bottom: 25px;
+  margin-top: 0;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 30px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.students-table th {
-  background-color: #f9fafb;
-  font-weight: 600;
-  color: #374151;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.students-table tbody tr:hover {
-  background-color: #f3f4f6;
-  cursor: pointer;
-}
-
-.students-table td {
-  color: #1f2937;
-  font-size: 14px;
-}
-
-.students-table tbody tr:last-child td {
+.info-item:last-child {
   border-bottom: none;
 }
 
-.btn-view {
-  display: inline-block;
-  padding: 6px 12px;
-  background-color: #3b82f6;
-  color: white;
-  text-decoration: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  transition: background-color 0.2s;
+.info-label {
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #555;
 }
 
-.btn-view:hover {
-  background-color: #2563eb;
+.info-value {
+  font-family: "Open Sans", sans-serif;
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+
+.info-card {
+  text-align: center;
+  padding: 60px 30px;
+}
+
+.info-card.placeholder {
+  background-color: #3c3c3c;
+  color: white;
+}
+
+.info-card p {
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  margin: 0;
+}
+
+.info-card strong {
+  font-weight: 600;
+}
+
+.btn-primary {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #007a33;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 15px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  text-align: center;
+}
+
+.btn-primary.btn-full {
+  display: block;
+  width: 100%;
+}
+
+.btn-primary:hover {
+  background-color: #005a24;
+}
+
+@media (max-width: 968px) {
+  .hero-content {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .hero-title {
+    font-size: 36px;
+  }
 }
 </style>
