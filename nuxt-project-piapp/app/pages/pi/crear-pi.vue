@@ -3,7 +3,7 @@ import { ref } from "vue";
 
 // Dynamic import for pdfjs
 const getPdfWorker = async () => {
-  if (process.client) {
+  if (import.meta.client) {
     const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
     return worker.default;
   }
@@ -27,21 +27,26 @@ const extractedText = ref("");
 // -- COMPOSABLES --
 const {
   analyzePdfContent,
-  aiResponse,
+  aiResponse: _aiResponse,
   isGenerating,
   error: aiError,
 } = useGemini();
+
+// Cast to any to avoid TS errors since useGemini is JS
+const aiResponse = _aiResponse as any;
+
+const { setPiData } = usePiData();
 
 // -- ACTIONS --
 const handleFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement;
   if (target.files && target.files.length > 0) {
-    pdfFile.value = target.files[0];
+    pdfFile.value = target.files[0] || null;
   }
 };
 
 const extractTextFromPdf = async (file: File): Promise<string> => {
-  if (!process.client) return "";
+  if (!import.meta.client) return "";
 
   try {
     const pdfjsLib = await import("pdfjs-dist");
@@ -60,7 +65,6 @@ const extractTextFromPdf = async (file: File): Promise<string> => {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
       const pageText = textContent.items
-        // @ts-expect-error item structure varies
         .map((item: any) => item.str || "")
         .join(" ");
       fullText += pageText + "\n";
@@ -75,6 +79,14 @@ const extractTextFromPdf = async (file: File): Promise<string> => {
     throw new Error("Error tècnic llegint el PDF: " + (e.message || e));
   }
 };
+
+// Local state for the form content (Step 2)
+const piContent = ref({
+  dificultat_gravetat: "",
+  justificacio_pi: "",
+  proposta_educativa: "",
+  observacions: ""
+});
 
 const nextStep = async () => {
   if (step.value === 1) {
@@ -93,6 +105,16 @@ const nextStep = async () => {
         if (extractedText.value.trim().length > 0) {
           const fullName = `${studentData.value.nom} ${studentData.value.cognoms}`;
           await analyzePdfContent(extractedText.value, fullName);
+          
+          // Sync AI response to local form state
+          if (aiResponse.value) {
+              piContent.value = {
+                  dificultat_gravetat: aiResponse.value.dificultat_gravetat || "",
+                  justificacio_pi: aiResponse.value.justificacio_pi || "",
+                  proposta_educativa: aiResponse.value.proposta_educativa || "",
+                  observacions: aiResponse.value.observacions || ""
+              };
+          }
         }
 
         // 3. Move to Step 2
@@ -102,16 +124,30 @@ const nextStep = async () => {
         console.error(e);
       }
     } else {
-      // Continue without PDF
+      // Continue without PDF (empty content)
       step.value = 2;
     }
   }
 };
 
 const savePlan = () => {
-  // Save logic here (e.g. call API)
-  alert("Pla guardat correctament! (Simulació)");
-  // navigateTo('/dashboard');
+  setPiData({
+    studentName: `${studentData.value.nom} ${studentData.value.cognoms}`,
+    ralc: studentData.value.ralc,
+    dni: studentData.value.dni,
+    birthDate: studentData.value.dataNaixement,
+    grade: studentData.value.curs,
+    group: studentData.value.grup,
+    
+    // Spread the structured content from local state
+    dificultat_gravetat: piContent.value.dificultat_gravetat,
+    justificacio_pi: piContent.value.justificacio_pi,
+    proposta_educativa: piContent.value.proposta_educativa,
+    observacions: piContent.value.observacions,
+  });
+
+  // 2. Navigate to completion page
+  navigateTo("/pi/finalizar-pi");
 };
 </script>
 
@@ -235,14 +271,47 @@ const savePlan = () => {
             </div>
 
             <p class="description">
-              Edita el text a continuació abans de guardar el document final.
+              Edita els camps a continuació abans de guardar el document final.
             </p>
 
-            <textarea
-              v-model="aiResponse"
-              class="editor-textarea"
-              placeholder="Aquí apareixerà el contingut generat..."
-            ></textarea>
+            <!-- Removed hacky aiResponse init -->
+            
+            <div class="field-group">
+                <label>1. Dificultat i Gravetat</label>
+                <textarea
+                  v-model="piContent.dificultat_gravetat"
+                  class="editor-textarea small"
+                  placeholder="Descripció de la dificultat i gravetat..."
+                ></textarea>
+            </div>
+
+            <div class="field-group">
+                <label>2. Justificació del PI</label>
+                <textarea
+                  v-model="piContent.justificacio_pi"
+                  class="editor-textarea small"
+                  placeholder="Per què necessita un PI..."
+                ></textarea>
+            </div>
+
+            <div class="field-group">
+                <label>3. Proposta Educativa</label>
+                <textarea
+                  v-model="piContent.proposta_educativa"
+                  class="editor-textarea large"
+                  placeholder="Mesures i propostes..."
+                ></textarea>
+            </div>
+
+            <div class="field-group">
+                <label>4. Observacions</label>
+                <textarea
+                  v-model="piContent.observacions"
+                  class="editor-textarea small"
+                  placeholder="Observacions addicionals (a omplir pel professor)..."
+                ></textarea>
+            </div>
+
           </div>
 
           <div class="form-actions">
@@ -404,17 +473,35 @@ const savePlan = () => {
 }
 
 /* TEXT AREA EDITOR */
+.field-group {
+    margin-bottom: 25px;
+}
+
+.field-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
 .editor-textarea {
   width: 100%;
-  min-height: 400px;
   padding: 15px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-family: "Courier New", Courier, monospace; /* Monospaced para edición */
+  font-family: inherit;
   font-size: 14px;
   line-height: 1.6;
   resize: vertical;
   box-sizing: border-box;
+}
+
+.editor-textarea.small {
+    min-height: 120px;
+}
+
+.editor-textarea.large {
+    min-height: 300px;
 }
 
 .editor-textarea:focus {

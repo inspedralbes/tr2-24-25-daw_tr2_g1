@@ -32,6 +32,6 @@ export default defineNuxtConfig({
   },
 
   build: {
-    transpile: ["pdfjs-dist"],
+    transpile: ["pdfjs-dist", "jspdf"],
   },
 });
