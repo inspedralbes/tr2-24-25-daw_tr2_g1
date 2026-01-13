@@ -13,9 +13,9 @@ services:
   frontend:
     container_name: plapi_frontend
     build:
-      # Contexto: La carpeta 'nuxt-project-piapp' donde está el código
+      # Contexto: La carpeta 'front' donde está el código
       context: ./nuxt-project-piapp
-      dockerfile: ../front/dockerfile
+      dockerfile: Dockerfile
     environment:
       # Configuración específica de desarrollo
       VITE_NODE_ENV: development
@@ -24,11 +24,11 @@ services:
     ports:
       - "5173:3000" # Puerto de desarrollo de nuxt
     volumes:
-      # Monta el código fuente de 'nuxt-project-piapp' para hot-reloading
+      # Monta el código fuente de 'front' para hot-reloading
       - ./nuxt-project-piapp:/app
       # Volumen anónimo para preservar node_modules del contenedor
       - /app/node_modules
-    # Asegúrate de que tu package.json en 'nuxt-project-piapp' tenga un script 'dev'
+    # Asegúrate de que tu package.json en 'front' tenga un script 'dev'
     command: sh -c "npm install && npm run dev"
     networks:
       - plapi-network
@@ -86,17 +86,7 @@ services:
       - plapi-mysql-data:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u",
-          "root",
-          "-p$$MYSQL_ROOT_PASSWORD",
-        ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD" ]
       interval: 10s
       timeout: 5s
       retries: 5
