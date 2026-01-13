@@ -24,4 +24,8 @@ router.post('/login-centre', api.loginCentre);
 // PI route accepts 'pdf' field as file
 router.post('/pi', upload.single('pdf'), api.createPIRecord);
 
+// Alumnes routes
+router.get('/alumnes', api.getAllAlumnes);
+router.get('/alumnes/:ralc', api.getAlumneByRalc);
+
 module.exports = router;

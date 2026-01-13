@@ -6,7 +6,6 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: true },
 
-  // ADD THIS SECTION:
   modules: ["@nuxt/ui"],
 
   runtimeConfig: {

@@ -100,7 +100,37 @@ const createPIRecord = async (req, res) => {
     }
 };
 
+// Get all alumnes with their centre information
+const getAllAlumnes = async (req, res) => {
+    try {
+        const alumnes = await models.getAllAlumnes();
+        res.json({ success: true, data: alumnes });
+    } catch (error) {
+        console.error('Error obteniendo alumnos:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// Get alumne by RALC with their PIs
+const getAlumneByRalc = async (req, res) => {
+    try {
+        const { ralc } = req.params;
+        const alumne = await models.getAlumneByRalc(ralc);
+        
+        if (!alumne) {
+            return res.status(404).json({ success: false, error: 'Alumne no trobat' });
+        }
+        
+        res.json({ success: true, data: alumne });
+    } catch (error) {
+        console.error('Error obteniendo alumno:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
 module.exports = {
     loginCentre,
-    createPIRecord
+    createPIRecord,
+    getAllAlumnes,
+    getAlumneByRalc
 };

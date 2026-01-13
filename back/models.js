@@ -79,10 +79,68 @@ const createPI = async (data) => {
     return result.insertId;
 };
 
+// Get all alumnes with centre information
+const getAllAlumnes = async () => {
+    const [rows] = await pool.query(`
+        SELECT 
+            a.ralc,
+            a.nom,
+            a.cognom as cognoms,
+            a.dni,
+            a.data_naixement as dataNaixement,
+            '1r ESO' as curs,
+            c.denominacio_completa as centreProcedencia
+        FROM alumnes a
+        LEFT JOIN centres c ON a.centre_procedencia_id = c.id
+    `);
+    return rows;
+};
+
+// Get alumne by RALC with their PIs
+const getAlumneByRalc = async (ralc) => {
+    const [alumnes] = await pool.query(`
+        SELECT 
+            a.ralc,
+            a.nom,
+            a.cognom as cognoms,
+            a.dni,
+            a.data_naixement as dataNaixement,
+            '1r ESO' as curs,
+            c.denominacio_completa as centreProcedencia
+        FROM alumnes a
+        LEFT JOIN centres c ON a.centre_procedencia_id = c.id
+        WHERE a.ralc = ?
+    `, [ralc]);
+    
+    if (alumnes.length === 0) return null;
+    
+    const alumne = alumnes[0];
+    
+    // Get PIs for this alumne
+    const [pis] = await pool.query(`
+        SELECT 
+            pi.id,
+            pi.estat,
+            pi.ruta_pdf,
+            pi.data_creacio,
+            pi.dades_ia,
+            p.nom as professorNom,
+            p.cognom as professorCognom
+        FROM pis pi
+        LEFT JOIN professors p ON pi.professor_id = p.id
+        WHERE pi.alumne_id = (SELECT id FROM alumnes WHERE ralc = ?)
+    `, [ralc]);
+    
+    alumne.pis = pis;
+    return alumne;
+};
+
 module.exports = {
     pool,
     getCentreByEmail,
     getAlumneByDNI,
     createAlumne,
-    createPI
+    createPI,
+    getAllAlumnes,
+    getAlumneByRalc
 };
