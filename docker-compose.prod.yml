@@ -11,8 +11,8 @@ services:
     # Usa la imagen construida en el workflow. ${GITHUB_REPOSITORY} se llena desde el .env generado
     image: ghcr.io/${GITHUB_REPOSITORY}-frontend:latest
     restart: always
-    ports:
-      - "8050:80" # El frontend se sirve en el puerto estándar web
+    expose:
+      - "3000" # Exponemos el puerto interno de Nuxt para que Nginx lo vea
     depends_on:
       - backend
     networks:
