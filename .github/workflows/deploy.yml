@@ -25,8 +25,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Construir y subir imagen del Frontend (Incluyendo variables de construcción)
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
@@ -36,7 +34,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
           build-args: |
             NODE_ENV=production
-            VITE_SOCKET_URL=${{ secrets.API_URL }}
+            VITE_SOCKET_URL=${{ secrets.FRONTEND_URL }}
 
       # Construir y subir imagen del Backend
       - name: Build and push Backend
@@ -46,7 +44,6 @@ jobs:
           file: ./back/Dockerfile.prod
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
-
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -56,7 +53,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # Configuración de rutas
             PROJECT_PATH="/var/www/html/tr2-24-25-daw_tr2_g1"
@@ -92,7 +89,6 @@ jobs:
             
             # Otras variables útiles
             echo "NODE_ENV=production" >> .env
-            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
 
             # 3. Desplegar con Docker Compose
             echo "Iniciando despliegue..."
