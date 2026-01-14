@@ -1,37 +1,53 @@
+# Fichero: docker-compose.prod.yml
+# Descripción: Configuración de Docker Compose para PRODUCCIÓN.
+# Utiliza las imágenes construidas en GitHub Actions y almacenadas en GHCR.
+
 services:
+  # ----------------------------------------
+  # 1. Frontend (Producción)
+  # ----------------------------------------
   frontend:
-    # La imagen será descargada del registro de GitHub (GHCR)
+    container_name: plapi_frontend_prod
+    # Usa la imagen construida en el workflow. ${GITHUB_REPOSITORY} se llena desde el .env generado
     image: ghcr.io/${GITHUB_REPOSITORY}-frontend:latest
-    container_name: plapi_frontend
     restart: always
-    ports:
-      - "8050:3000" # El contenedor escucha en el 3000, lo exponemos en el 8050 del host
-    depends_on:
-      - backend
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
     networks:
       - plapi-network
 
+  # ----------------------------------------
+  # 2. Backend (Producción)
+  # ----------------------------------------
   backend:
+    container_name: plapi_backend_prod
     image: ghcr.io/${GITHUB_REPOSITORY}-backend:latest
-    container_name: plapi_backend
     restart: always
+    expose:
+      - "3000"
     environment:
       NODE_ENV: production
       DB_HOST: mysql
+      # Estas variables se leen del archivo .env generado por el workflow
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-    ports:
-      - "3000:3000"
+      # URL del frontend para CORS si es necesario
+      FRONTEND_URL: ${FRONTEND_URL}
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - plapi-network
 
+  # ----------------------------------------
+  # 3. Base de Datos MySQL (Producción)
+  # ----------------------------------------
   mysql:
+    container_name: plapi_mysql_prod
     image: mysql:8.0
-    container_name: plapi_mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -39,20 +55,30 @@ services:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
+      # Volumen persistente para producción
       - plapi-mysql-data-prod:/var/lib/mysql
+    healthcheck:
+      test: "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD"
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - plapi-network
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: plapi_phpmyadmin
+  # ----------------------------------------
+  # 4. Nginx (Proxy Inverso / Gateway)
+  # ----------------------------------------
+  nginx:
+    container_name: plapi_nginx_prod
+    image: nginx:alpine
     restart: always
-    environment:
-      PMA_HOST: mysql
     ports:
-      - "8080:80"
+      - "80:80" # El único puerto abierto al mundo
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - mysql
+      - frontend
+      - backend
     networks:
       - plapi-network
 

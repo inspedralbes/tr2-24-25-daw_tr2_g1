@@ -36,7 +36,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
           build-args: |
             NODE_ENV=production
-            VITE_SOCKET_URL=${{ secrets.FRONTEND_URL }}
+            VITE_SOCKET_URL=${{ secrets.API_URL }}
 
       # Construir y subir imagen del Backend
       - name: Build and push Backend
@@ -56,7 +56,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          password: ${{ secrets.SSH_PASSWORD }}
           script: |
             # Configuración de rutas
             PROJECT_PATH="/var/www/html/tr2-24-25-daw_tr2_g1"
@@ -92,6 +92,7 @@ jobs:
             
             # Otras variables útiles
             echo "NODE_ENV=production" >> .env
+            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
 
             # 3. Desplegar con Docker Compose
             echo "Iniciando despliegue..."
