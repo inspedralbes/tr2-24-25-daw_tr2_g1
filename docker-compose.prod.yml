@@ -11,10 +11,10 @@ services:
     # Usa la imagen construida en el workflow. ${GITHUB_REPOSITORY} se llena desde el .env generado
     image: ghcr.io/${GITHUB_REPOSITORY}-frontend:latest
     restart: always
-    expose:
-      - "3000"
-    environment:
-      NODE_ENV: production
+    ports:
+      - "8050:80" # El frontend se sirve en el puerto estándar web
+    depends_on:
+      - backend
     networks:
       - plapi-network
 
