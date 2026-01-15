@@ -1,124 +1,225 @@
-<script setup></script>
+<script setup>
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+
+// 1. Importamos el idioma global
+const idioma = useIdioma();
+const router = useRouter();
+
+const email = ref('');
+const errorMessage = ref('');
+const loading = ref(false);
+
+// 2. DICCIONARIO DE TRADUCCIONES LOGIN
+const t = computed(() => {
+  const textos = {
+    ca: {
+      subtitle: 'Accés per a Centres Educatius',
+      label_email: 'Correu electrònic (xtec)',
+      btn_entrar: 'Entrar',
+      btn_loading: 'Entrant...',
+      footer: '© Generalitat de Catalunya',
+      error_connexio: 'Error de connexió amb el servidor'
+    },
+    es: {
+      subtitle: 'Acceso para Centros Educativos',
+      label_email: 'Correo electrónico (xtec)',
+      btn_entrar: 'Entrar',
+      btn_loading: 'Entrando...',
+      footer: '© Generalitat de Catalunya',
+      error_connexio: 'Error de conexión con el servidor'
+    },
+    en: {
+      subtitle: 'Access for Educational Centers',
+      label_email: 'Email address (xtec)',
+      btn_entrar: 'Log In',
+      btn_loading: 'Logging in...',
+      footer: '© Generalitat de Catalunya',
+      error_connexio: 'Connection error with server'
+    }
+  };
+  return textos[idioma.value];
+});
+
+const handleLogin = async () => {
+  loading.value = true;
+  errorMessage.value = '';
+
+  try {
+    const response = await fetch('http://localhost:3000/api/login-centre', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.value }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem('user_centre', JSON.stringify(data.centre));
+      router.push('/home');
+    } else {
+      // Si el backend devuelve un error, lo mostramos tal cual
+      // O podrías traducirlo si el backend devolviera códigos de error
+      errorMessage.value = data.error || 'Error al iniciar sessió';
+    }
+  } catch (error) {
+    errorMessage.value = t.value.error_connexio;
+  } finally {
+    loading.value = false;
+  }
+};
+</script>
 
 <template>
-  <div class="main-content">
-    <div class="container">
-      <section class="intro">
-        <h1>Benvingut/da al Gestor de Plans Individualitzats</h1>
-        <p class="subtitle">
-          Aquesta eina permet agilitzar la creació i gestió dels PIs mitjançant
-          intel·ligència artificial. Selecciona una de les opcions següents per
-          començar:
-        </p>
-      </section>
+  <div class="glass-bg">
+    <div class="login-card">
+      <div class="card-header">
+        <h1>PlaPI</h1>
+      </div>
 
-      <div class="grid-opciones">
-        <NuxtLink to="/pi/crear-pi" class="card-gencat">
-          <div class="text-card">
-            <h3>Pujar Nou PI</h3>
-            <p>Pujar un nou pla individualitzat per a un alumne.</p>
-          </div>
-          <div class="arrow">→</div>
-        </NuxtLink>
+      <p class="subtitle">{{ t.subtitle }}</p>
 
-        <NuxtLink to="/search" class="card-gencat">
-          <div class="text-card">
-            <h3>Cercar PI d'alumne</h3>
-            <p>Cerca i accedeix a un PI ja creat.</p>
-          </div>
-          <div class="arrow">→</div>
-        </NuxtLink>
+      <form @submit.prevent="handleLogin">
+        <div class="input-wrap">
+          <input 
+            type="email" 
+            v-model="email" 
+            placeholder=" " 
+            required
+            id="email-input"
+          />
+          <label for="email-input">{{ t.label_email }}</label>
+        </div>
+
+        <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
+
+        <button type="submit" class="btn-primary" :disabled="loading">
+          {{ loading ? t.btn_loading : t.btn_entrar }}
+        </button>
+      </form>
+
+      <div class="footer-links">
+        <span>{{ t.footer }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.main-content {
-  background-color: #f5f5f5;
-  min-height: calc(100vh - 140px);
-  padding-bottom: 40px;
-}
-
-.container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 50px 20px;
+.glass-bg {
+  min-height: calc(100vh - 120px);
   display: flex;
-  flex-direction: column;
-  gap: 40px;
+  align-items: flex-start; 
+  justify-content: center;
+  padding-top: 8vh; 
+  background-color: #e8ecf1;
+  background-image: radial-gradient(#c5cdd8 1px, transparent 1px);
+  background-size: 20px 20px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
 }
 
-.intro {
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 20px;
+.login-card {
+  background: white;
+  padding: 50px 40px;
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+  border: 1px solid #dce1e6;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
 }
 
-.intro h1 {
-  font-family: "Open Sans", sans-serif;
-  font-weight: 700;
-  font-size: 32px;
-  color: #333;
-  margin-bottom: 15px;
-  line-height: 1.2;
+/* ELIMINADO EL ESTILO .logo-circle PORQUE YA NO SE USA */
+
+h1 {
+  margin: 0 0 10px 0; /* Un poco de margen abajo */
+  color: #D9001D;
+  font-weight: 800;
+  letter-spacing: -1px;
+  font-size: 2.5rem; /* He hecho el título un pelín más grande al quitar el logo */
 }
 
 .subtitle {
-  font-family: "Open Sans", sans-serif;
-  color: #555;
-  font-size: 18px;
-  line-height: 1.6;
-  max-width: 800px;
-}
-
-.grid-opciones {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 25px;
-  width: 100%;
-}
-
-.card-gencat {
-  background-color: white;
-  text-decoration: none;
-  border: 1px solid #ddd;
-  border-left: 5px solid #d00000;
-  padding: 30px;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.card-gencat:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  border-color: #bbb;
-}
-
-.text-card h3 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: #333;
-}
-
-.card-gencat:hover h3 {
-  color: #d00000;
-}
-
-.text-card p {
-  margin: 0;
-  font-size: 14px;
   color: #666;
+  margin-bottom: 30px;
+  font-size: 0.9rem;
 }
 
-.arrow {
-  font-size: 24px;
-  color: #d00000;
-  margin-left: 20px;
+/* Input y Labels */
+.input-wrap {
+  position: relative;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.input-wrap input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #cdd4dc;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f9f9f9;
+  outline: none;
+  box-sizing: border-box; 
+  transition: all 0.2s;
+}
+
+.input-wrap input:focus {
+  background: white;
+  border-color: #D9001D;
+  box-shadow: 0 0 0 4px rgba(217, 0, 29, 0.1);
+}
+
+.input-wrap label {
+  position: absolute;
+  left: 15px;
+  top: 16px;
+  color: #888;
+  pointer-events: none;
+  transition: 0.2s ease all;
+}
+
+.input-wrap input:focus ~ label,
+.input-wrap input:not(:placeholder-shown) ~ label {
+  top: -10px;
+  left: 10px;
+  font-size: 0.75rem;
+  background: white;
+  padding: 0 5px;
+  color: #D9001D;
   font-weight: bold;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  background: #D9001D;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(217, 0, 29, 0.3);
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #b00018;
+}
+
+.error-msg {
+  color: #D9001D;
+  font-size: 0.85rem;
+  margin-bottom: 15px;
+  background-color: #fff5f5;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.footer-links {
+  margin-top: 30px;
+  font-size: 0.75rem;
+  color: #888;
 }
 </style>
