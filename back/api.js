@@ -116,11 +116,11 @@ const getAlumneByRalc = async (req, res) => {
     try {
         const { ralc } = req.params;
         const alumne = await models.getAlumneByRalc(ralc);
-        
+
         if (!alumne) {
             return res.status(404).json({ success: false, error: 'Alumne no trobat' });
         }
-        
+
         res.json({ success: true, data: alumne });
     } catch (error) {
         console.error('Error obteniendo alumno:', error);
@@ -128,9 +128,29 @@ const getAlumneByRalc = async (req, res) => {
     }
 };
 
+const createAlumneEndpoint = async (req, res) => {
+    try {
+        const { nom, cognom, ralc, dni, data_naixement, centre_procedencia_id } = req.body;
+
+        if (!nom || !cognom || !ralc || !dni) {
+            return res.status(400).json({ success: false, error: 'Falten camps obligatoris (nom, cognom, ralc, dni)' });
+        }
+
+        const newId = await models.createAlumne({ nom, cognom, ralc, dni, data_naixement, centre_procedencia_id });
+        res.json({ success: true, message: 'Alumne creat correctament', id: newId });
+    } catch (error) {
+        console.error('Error creating alumne:', error);
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ success: false, error: 'Ja existeix un alumne amb aquest DNI o RALC' });
+        }
+        res.status(500).json({ success: false, error: 'Error al crear l\'alumne' });
+    }
+};
+
 module.exports = {
     loginCentre,
     createPIRecord,
     getAllAlumnes,
-    getAlumneByRalc
+    getAlumneByRalc,
+    createAlumneEndpoint
 };

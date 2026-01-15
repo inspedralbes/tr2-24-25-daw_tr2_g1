@@ -27,5 +27,6 @@ router.post('/pi', upload.single('pdf'), api.createPIRecord);
 // Alumnes routes
 router.get('/alumnes', api.getAllAlumnes);
 router.get('/alumnes/:ralc', api.getAlumneByRalc);
+router.post('/alumnes', api.createAlumneEndpoint);
 
 module.exports = router;

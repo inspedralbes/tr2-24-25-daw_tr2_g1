@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-// Dynamic import for pdfjs
+// Importacion de la libreria para renderitzar i extreure text de PDFs
+
 const getPdfWorker = async () => {
   if (import.meta.client) {
     const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
@@ -85,7 +86,7 @@ const piContent = ref({
   dificultat_gravetat: "",
   justificacio_pi: "",
   proposta_educativa: "",
-  observacions: ""
+  observacions: "",
 });
 
 const nextStep = async () => {
@@ -105,15 +106,15 @@ const nextStep = async () => {
         if (extractedText.value.trim().length > 0) {
           const fullName = `${studentData.value.nom} ${studentData.value.cognoms}`;
           await analyzePdfContent(extractedText.value, fullName);
-          
+
           // Sync AI response to local form state
           if (aiResponse.value) {
-              piContent.value = {
-                  dificultat_gravetat: aiResponse.value.dificultat_gravetat || "",
-                  justificacio_pi: aiResponse.value.justificacio_pi || "",
-                  proposta_educativa: aiResponse.value.proposta_educativa || "",
-                  observacions: aiResponse.value.observacions || ""
-              };
+            piContent.value = {
+              dificultat_gravetat: aiResponse.value.dificultat_gravetat || "",
+              justificacio_pi: aiResponse.value.justificacio_pi || "",
+              proposta_educativa: aiResponse.value.proposta_educativa || "",
+              observacions: aiResponse.value.observacions || "",
+            };
           }
         }
 
@@ -138,7 +139,7 @@ const savePlan = () => {
     birthDate: studentData.value.dataNaixement,
     grade: studentData.value.curs,
     group: studentData.value.grup,
-    
+
     // Spread the structured content from local state
     dificultat_gravetat: piContent.value.dificultat_gravetat,
     justificacio_pi: piContent.value.justificacio_pi,
@@ -275,43 +276,42 @@ const savePlan = () => {
             </p>
 
             <!-- Removed hacky aiResponse init -->
-            
+
             <div class="field-group">
-                <label>1. Dificultat i Gravetat</label>
-                <textarea
-                  v-model="piContent.dificultat_gravetat"
-                  class="editor-textarea small"
-                  placeholder="Descripció de la dificultat i gravetat..."
-                ></textarea>
+              <label>1. Dificultat i Gravetat</label>
+              <textarea
+                v-model="piContent.dificultat_gravetat"
+                class="editor-textarea small"
+                placeholder="Descripció de la dificultat i gravetat..."
+              ></textarea>
             </div>
 
             <div class="field-group">
-                <label>2. Justificació del PI</label>
-                <textarea
-                  v-model="piContent.justificacio_pi"
-                  class="editor-textarea small"
-                  placeholder="Per què necessita un PI..."
-                ></textarea>
+              <label>2. Justificació del PI</label>
+              <textarea
+                v-model="piContent.justificacio_pi"
+                class="editor-textarea small"
+                placeholder="Per què necessita un PI..."
+              ></textarea>
             </div>
 
             <div class="field-group">
-                <label>3. Proposta Educativa</label>
-                <textarea
-                  v-model="piContent.proposta_educativa"
-                  class="editor-textarea large"
-                  placeholder="Mesures i propostes..."
-                ></textarea>
+              <label>3. Proposta Educativa</label>
+              <textarea
+                v-model="piContent.proposta_educativa"
+                class="editor-textarea large"
+                placeholder="Mesures i propostes..."
+              ></textarea>
             </div>
 
             <div class="field-group">
-                <label>4. Observacions</label>
-                <textarea
-                  v-model="piContent.observacions"
-                  class="editor-textarea small"
-                  placeholder="Observacions addicionals (a omplir pel professor)..."
-                ></textarea>
+              <label>4. Observacions</label>
+              <textarea
+                v-model="piContent.observacions"
+                class="editor-textarea small"
+                placeholder="Observacions addicionals (a omplir pel professor)..."
+              ></textarea>
             </div>
-
           </div>
 
           <div class="form-actions">
@@ -474,14 +474,14 @@ const savePlan = () => {
 
 /* TEXT AREA EDITOR */
 .field-group {
-    margin-bottom: 25px;
+  margin-bottom: 25px;
 }
 
 .field-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #333;
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
 }
 
 .editor-textarea {
@@ -497,11 +497,11 @@ const savePlan = () => {
 }
 
 .editor-textarea.small {
-    min-height: 120px;
+  min-height: 120px;
 }
 
 .editor-textarea.large {
-    min-height: 300px;
+  min-height: 300px;
 }
 
 .editor-textarea:focus {

@@ -5,26 +5,26 @@ export const useTable = () => {
 
   // Columnas de la tabla
   const columns = [
-    { 
-      key: 'ralc', 
+    {
+      key: 'ralc',
       label: 'RALC',
       sortable: true,
       id: 'ralc'
     },
-    { 
-      key: 'nom', 
+    {
+      key: 'nom',
       label: 'Nom',
       sortable: true,
       id: 'nom'
     },
-    { 
-      key: 'cognoms', 
+    {
+      key: 'cognoms',
       label: 'Cognoms',
       sortable: true,
       id: 'cognoms'
     },
-    { 
-      key: 'curs', 
+    {
+      key: 'curs',
       label: 'Curs',
       id: 'curs'
     }
@@ -37,10 +37,11 @@ export const useTable = () => {
   const loadStudents = async () => {
     isLoading.value = true
     error.value = null
-    
+
     try {
-      const response = await $fetch('http://localhost:3000/api/alumnes')
-      
+      const baseURL = import.meta.server ? 'http://backend:3000' : 'http://localhost:3000'
+      const response = await $fetch(`${baseURL}/api/alumnes`)
+
       if (response.success) {
         students.value = response.data
       } else {

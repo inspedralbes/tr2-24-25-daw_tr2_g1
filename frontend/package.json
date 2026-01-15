@@ -11,13 +11,9 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-<<<<<<< HEAD
-    "@nuxt/ui": "^4.2.1",
-    "jspdf": "^4.0.0",
-=======
     "@iconify/vue": "^5.0.0",
     "@nuxt/ui": "^4.3.0",
->>>>>>> 752242956d0a8d7ece4d0538606f7d215fb61da0
+    "jspdf": "^4.0.0",
     "nuxt": "^4.2.2",
     "pdfjs-dist": "^5.4.530",
     "vue": "^3.5.25",

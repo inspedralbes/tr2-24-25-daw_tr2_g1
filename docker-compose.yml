@@ -21,6 +21,7 @@ services:
       VITE_NODE_ENV: development
       # Conexión al backend usando el nombre del servicio 'backend'
       VITE_SOCKET_URL: http://backend:3000
+      HOST: "0.0.0.0"
     ports:
       - "5173:3000" # Puerto de desarrollo de nuxt
     volumes:
@@ -84,9 +85,19 @@ services:
     volumes:
       # Persistencia de los datos
       - plapi-mysql-data:/var/lib/mysql
-      - ./db:/docker-entrypoint-initdb.d
+      - ./back/db:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD" ]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p$$MYSQL_ROOT_PASSWORD",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -122,8 +133,7 @@ services:
     depends_on:
       - mysql
     networks:
-      - plapi-network
-
+      - plapi-networkdb
 # ----------------------------------------
 # Definición de la red y volúmenes
 # ----------------------------------------

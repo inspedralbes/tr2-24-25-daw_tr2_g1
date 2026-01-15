@@ -111,11 +111,11 @@ const getAlumneByRalc = async (ralc) => {
         LEFT JOIN centres c ON a.centre_procedencia_id = c.id
         WHERE a.ralc = ?
     `, [ralc]);
-    
+
     if (alumnes.length === 0) return null;
-    
+
     const alumne = alumnes[0];
-    
+
     // Get PIs for this alumne
     const [pis] = await pool.query(`
         SELECT 
@@ -124,13 +124,12 @@ const getAlumneByRalc = async (ralc) => {
             pi.ruta_pdf,
             pi.data_creacio,
             pi.dades_ia,
-            p.nom as professorNom,
-            p.cognom as professorCognom
+            p.nom as professorNom
         FROM pis pi
         LEFT JOIN professors p ON pi.professor_id = p.id
         WHERE pi.alumne_id = (SELECT id FROM alumnes WHERE ralc = ?)
     `, [ralc]);
-    
+
     alumne.pis = pis;
     return alumne;
 };

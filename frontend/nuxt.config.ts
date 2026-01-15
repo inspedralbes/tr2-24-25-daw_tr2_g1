@@ -5,13 +5,17 @@ export default defineNuxtConfig({
     dirs: ["~/components", "~/components/comp-pi"],
   },
   devtools: { enabled: true },
+  devServer: {
+    host: "0.0.0.0",
+    port: 4000,
+  },
 
   modules: ["@nuxt/ui"],
 
   runtimeConfig: {
     public: {
       GEMINI_KEY: process.env.GEMINI_KEY || "",
-    }
+    },
   },
 
   routeRules: {
@@ -27,7 +31,7 @@ export default defineNuxtConfig({
     },
     build: {
       target: "esnext",
-    }
+    },
   },
 
   build: {
