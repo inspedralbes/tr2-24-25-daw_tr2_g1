@@ -21,7 +21,7 @@
           <div class="arrow">→</div>
         </NuxtLink>
 
-        <NuxtLink to="/temporal/formPage" class="card-gencat">
+        <NuxtLink to="/search" class="card-gencat">
           <div class="text-card">
             <h3>Cercar PI d'alumne</h3>
             <p>Cerca i accedeix a un PI ja creat.</p>
