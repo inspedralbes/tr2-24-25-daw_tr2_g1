@@ -47,7 +47,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="student-detail-page">
+  <div class="student-detail-page page-background">
     <!-- Navegació -->
     <div class="nav-back">
       <NuxtLink to="/search" class="btn-back">
@@ -56,12 +56,12 @@ onMounted(() => {
     </div>
 
     <!-- Loading -->
-    <div v-if="isLoading" class="loading-state">
+    <div v-if="isLoading" class="loading-state white-card">
       <p>Carregant dades de l'alumne...</p>
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="error-state">
+    <div v-else-if="error" class="error-state white-card">
       <p>{{ error }}</p>
       <button @click="loadStudent" class="btn-retry">Tornar a intentar</button>
     </div>
@@ -71,7 +71,7 @@ onMounted(() => {
       <div class="detail-grid">
         <!-- ESQUERRA: Dades de l'alumne -->
         <div class="detail-left">
-          <div class="student-card">
+          <div class="student-card white-card">
             <div class="card-header">
               <div class="gencat-logo">gencat.cat</div>
               <h1>{{ student.nom }} {{ student.cognoms }}</h1>
@@ -108,7 +108,7 @@ onMounted(() => {
 
             <!-- Plans Individualitzats -->
             <div v-if="student.pis && student.pis.length > 0" class="pis-section">
-              <h2>Plans Individualitzats</h2>
+              <h2 class="section-title">Plans Individualitzats</h2>
               <div class="pis-list">
                 <div v-for="pi in student.pis" :key="pi.id" class="pi-card">
                   <div class="pi-header">
@@ -148,32 +148,7 @@ onMounted(() => {
 
 <style scoped>
 .student-detail-page {
-  background-color: #e8e8e8;
-  min-height: calc(100vh - 140px);
   padding: 40px;
-}
-
-.nav-back {
-  max-width: 1400px;
-  margin: 0 auto 30px;
-}
-
-.btn-back {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: white;
-  color: #333;
-  text-decoration: none;
-  border-radius: 4px;
-  font-family: "Open Sans", sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn-back:hover {
-  background-color: #f5f5f5;
 }
 
 .loading-state, .error-state {
@@ -181,9 +156,6 @@ onMounted(() => {
   padding: 60px 20px;
   max-width: 600px;
   margin: 0 auto;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .loading-state p {
@@ -202,7 +174,7 @@ onMounted(() => {
 
 .btn-retry {
   padding: 10px 24px;
-  background-color: #007a33;
+  background-color: #c8102e;
   color: white;
   border: none;
   border-radius: 4px;
@@ -214,7 +186,7 @@ onMounted(() => {
 }
 
 .btn-retry:hover {
-  background-color: #005a24;
+  background-color: #a00d25;
 }
 
 .detail-content {
@@ -234,24 +206,13 @@ onMounted(() => {
 }
 
 .student-card {
-  background-color: white;
-  border-radius: 8px;
   padding: 40px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
   margin-bottom: 30px;
   border-bottom: 2px solid #e0e0e0;
   padding-bottom: 20px;
-}
-
-.gencat-logo {
-  font-size: 20px;
-  font-weight: 700;
-  color: #c8102e;
-  font-family: "Open Sans", sans-serif;
-  margin-bottom: 15px;
 }
 
 .card-header h1 {
@@ -263,37 +224,7 @@ onMounted(() => {
   line-height: 1.3;
 }
 
-.info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  margin-bottom: 30px;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.info-item:last-child {
-  border-bottom: none;
-}
-
-.info-label {
-  font-family: "Open Sans", sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  color: #555;
-}
-
 .info-value {
-  font-family: "Open Sans", sans-serif;
-  font-size: 15px;
-  color: #333;
-  font-weight: 500;
   text-align: right;
 }
 
@@ -301,15 +232,6 @@ onMounted(() => {
   margin-top: 30px;
   padding-top: 30px;
   border-top: 2px solid #e0e0e0;
-}
-
-.pis-section h2 {
-  font-family: "Open Sans", sans-serif;
-  font-weight: 600;
-  font-size: 22px;
-  color: #333;
-  margin-bottom: 20px;
-  margin-top: 0;
 }
 
 .pis-list {
