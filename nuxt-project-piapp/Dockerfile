@@ -8,7 +8,7 @@ COPY package*.json ./
 # Copia el código
 COPY . .
 
-# El puerto 3000 es el interno de Nuxt
+# Expone el puerto por defecto del backend
 EXPOSE 3000
 
 CMD ["npm", "run", "dev"]

@@ -1,4 +1,4 @@
-// useGemini.js
+// composables/useGemini.js
 import { ref } from "vue";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -6,54 +6,59 @@ const API_KEY = import.meta.env.VITE_GEMINI_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const useGemini = () => {
-  const aiResponse = ref("");
+  const aiResponse = ref(null);
   const isGenerating = ref(false);
   const error = ref(null);
 
-  // Cambiamos el argumento para recibir el texto del PDF
-  const analyzePdfContent = async (pdfText) => {
+  const analyzePdfContent = async (pdfText, studentName) => {
     isGenerating.value = true;
     error.value = null;
-    aiResponse.value = "";
+    aiResponse.value = null; // Changed from "" to null/object
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      // Usamos flash para rapidez, o pro para mayor razonamiento
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
 
-      // --- EL PROMPT ---
-      // Instrucciones claras para limpiar y resumir
       const prompt = `
-        Actúa como un analista experto y conciso. 
-        A continuación te paso el texto crudo extraído de un archivo PDF. 
-        El texto puede contener errores de formato, números de página o encabezados desordenados.
-
-        Tu tarea es:
-        1. Identificar de qué trata el documento.
-        2. Extraer los puntos clave más importantes.
-        3. Explicarlo todo en un lenguaje simple, directo y fácil de leer (una "respuesta corriente").
+        Actúa como un psicopedagogo experto. He extraído el texto de un informe escolar/psicológico del alumno ${studentName || "desconocido"
+        }.
         
-        Si el texto es ilegible o muy corto, indícalo.
+        Tu tarea es analizar el texto y generar un resumen estructurado para un Plan Individualizado (PI) en formato JSON.
+        
+        IMPORTANTE: Debes devolver UNICAMENTE un objeto JSON válido con la siguiente estructura exacta:
+        {
+          "dificultat_gravetat": "Resumen breve de la dificultad y gravedad detectada",
+          "justificacio_pi": "Justificación de por qué necesita un plan individualizado",
+          "proposta_educativa": "Propuesta educativa y medidas sugeridas",
+          "observacions": "" 
+        }
+
+        Nota: El campo "observacions" debe estar vacío (cadena vacía), ya que lo rellenará el profesor manualmente.
 
         --- TEXTO DEL PDF ---
-        "${pdfText}"
+        "${pdfText.substring(0, 30000)}"
       `;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      aiResponse.value = response.text();
+      const text = response.text();
+
+      try {
+        aiResponse.value = JSON.parse(text);
+      } catch (parseError) {
+        console.error("Error parsing JSON:", parseError);
+        // Fallback for non-JSON response (though we requested JSON)
+        aiResponse.value = {
+          dificultat_gravetat: "Error parseando respuesta",
+          justificacio_pi: text,
+          proposta_educativa: "",
+          observacions: ""
+        };
+      }
+
     } catch (e) {
       console.error("Gemini Error:", e);
-
-      if (e.message?.includes("404")) {
-        error.value = `Error (404): Modelo no encontrado. Intenta cambiar a 'gemini-1.5-flash'.`;
-      } else if (e.message?.includes("400") || e.message?.includes("API key")) {
-        error.value = `Error de API Key: Verifica tu archivo .env`;
-      } else if (e.message?.includes("429")) {
-        error.value = `Error (429): Has superado la cuota de peticiones.`;
-      } else if (e.message?.includes("SAFETY")) {
-        error.value = `El contenido fue bloqueado por filtros de seguridad.`;
-      } else {
-        error.value = `Error desconocido: ${e.message}`;
-      }
+      error.value = "Error al conectar con la IA.";
     } finally {
       isGenerating.value = false;
     }

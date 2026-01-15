@@ -32,7 +32,7 @@ CREATE TABLE `alumnes` (
   `ralc` varchar(20) NOT NULL,
   `dni` varchar(15) NOT NULL,
   `data_naixement` date NOT NULL,
-  `centre_procedencia_id` int NOT NULL,
+  `centre_procedencia_id` int NOT NULL DEFAULT '835',
   PRIMARY KEY (`id`),
   KEY `centre_procedencia_id` (`centre_procedencia_id`),
   CONSTRAINT `alumnes_ibfk_1` FOREIGN KEY (`centre_procedencia_id`) REFERENCES `centres` (`id`) ON DELETE CASCADE ON UPDATE CASCADE

@@ -1,67 +1,62 @@
-<script setup>
-</script>
+<script setup></script>
 
 <template>
   <div class="main-content">
-    
     <div class="container">
-      
       <section class="intro">
         <h1>Benvingut/da al Gestor de Plans Individualitzats</h1>
         <p class="subtitle">
-          Aquesta eina permet agilitzar la creació i gestió dels PIs mitjançant intel·ligència artificial. 
-          Selecciona una de les opcions següents per començar:
+          Aquesta eina permet agilitzar la creació i gestió dels PIs mitjançant
+          intel·ligència artificial. Selecciona una de les opcions següents per
+          començar:
         </p>
       </section>
 
       <div class="grid-opciones">
-        
-        <NuxtLink to="/pi/new" class="card-gencat">
+        <NuxtLink to="/pi/crear-pi" class="card-gencat">
           <div class="text-card">
-            <h3>Crear Nou PI</h3>
-            <p>Iniciar un nou tràmit d'alumne (Opció A).</p>
+            <h3>Pujar Nou PI</h3>
+            <p>Pujar un nou pla individualitzat per a un alumne.</p>
           </div>
           <div class="arrow">→</div>
         </NuxtLink>
 
-        <NuxtLink to="/temporal/formPage" class="card-gencat">
+        <NuxtLink to="/search" class="card-gencat">
           <div class="text-card">
-            <h3>Formulari de Prova</h3>
-            <p>Accés al formulari temporal (Form Page).</p>
+            <h3>Cercar PI d'alumne</h3>
+            <p>Cerca i accedeix a un PI ja creat.</p>
           </div>
           <div class="arrow">→</div>
         </NuxtLink>
-
       </div>
-
     </div>
   </div>
 </template>
 
 <style scoped>
 .main-content {
-  background-color: #f5f5f5; 
-  min-height: calc(100vh - 140px); 
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 140px);
   padding-bottom: 40px;
 }
 
 .container {
-  max-width: 1000px; 
-  margin: 0 auto;    
+  max-width: 1000px;
+  margin: 0 auto;
   padding: 50px 20px;
   display: flex;
-  flex-direction: column; 
-  gap: 40px; 
+  flex-direction: column;
+  gap: 40px;
 }
 
 .intro {
-  border-bottom: 1px solid #e0e0e0; 
+  border-bottom: 1px solid #e0e0e0;
   padding-bottom: 20px;
 }
 
 .intro h1 {
-  font-family: 'Open Sans', sans-serif;
-  font-weight: 700; 
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
   font-size: 32px;
   color: #333;
   margin-bottom: 15px;
@@ -69,17 +64,17 @@
 }
 
 .subtitle {
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   color: #555;
   font-size: 18px;
   line-height: 1.6;
-  max-width: 800px; 
+  max-width: 800px;
 }
 
 .grid-opciones {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-  gap: 25px; 
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
   width: 100%;
 }
 
@@ -87,19 +82,19 @@
   background-color: white;
   text-decoration: none;
   border: 1px solid #ddd;
-  border-left: 5px solid #d00000; 
+  border-left: 5px solid #d00000;
   padding: 30px;
   border-radius: 4px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .card-gencat:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   border-color: #bbb;
 }
 
@@ -111,7 +106,7 @@
 }
 
 .card-gencat:hover h3 {
-  color: #d00000; 
+  color: #d00000;
 }
 
 .text-card p {
@@ -119,7 +114,6 @@
   font-size: 14px;
   color: #666;
 }
-
 
 .arrow {
   font-size: 24px;
