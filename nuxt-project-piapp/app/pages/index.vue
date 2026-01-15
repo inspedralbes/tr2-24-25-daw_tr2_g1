@@ -1,13 +1,45 @@
 <script setup>
-// ... (MISMO SCRIPT QUE ARRIBA) ...
-// Copia el script de la Opción 1 o usa el que ya tenías
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+
+// 1. Importamos el idioma global
+const idioma = useIdioma();
+const router = useRouter();
 
 const email = ref('');
 const errorMessage = ref('');
 const loading = ref(false);
-const router = useRouter();
+
+// 2. DICCIONARIO DE TRADUCCIONES LOGIN
+const t = computed(() => {
+  const textos = {
+    ca: {
+      subtitle: 'Accés per a Centres Educatius',
+      label_email: 'Correu electrònic (xtec)',
+      btn_entrar: 'Entrar',
+      btn_loading: 'Entrant...',
+      footer: '© Generalitat de Catalunya',
+      error_connexio: 'Error de connexió amb el servidor'
+    },
+    es: {
+      subtitle: 'Acceso para Centros Educativos',
+      label_email: 'Correo electrónico (xtec)',
+      btn_entrar: 'Entrar',
+      btn_loading: 'Entrando...',
+      footer: '© Generalitat de Catalunya',
+      error_connexio: 'Error de conexión con el servidor'
+    },
+    en: {
+      subtitle: 'Access for Educational Centers',
+      label_email: 'Email address (xtec)',
+      btn_entrar: 'Log In',
+      btn_loading: 'Logging in...',
+      footer: '© Generalitat de Catalunya',
+      error_connexio: 'Connection error with server'
+    }
+  };
+  return textos[idioma.value];
+});
 
 const handleLogin = async () => {
   loading.value = true;
@@ -26,10 +58,12 @@ const handleLogin = async () => {
       localStorage.setItem('user_centre', JSON.stringify(data.centre));
       router.push('/home');
     } else {
+      // Si el backend devuelve un error, lo mostramos tal cual
+      // O podrías traducirlo si el backend devolviera códigos de error
       errorMessage.value = data.error || 'Error al iniciar sessió';
     }
   } catch (error) {
-    errorMessage.value = 'Error de connexió amb el servidor';
+    errorMessage.value = t.value.error_connexio;
   } finally {
     loading.value = false;
   }
@@ -40,11 +74,10 @@ const handleLogin = async () => {
   <div class="glass-bg">
     <div class="login-card">
       <div class="card-header">
-        <div class="logo-circle">🎓</div>
         <h1>PlaPI</h1>
       </div>
 
-      <p class="subtitle">Accés per a Centres Educatius</p>
+      <p class="subtitle">{{ t.subtitle }}</p>
 
       <form @submit.prevent="handleLogin">
         <div class="input-wrap">
@@ -55,18 +88,18 @@ const handleLogin = async () => {
             required
             id="email-input"
           />
-          <label for="email-input">Correu electrònic (xtec)</label>
+          <label for="email-input">{{ t.label_email }}</label>
         </div>
 
         <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
 
         <button type="submit" class="btn-primary" :disabled="loading">
-          {{ loading ? '...' : 'Entrar' }}
+          {{ loading ? t.btn_loading : t.btn_entrar }}
         </button>
       </form>
 
       <div class="footer-links">
-        <span>© Generalitat de Catalunya</span>
+        <span>{{ t.footer }}</span>
       </div>
     </div>
   </div>
@@ -74,12 +107,13 @@ const handleLogin = async () => {
 
 <style scoped>
 .glass-bg {
-  min-height: 100vh;
+  min-height: calc(100vh - 120px);
   display: flex;
-  align-items: center;
+  align-items: flex-start; 
   justify-content: center;
-  background-color: #f4f6f8;
-  background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+  padding-top: 8vh; 
+  background-color: #e8ecf1;
+  background-image: radial-gradient(#c5cdd8 1px, transparent 1px);
   background-size: 20px 20px;
   font-family: 'Helvetica Neue', Arial, sans-serif;
 }
@@ -88,35 +122,21 @@ const handleLogin = async () => {
   background: white;
   padding: 50px 40px;
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+  border: 1px solid #dce1e6;
   width: 100%;
   max-width: 380px;
   text-align: center;
-  transition: transform 0.3s;
 }
 
-.login-card:hover {
-  transform: translateY(-5px);
-}
-
-.logo-circle {
-  font-size: 2rem;
-  background: #fff0f0;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 15px;
-  border: 2px solid #ffe0e0;
-}
+/* ELIMINADO EL ESTILO .logo-circle PORQUE YA NO SE USA */
 
 h1 {
-  margin: 0;
+  margin: 0 0 10px 0; /* Un poco de margen abajo */
   color: #D9001D;
   font-weight: 800;
   letter-spacing: -1px;
+  font-size: 2.5rem; /* He hecho el título un pelín más grande al quitar el logo */
 }
 
 .subtitle {
@@ -125,7 +145,7 @@ h1 {
   font-size: 0.9rem;
 }
 
-/* Floating Label Style */
+/* Input y Labels */
 .input-wrap {
   position: relative;
   margin-bottom: 20px;
@@ -135,7 +155,7 @@ h1 {
 .input-wrap input {
   width: 100%;
   padding: 15px;
-  border: 1px solid #ddd;
+  border: 1px solid #cdd4dc;
   border-radius: 8px;
   font-size: 1rem;
   background: #f9f9f9;
@@ -150,12 +170,11 @@ h1 {
   box-shadow: 0 0 0 4px rgba(217, 0, 29, 0.1);
 }
 
-/* Truco CSS para que el label flote */
 .input-wrap label {
   position: absolute;
   left: 15px;
   top: 16px;
-  color: #999;
+  color: #888;
   pointer-events: none;
   transition: 0.2s ease all;
 }
@@ -193,11 +212,14 @@ h1 {
   color: #D9001D;
   font-size: 0.85rem;
   margin-bottom: 15px;
+  background-color: #fff5f5;
+  padding: 5px;
+  border-radius: 4px;
 }
 
 .footer-links {
   margin-top: 30px;
   font-size: 0.75rem;
-  color: #aaa;
+  color: #888;
 }
 </style>
