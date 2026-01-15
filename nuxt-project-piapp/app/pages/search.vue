@@ -148,11 +148,11 @@ const filteredStudents = computed(() => {
 }
 
 .search-box {
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 .search-input {
-  width: 100%;
+  width: 90%;
   padding: 16px 20px;
   font-size: 18px;
   font-family: "Open Sans", sans-serif;
@@ -247,21 +247,22 @@ const filteredStudents = computed(() => {
 
 .btn-primary {
   display: inline-block;
-  padding: 12px 24px;
+  padding: 14px 28px;
   background-color: #007a33;
   color: white;
   text-decoration: none;
   border-radius: 4px;
-  font-size: 15px;
+  font-size: 16px;
   font-family: "Open Sans", sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   transition: background-color 0.2s;
   text-align: center;
 }
 
 .btn-primary.btn-full {
   display: block;
-  width: 100%;
+  width: auto;
+  margin-top: 8px;
 }
 
 .btn-primary:hover {
