@@ -45,7 +45,7 @@ async function searchByRALC() {
 
   try {
     const response: any = await $fetch(
-      `http://localhost:3000/api/alumnes/${ralcToSearch}`,
+      `http://localhost:3000/api/alumne/${ralcToSearch}`,
       {
         ignoreResponseError: true,
       }

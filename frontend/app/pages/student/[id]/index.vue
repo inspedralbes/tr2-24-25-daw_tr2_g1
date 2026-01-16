@@ -1,58 +1,58 @@
 <script setup lang="ts">
-const route = useRoute()
-const studentRalc = route.params.id
+const route = useRoute();
+const studentRalc = route.params.id;
 
 // Estat de càrrega
-const isLoading = ref(true)
-const error = ref(null)
-const student = ref(null)
+const isLoading = ref(true);
+const error = ref(null);
+const student = ref(null);
 
 // Carregar dades de l'alumne des de l'API - igual que search.vue
 const loadStudent = async () => {
   try {
-    isLoading.value = true
-    error.value = null
-    
+    isLoading.value = true;
+    error.value = null;
+
     // Cridar a la mateixa API que search.vue però filtrant per aquest RALC
-    const response = await $fetch('http://localhost:3000/api/alumnes')
-    
-    console.log('Response completa:', response)
-    
+    const response = await $fetch("http://localhost:3000/api/alumnes");
+
+    console.log("Response completa:", response);
+
     if (response?.success && Array.isArray(response.data)) {
       // Buscar l'alumne amb aquest RALC
-      const foundStudent = response.data.find((s: any) => s.ralc === studentRalc)
-      
+      const foundStudent = response.data.find(
+        (s: any) => s.ralc === studentRalc
+      );
+
       if (foundStudent) {
-        student.value = foundStudent
-        console.log('Alumne trobat:', foundStudent)
+        student.value = foundStudent;
+        console.log("Alumne trobat:", foundStudent);
       } else {
-        error.value = 'No s\'ha trobat l\'alumne amb aquest RALC'
+        error.value = "No s'ha trobat l'alumne amb aquest RALC";
       }
     } else {
-      error.value = 'Error al carregar les dades'
-      console.error('Format de resposta incorrecte:', response)
+      error.value = "Error al carregar les dades";
+      console.error("Format de resposta incorrecte:", response);
     }
   } catch (e) {
-    console.error('Error carregant alumne:', e)
-    error.value = 'Error al carregar les dades de l\'alumne'
+    console.error("Error carregant alumne:", e);
+    error.value = "Error al carregar les dades de l'alumne";
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
 
 // Carregar dades al muntar el component
 onMounted(() => {
-  loadStudent()
-})
+  loadStudent();
+});
 </script>
 
 <template>
   <div class="student-detail-page">
     <!-- Navegació -->
     <div class="nav-back">
-      <NuxtLink to="/search" class="btn-back">
-        ← Tornar a la cerca
-      </NuxtLink>
+      <NuxtLink to="/search" class="btn-back"> ← Tornar a la cerca </NuxtLink>
     </div>
 
     <!-- Loading -->
@@ -80,56 +80,84 @@ onMounted(() => {
             <div class="info-list">
               <div class="info-item">
                 <span class="info-label">RALC:</span>
-                <span class="info-value">{{ student.ralc || 'No disponible' }}</span>
+                <span class="info-value">{{
+                  student.ralc || "No disponible"
+                }}</span>
               </div>
 
               <div class="info-item">
                 <span class="info-label">DNI / TIE:</span>
-                <span class="info-value">{{ student.dni || '-' }}</span>
+                <span class="info-value">{{ student.dni || "-" }}</span>
               </div>
 
               <div class="info-item">
                 <span class="info-label">Data de Naixement:</span>
                 <span class="info-value">
-                  {{ student.dataNaixement ? new Date(student.dataNaixement).toLocaleDateString('ca-ES') : '-' }}
+                  {{
+                    student.dataNaixement
+                      ? new Date(student.dataNaixement).toLocaleDateString(
+                          "ca-ES"
+                        )
+                      : "-"
+                  }}
                 </span>
               </div>
 
               <div class="info-item">
                 <span class="info-label">Curs:</span>
-                <span class="info-value">{{ student.curs || '-' }}</span>
+                <span class="info-value">{{ student.curs || "-" }}</span>
               </div>
 
               <div class="info-item">
                 <span class="info-label">Centre de Procedència:</span>
-                <span class="info-value">{{ student.centreProcedencia || '-' }}</span>
+                <span class="info-value">{{
+                  student.centreProcedencia || "-"
+                }}</span>
               </div>
             </div>
 
             <!-- Plans Individualitzats -->
-            <div v-if="student.pis && student.pis.length > 0" class="pis-section">
+            <div
+              v-if="student.pis && student.pis.length > 0"
+              class="pis-section"
+            >
               <h2>Plans Individualitzats</h2>
               <div class="pis-list">
                 <div v-for="pi in student.pis" :key="pi.id" class="pi-card">
                   <div class="pi-header">
-                    <span class="pi-estat" :class="pi.estat ? 'estat-' + pi.estat.toLowerCase() : ''">
-                      {{ pi.estat || 'Sense estat' }}
+                    <span
+                      class="pi-estat"
+                      :class="pi.estat ? 'estat-' + pi.estat.toLowerCase() : ''"
+                    >
+                      {{ pi.estat || "Sense estat" }}
                     </span>
                     <span class="pi-date" v-if="pi.data_creacio">
-                      {{ new Date(pi.data_creacio).toLocaleDateString('ca-ES') }}
+                      {{
+                        new Date(pi.data_creacio).toLocaleDateString("ca-ES")
+                      }}
                     </span>
                   </div>
-                  <p class="pi-professor" v-if="pi.professorNom || pi.professorCognom">
-                    Professor: {{ pi.professorNom || '' }} {{ pi.professorCognom || '' }}
+                  <p
+                    class="pi-professor"
+                    v-if="pi.professorNom || pi.professorCognom"
+                  >
+                    Professor: {{ pi.professorNom || "" }}
+                    {{ pi.professorCognom || "" }}
                   </p>
                   <p class="pi-ia" v-if="pi.dades_ia">
-                    {{ pi.dades_ia.length > 150 ? pi.dades_ia.substring(0, 150) + '...' : pi.dades_ia }}
+                    {{
+                      pi.dades_ia.length > 150
+                        ? pi.dades_ia.substring(0, 150) + "..."
+                        : pi.dades_ia
+                    }}
                   </p>
                 </div>
               </div>
             </div>
             <div v-else class="empty-state">
-              <p>Aquest alumne encara no té plans individualitzats assignats.</p>
+              <p>
+                Aquest alumne encara no té plans individualitzats assignats.
+              </p>
             </div>
           </div>
         </div>
@@ -176,7 +204,8 @@ onMounted(() => {
   background-color: #f5f5f5;
 }
 
-.loading-state, .error-state {
+.loading-state,
+.error-state {
   text-align: center;
   padding: 60px 20px;
   max-width: 600px;
@@ -428,7 +457,7 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: 30px;
   }
-  
+
   .pdf-preview {
     height: 500px;
   }
