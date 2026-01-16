@@ -1,5 +1,4 @@
 <script setup>
-<<<<<<< HEAD:frontend/app/pages/index.vue
 // import functions de services
 import { getAllStudent, getByRalcStudent } from "@/services/apiStudent.js";
 
@@ -21,37 +20,7 @@ async function fetchStudentByRalc() {
   student.value = data;
   console.log("Student fetched by RALC:", data);
 }
-</script>
 
-<template>
-  <!-- Botones para probar las funciones -->
-  <button @click="fetchStudents()">
-    <span class="button-text">Get Alumnes</span>
-  </button>
-
-  <div>
-    <input
-      v-model="inputRalc"
-      type="text"
-      placeholder="Introdueix RALC + Enter"
-      @keypress.enter="fetchStudentByRalc"
-    />
-  </div>
-  <!-- OK-->
-
-  <!-- Contenido principal de la página -->
-
-  <div class="main-content">
-    <div class="container">
-      <section class="intro">
-        <h1>Benvingut/da al Gestor de Plans Individualitzats</h1>
-        <p class="subtitle">
-          Aquesta eina permet agilitzar la creació i gestió dels PIs mitjançant
-          intel·ligència artificial. Selecciona una de les opcions següents per
-          començar:
-        </p>
-      </section>
-=======
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -124,16 +93,42 @@ const handleLogin = async () => {
 </script>
 
 <template>
+  <!-- Botones para probar las funciones -->
+  <button @click="fetchStudents()">
+    <span class="button-text">Get Alumnes</span>
+  </button>
+
+  <div>
+    <input
+      v-model="inputRalc"
+      type="text"
+      placeholder="Introdueix RALC + Enter"
+      @keypress.enter="fetchStudentByRalc"
+    />
+  </div>
+  <!-- OK-->
+
+  <!-- Contenido principal de la página -->
+
+  <div class="main-content">
+    <div class="container">
+      <section class="intro">
+        <h1>Benvingut/da al Gestor de Plans Individualitzats</h1>
+        <p class="subtitle">
+          Aquesta eina permet agilitzar la creació i gestió dels PIs mitjançant
+          intel·ligència artificial. Selecciona una de les opcions següents per
+          començar:
+        </p>
+      </section>
+    </div>
+  </div>  
   <div class="glass-bg">
     <div class="login-card">
       <div class="card-header">
         <h1>PlaPI</h1>
-      </div>
->>>>>>> origin/dev:nuxt-project-piapp/app/pages/index.vue
-
+      </div>s
       <p class="subtitle">{{ t.subtitle }}</p>
 
-<<<<<<< HEAD:frontend/app/pages/index.vue
         <NuxtLink to="/search" class="card-gencat">
           <div class="text-card">
             <h3>Cercar PI d'alumne</h3>
@@ -148,7 +143,6 @@ const handleLogin = async () => {
           </div>
           <div class="arrow">→</div>
         </NuxtLink>
-=======
       <form @submit.prevent="handleLogin">
         <div class="input-wrap">
           <input 
@@ -170,7 +164,6 @@ const handleLogin = async () => {
 
       <div class="footer-links">
         <span>{{ t.footer }}</span>
->>>>>>> origin/dev:nuxt-project-piapp/app/pages/index.vue
       </div>
     </div>
   </div>
