@@ -1,0 +1,14 @@
+FROM node:20
+
+WORKDIR /app
+
+# Instala dependencias
+COPY package*.json ./
+
+# Copia el código
+COPY . .
+
+# Expone el puerto por defecto del backend
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]

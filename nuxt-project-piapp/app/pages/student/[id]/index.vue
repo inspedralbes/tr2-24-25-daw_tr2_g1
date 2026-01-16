@@ -1,231 +1,60 @@
 <script setup lang="ts">
-import type { TimelineItem } from '@nuxt/ui'
+interface ApiResponse {
+  success: boolean
+  data?: any[]
+  error?: string
+}
 
 const route = useRoute()
-const studentId = route.params.id
+const studentRalc = route.params.id
 
-// Estado de carga
-const isLoading = ref(false)
-const error = ref(null)
+// Estat de càrrega
+const isLoading = ref(true)
+const error = ref<string | null>(null)
 const student = ref(null)
-const pdfs = ref([])
 
-// DATOS DE EJEMPLO - Reemplazar con llamada a BD
-const datosEjemplo = {
-  '101': {
-    id: '101',
-    nombre: 'Ana',
-    apellidos: 'García',
-    nia: '101',
-    curso: '2º DAM',
-    centroEstudios: 'INS Pedralbes',
-    fechaNacimiento: '2005-03-15',
-    tutor: 'Sr. Pérez',
-    email: 'ana.garcia@example.com',
-    telefono: '612345678',
-    estado: 'Completo',
-    listadoPI: [
-      { 
-        id: 1, 
-        titulo: 'Temps extra en exàmens', 
-        descripcion: '30 minuts addicionals en totes les avaluacions',
-        fechaCreacion: '2024-09-01',
-        activo: true
-      },
-      { 
-        id: 2, 
-        titulo: 'Material adaptat', 
-        descripcion: 'Apunts en format digital i presentacions accessibles',
-        fechaCreacion: '2024-09-01',
-        activo: true
-      }
-    ],
-    observaciones: 'Alumna amb excel·lent actitud i participació a classe. Necessita seguiment personalitzat en matèries tècniques.'
-  },
-  '102': {
-    id: '102',
-    nombre: 'Carlos',
-    apellidos: 'Ruíz',
-    nia: '102',
-    curso: '1º DAW',
-    centroEstudios: 'IES Barcelona',
-    fechaNacimiento: '2006-07-22',
-    tutor: 'Sra. Martínez',
-    email: 'carlos.ruiz@example.com',
-    telefono: '623456789',
-    estado: 'Pendiente',
-    listadoPI: [
-      { 
-        id: 1, 
-        titulo: 'Suport en programació', 
-        descripcion: 'Sessions addicionals de reforç en desenvolupament web',
-        fechaCreacion: '2024-10-15',
-        activo: true
-      }
-    ],
-    observaciones: 'Alumne molt motivat però necessita més pràctica en els conceptes de backend.'
-  },
-  '103': {
-    id: '103',
-    nombre: 'Lucía',
-    apellidos: 'Méndez',
-    nia: '103',
-    curso: '2º DAM',
-    centroEstudios: 'INS Pedralbes',
-    fechaNacimiento: '2005-11-08',
-    tutor: 'Sr. López',
-    email: 'lucia.mendez@example.com',
-    telefono: '634567890',
-    estado: 'En Revisión',
-    listadoPI: [
-      { 
-        id: 1, 
-        titulo: 'Adaptació per mobilitat reduïda', 
-        descripcion: 'Accés prioritari a aules i laboratoris adaptats',
-        fechaCreacion: '2024-09-01',
-        activo: true
-      },
-      { 
-        id: 2, 
-        titulo: 'Material digital', 
-        descripcion: 'Tots els materials disponibles en format digital',
-        fechaCreacion: '2024-09-01',
-        activo: true
-      }
-    ],
-    observaciones: 'Alumna amb gran capacitat d\'organització i treball autònom. Excel·lent rendiment acadèmic.'
-  }
-}
-
-// PDFs de ejemplo por estudiante
-const pdfsEjemplo = {
-  '101': [
-    {
-      id: 1,
-      nombre: 'PI_Ana_Garcia_2024.pdf',
-      fechaSubida: '2024-09-01',
-      tipo: 'Plan Individualizado',
-      url: '/pdfs/ana_pi.pdf',
-      resumen: 'Aquest document conté el pla individualitzat per a l\'alumna amb adaptacions específiques per a les avaluacions i materials didàctics.'
-    },
-    {
-      id: 2,
-      nombre: 'Informe_Seguiment_Q1.pdf',
-      fechaSubida: '2024-11-15',
-      tipo: 'Seguimiento',
-      url: '/pdfs/ana_seguiment.pdf',
-      resumen: 'Informe de seguiment del primer trimestre amb avaluació del compliment dels objectius establerts al PI.'
-    }
-  ],
-  '102': [
-    {
-      id: 1,
-      nombre: 'PI_Carlos_Ruiz_2024.pdf',
-      fechaSubida: '2024-10-15',
-      tipo: 'Plan Individualizado',
-      url: '/pdfs/carlos_pi.pdf',
-      resumen: 'Pla individualitzat centrat en el suport addicional per a programació i desenvolupament web.'
-    }
-  ],
-  '103': [
-    {
-      id: 1,
-      nombre: 'PI_Lucia_Mendez_2024.pdf',
-      fechaSubida: '2024-09-01',
-      tipo: 'Plan Individualizado',
-      url: '/pdfs/lucia_pi.pdf',
-      resumen: 'Pla d\'adaptacions per mobilitat reduïda i accés a materials digitals.'
-    },
-    {
-      id: 2,
-      nombre: 'Avaluacio_Trimestral.pdf',
-      fechaSubida: '2024-12-10',
-      tipo: 'Evaluación',
-      url: '/pdfs/lucia_avaluacio.pdf',
-      resumen: 'Avaluació trimestral amb notes excel·lents i observacions positives sobre l\'evolució de l\'alumna.'
-    },
-    {
-      id: 3,
-      nombre: 'Seguiment_Mensual_Nov.pdf',
-      fechaSubida: '2024-11-30',
-      tipo: 'Seguimiento',
-      url: '/pdfs/lucia_seguiment_nov.pdf',
-      resumen: 'Seguiment mensual del novembre amb observacions sobre l\'adaptació a les noves metodologies.'
-    }
-  ]
-}
-
-// Función para descargar PDF
-const descargarPdf = (pdf) => {
-  // TODO: Implementar descarga real
-  window.open(pdf.url, '_blank')
-}
-
-// Timeline items para PDFs
-const timelineItems = computed<TimelineItem[]>(() => {
-  if (!pdfs.value || pdfs.value.length === 0) return []
-  
-  return pdfs.value.map(pdf => ({
-    date: pdf.fechaSubida,
-    title: pdf.nombre,
-    description: pdf.tipo,
-    icon: 'i-lucide-file-text',
-    to: pdf.url
-  }))
-})
-
-// Cargar datos del estudiante
-const cargarDatos = async () => {
-  isLoading.value = true
-  error.value = null
-
+// Carregar dades de l'alumne des de l'API - igual que search.vue
+const loadStudent = async () => {
   try {
-    // SIMULACIÓN DE CONSULTA A BD
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    // TODO: Reemplazar con consulta real a BD
-    // Ejemplo con Supabase:
-    // const { data: studentData } = await supabase
-    //   .from('students')
-    //   .select('*, listadoPI(*)')
-    //   .eq('id', studentId)
-    //   .single()
-    // student.value = studentData
-    //
-    // const { data: pdfsData } = await supabase
-    //   .from('pdfs')
-    //   .select('*')
-    //   .eq('studentId', studentId)
-    //   .order('fechaSubida', { ascending: false })
-    // pdfs.value = pdfsData
-
-    // Obtener datos según el ID del estudiante
-    const studentData = datosEjemplo[studentId as string]
-    const studentPdfs = pdfsEjemplo[studentId as string] || []
+    isLoading.value = true
+    error.value = null
     
-    if (!studentData) {
-      throw new Error('Estudiant no trobat')
+    // Cridar a la mateixa API que search.vue però filtrant per aquest RALC
+    const response = await $fetch<ApiResponse>('http://localhost:3000/api/alumnes')
+    
+    console.log('Response completa:', response)
+    
+    if (response?.success && Array.isArray(response.data)) {
+      // Buscar l'alumne amb aquest RALC
+      const foundStudent = response.data.find((s: any) => s.ralc === studentRalc)
+      
+      if (foundStudent) {
+        student.value = foundStudent
+        console.log('Alumne trobat:', foundStudent)
+      } else {
+        error.value = 'No s\'ha trobat l\'alumne amb aquest RALC'
+      }
+    } else {
+      error.value = 'Error al carregar les dades'
+      console.error('Format de resposta incorrecte:', response)
     }
-
-    student.value = studentData
-    pdfs.value = studentPdfs
-  } catch (err) {
-    error.value = 'Error al cargar los datos del estudiante'
-    console.error(err)
+  } catch (e) {
+    console.error('Error carregant alumne:', e)
+    error.value = 'Error al carregar les dades de l\'alumne'
   } finally {
     isLoading.value = false
   }
 }
 
-// Cargar datos al montar
+// Carregar dades al muntar el component
 onMounted(() => {
-  cargarDatos()
+  loadStudent()
 })
 </script>
 
 <template>
-  <div class="student-detail">
-    <!-- Navegación -->
+  <div class="student-detail-page page-background">
+    <!-- Navegació -->
     <div class="nav-back">
       <NuxtLink to="/search" class="btn-back">
         ← Tornar a la cerca
@@ -233,345 +62,303 @@ onMounted(() => {
     </div>
 
     <!-- Loading -->
-    <div v-if="isLoading" class="loading">
-      <p>Carregant dades...</p>
+    <div v-if="isLoading" class="loading-state white-card">
+      <p>Carregant dades de l'alumne...</p>
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="error-box">
+    <div v-else-if="error" class="error-state white-card">
       <p>{{ error }}</p>
-      <button @click="cargarDatos" class="btn-retry">Reintentar</button>
+      <button @click="loadStudent" class="btn-retry">Tornar a intentar</button>
     </div>
 
-    <!-- Datos del estudiante -->
-    <div v-else-if="student" class="content">
-      
-      <!-- Cabecera -->
-      <div class="header">
-        <div>
-          <h1>{{ student.nombre }} {{ student.apellidos }}</h1>
-          <p class="subtitle">NIA: {{ student.nia }} | {{ student.curso }}</p>
+    <!-- Dades de l'alumne -->
+    <div v-else-if="student" class="detail-content">
+      <div class="detail-grid">
+        <!-- ESQUERRA: Dades de l'alumne -->
+        <div class="detail-left">
+          <div class="student-card white-card">
+            <div class="card-header">
+              <div class="gencat-logo">gencat.cat</div>
+              <h1>{{ student.nom }} {{ student.cognoms }}</h1>
+            </div>
+
+            <div class="info-list">
+              <div class="info-item">
+                <span class="info-label">RALC:</span>
+                <span class="info-value">{{ student.ralc || 'No disponible' }}</span>
+              </div>
+
+              <div class="info-item">
+                <span class="info-label">DNI / TIE:</span>
+                <span class="info-value">{{ student.dni || '-' }}</span>
+              </div>
+
+              <div class="info-item">
+                <span class="info-label">Data de Naixement:</span>
+                <span class="info-value">
+                  {{ student.dataNaixement ? new Date(student.dataNaixement).toLocaleDateString('ca-ES') : '-' }}
+                </span>
+              </div>
+
+              <div class="info-item">
+                <span class="info-label">Curs:</span>
+                <span class="info-value">{{ student.curs || '-' }}</span>
+              </div>
+
+              <div class="info-item">
+                <span class="info-label">Centre de Procedència:</span>
+                <span class="info-value">{{ student.centreProcedencia || '-' }}</span>
+              </div>
+            </div>
+
+            <!-- Plans Individualitzats -->
+            <div v-if="student.pis && student.pis.length > 0" class="pis-section">
+              <h2 class="section-title">Plans Individualitzats</h2>
+              <div class="pis-list">
+                <div v-for="pi in student.pis" :key="pi.id" class="pi-card">
+                  <div class="pi-header">
+                    <span class="pi-estat" :class="pi.estat ? 'estat-' + pi.estat.toLowerCase() : ''">
+                      {{ pi.estat || 'Sense estat' }}
+                    </span>
+                    <span class="pi-date" v-if="pi.data_creacio">
+                      {{ new Date(pi.data_creacio).toLocaleDateString('ca-ES') }}
+                    </span>
+                  </div>
+                  <p class="pi-professor" v-if="pi.professorNom || pi.professorCognom">
+                    Professor: {{ pi.professorNom || '' }} {{ pi.professorCognom || '' }}
+                  </p>
+                  <p class="pi-ia" v-if="pi.dades_ia">
+                    {{ pi.dades_ia.length > 150 ? pi.dades_ia.substring(0, 150) + '...' : pi.dades_ia }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div v-else class="empty-state">
+              <p>Aquest alumne encara no té plans individualitzats assignats</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- DRETA: Previsualització PDF (placeholder) -->
+        <div class="detail-right">
+          <div class="pdf-preview">
+            <p>Previsualització del PDF</p>
+            <small>Aquesta funcionalitat s'implementarà properament</small>
+          </div>
         </div>
       </div>
-
-      <!-- Información General -->
-      <section class="info-section">
-        <h2>Informació General</h2>
-        <div class="info-grid">
-          <div class="info-item">
-            <strong>Centre d'Estudis:</strong> {{ student.centroEstudios }}
-          </div>
-          <div class="info-item">
-            <strong>Data de Naixement:</strong> {{ student.fechaNacimiento }}
-          </div>
-          <div class="info-item">
-            <strong>Tutor/a:</strong> {{ student.tutor }}
-          </div>
-          <div class="info-item">
-            <strong>Email:</strong> {{ student.email }}
-          </div>
-          <div class="info-item">
-            <strong>Telèfon:</strong> {{ student.telefono }}
-          </div>
-        </div>
-      </section>
-
-      <!-- Plans Individualitzats -->
-      <section class="info-section">
-        <h2>Plans Individualitzats ({{ student.listadoPI?.length || 0 }})</h2>
-        <div v-if="student.listadoPI && student.listadoPI.length > 0" class="pi-list">
-          <div v-for="pi in student.listadoPI" :key="pi.id" class="pi-card">
-            <h3>{{ pi.titulo }}</h3>
-            <p>{{ pi.descripcion }}</p>
-            <div class="pi-meta">
-              <span>Creat el: {{ pi.fechaCreacion }}</span>
-              <span :class="['badge', pi.activo ? 'active' : 'inactive']">
-                {{ pi.activo ? 'Actiu' : 'Inactiu' }}
-              </span>
-            </div>
-          </div>
-        </div>
-        <p v-else class="empty-message">No hi ha plans individualitzats assignats.</p>
-      </section>
-
-      <!-- Observaciones -->
-      <section v-if="student.observaciones" class="info-section">
-        <h2>Observacions</h2>
-        <p class="observations">{{ student.observaciones }}</p>
-      </section>
-
-      <!-- PDFs / Documentos -->
-      <section class="info-section">
-        <h2>Documents i PDFs ({{ pdfs?.length || 0 }})</h2>
-        <div v-if="pdfs && pdfs.length > 0">
-          <div class="pdf-list">
-            <div v-for="pdf in pdfs" :key="pdf.id" class="pdf-card">
-              <div class="pdf-header">
-                <div>
-                  <h3>{{ pdf.nombre }}</h3>
-                  <p class="pdf-meta">{{ pdf.tipo }} • {{ pdf.fechaSubida }}</p>
-                </div>
-                <button @click="descargarPdf(pdf)" class="btn-download">
-                  Descarregar
-                </button>
-              </div>
-              <div v-if="pdf.resumen" class="pdf-summary">
-                <strong>Resum:</strong>
-                <p>{{ pdf.resumen }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <p v-else class="empty-message">No hi ha documents disponibles.</p>
-      </section>
-
     </div>
-
   </div>
 </template>
 
 <style scoped>
-.student-detail {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.nav-back {
-  margin-bottom: 20px;
-}
-
-.btn-back {
-  display: inline-block;
-  padding: 8px 16px;
-  background-color: #f3f4f6;
-  color: #374151;
-  text-decoration: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.btn-back:hover {
-  background-color: #e5e7eb;
-}
-
-.loading {
-  text-align: center;
+.student-detail-page {
   padding: 40px;
-  color: #6b7280;
 }
 
-.error-box {
-  background-color: #fee2e2;
-  border: 1px solid #fca5a5;
-  padding: 20px;
-  border-radius: 8px;
-  color: #991b1b;
+.loading-state, .error-state {
+  text-align: center;
+  padding: 60px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.loading-state p {
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  color: #666;
+  margin: 0;
+}
+
+.error-state p {
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  color: #c8102e;
+  margin: 0 0 20px 0;
 }
 
 .btn-retry {
-  margin-top: 10px;
-  padding: 8px 16px;
-  background-color: #ef4444;
+  padding: 10px 24px;
+  background-color: #c8102e;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.content {
+.btn-retry:hover {
+  background-color: #a00d25;
+}
+
+.detail-content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.detail-left {
   display: flex;
   flex-direction: column;
-  gap: 24px;
 }
 
-.header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.student-card {
+  padding: 40px;
 }
 
-.header h1 {
-  margin: 0;
-  font-size: 32px;
-  font-weight: 700;
+.card-header {
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 20px;
 }
 
-.subtitle {
-  margin: 8px 0 0 0;
-  font-size: 16px;
-  opacity: 0.9;
-}
-
-.info-section {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.info-section h2 {
-  margin: 0 0 20px 0;
-  font-size: 20px;
+.card-header h1 {
+  font-family: "Open Sans", sans-serif;
   font-weight: 600;
-  color: #1f2937;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 10px;
+  font-size: 28px;
+  color: #333;
+  margin: 0;
+  line-height: 1.3;
 }
 
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
+.info-value {
+  text-align: right;
 }
 
-.info-item {
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #374151;
+.pis-section {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 2px solid #e0e0e0;
 }
 
-.info-item strong {
-  color: #1f2937;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.pi-list {
+.pis-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
 .pi-card {
-  padding: 16px;
+  background-color: #f9fafb;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fafafa;
+  border-radius: 6px;
+  padding: 16px;
 }
 
-.pi-card h3 {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.pi-card p {
-  margin: 0 0 12px 0;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.pi-meta {
+.pi-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
-  color: #9ca3af;
+  margin-bottom: 10px;
 }
 
-.badge {
+.pi-estat {
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 12px;
-  font-weight: 500;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  background-color: #e5e7eb;
+  color: #555;
 }
 
-.badge.active {
+.pi-estat.estat-actiu {
   background-color: #d1fae5;
   color: #065f46;
 }
 
-.badge.inactive {
-  background-color: #fee2e2;
-  color: #991b1b;
+.pi-estat.estat-pendent {
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
-.observations {
-  color: #374151;
-  line-height: 1.6;
-  font-size: 14px;
-  margin: 0;
-}
-
-.pdf-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.pdf-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
-  background: #fafafa;
-}
-
-.pdf-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.pdf-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.pdf-meta {
-  margin: 4px 0 0 0;
+.pi-date {
   font-size: 13px;
   color: #6b7280;
+  font-family: "Open Sans", sans-serif;
 }
 
-.btn-download {
-  padding: 8px 16px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
+.pi-professor {
   font-size: 14px;
+  color: #374151;
+  font-family: "Open Sans", sans-serif;
+  margin: 8px 0;
   font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.btn-download:hover {
-  background-color: #2563eb;
-}
-
-.pdf-summary {
-  padding: 12px;
-  background: white;
-  border-radius: 6px;
-  border-left: 3px solid #3b82f6;
-}
-
-.pdf-summary strong {
-  color: #1f2937;
+.pi-ia {
   font-size: 14px;
-}
-
-.pdf-summary p {
-  margin: 8px 0 0 0;
-  color: #4b5563;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.empty-message {
   color: #6b7280;
-  font-style: italic;
+  font-family: "Open Sans", sans-serif;
+  line-height: 1.5;
+  margin: 8px 0 0 0;
+}
+
+.empty-state {
+  padding: 30px 20px;
+  text-align: center;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  margin-top: 30px;
+}
+
+.empty-state p {
+  font-family: "Open Sans", sans-serif;
+  font-size: 15px;
+  color: #6b7280;
   margin: 0;
+}
+
+.detail-right {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.pdf-preview {
+  width: 100%;
+  height: 700px;
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 40px;
+}
+
+.pdf-preview p {
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.pdf-preview small {
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+@media (max-width: 1024px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  
+  .pdf-preview {
+    height: 500px;
+  }
 }
 </style>
