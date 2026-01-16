@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 
-import routerLogic from "./server/router/routerLogic.js";
+import routerLogic from "./router/routerLogic.js";
 import { pool } from "./db.js";
 
 const app = express();

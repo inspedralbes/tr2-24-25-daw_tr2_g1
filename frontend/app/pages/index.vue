@@ -1,88 +1,65 @@
 <script setup>
-// import functions de services
-import { getAllStudent, getByRalcStudent } from "@/services/apiStudent.js";
-
-// definir objecte services
-const students = ref([]);
-const student = ref(null);
-const inputRalc = ref("");
-
-async function fetchStudents() {
-  const data = await getAllStudent();
-  students.value = data;
-  console.log("Students fetched:", students.value);
-}
-
-async function fetchStudentByRalc() {
-  console.log("Buscando RALC:", inputRalc.value);
-
-  const data = await getByRalcStudent(inputRalc.value);
-  student.value = data;
-  console.log("Student fetched by RALC:", data);
-}
-
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 
 // 1. Importamos el idioma global
 const idioma = useIdioma();
 const router = useRouter();
 
-const email = ref('');
-const errorMessage = ref('');
+const email = ref("");
+const errorMessage = ref("");
 const loading = ref(false);
 
 // 2. DICCIONARIO DE TRADUCCIONES LOGIN
 const t = computed(() => {
   const textos = {
     ca: {
-      subtitle: 'Accés per a Centres Educatius',
-      label_email: 'Correu electrònic (xtec)',
-      btn_entrar: 'Entrar',
-      btn_loading: 'Entrant...',
-      footer: '© Generalitat de Catalunya',
-      error_connexio: 'Error de connexió amb el servidor'
+      subtitle: "Accés per a Centres Educatius",
+      label_email: "Correu electrònic (xtec)",
+      btn_entrar: "Entrar",
+      btn_loading: "Entrant...",
+      footer: "© Generalitat de Catalunya",
+      error_connexio: "Error de connexió amb el servidor",
     },
     es: {
-      subtitle: 'Acceso para Centros Educativos',
-      label_email: 'Correo electrónico (xtec)',
-      btn_entrar: 'Entrar',
-      btn_loading: 'Entrando...',
-      footer: '© Generalitat de Catalunya',
-      error_connexio: 'Error de conexión con el servidor'
+      subtitle: "Acceso para Centros Educativos",
+      label_email: "Correo electrónico (xtec)",
+      btn_entrar: "Entrar",
+      btn_loading: "Entrando...",
+      footer: "© Generalitat de Catalunya",
+      error_connexio: "Error de conexión con el servidor",
     },
     en: {
-      subtitle: 'Access for Educational Centers',
-      label_email: 'Email address (xtec)',
-      btn_entrar: 'Log In',
-      btn_loading: 'Logging in...',
-      footer: '© Generalitat de Catalunya',
-      error_connexio: 'Connection error with server'
-    }
+      subtitle: "Access for Educational Centers",
+      label_email: "Email address (xtec)",
+      btn_entrar: "Log In",
+      btn_loading: "Logging in...",
+      footer: "© Generalitat de Catalunya",
+      error_connexio: "Connection error with server",
+    },
   };
   return textos[idioma.value];
 });
 
 const handleLogin = async () => {
   loading.value = true;
-  errorMessage.value = '';
+  errorMessage.value = "";
 
   try {
-    const response = await fetch('http://localhost:3000/api/login-centre', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("http://localhost:3000/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.value }),
     });
 
     const data = await response.json();
 
     if (response.ok) {
-      localStorage.setItem('user_centre', JSON.stringify(data.centre));
-      router.push('/home');
+      localStorage.setItem("user_centre", JSON.stringify(data.centre));
+      router.push("/home");
     } else {
       // Si el backend devuelve un error, lo mostramos tal cual
       // O podrías traducirlo si el backend devolviera códigos de error
-      errorMessage.value = data.error || 'Error al iniciar sessió';
+      errorMessage.value = data.error || "Error al iniciar sessió";
     }
   } catch (error) {
     errorMessage.value = t.value.error_connexio;
@@ -93,62 +70,22 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <!-- Botones para probar las funciones -->
-  <button @click="fetchStudents()">
-    <span class="button-text">Get Alumnes</span>
-  </button>
+  <!-- Contenido principal de la página login -->
 
-  <div>
-    <input
-      v-model="inputRalc"
-      type="text"
-      placeholder="Introdueix RALC + Enter"
-      @keypress.enter="fetchStudentByRalc"
-    />
-  </div>
-  <!-- OK-->
-
-  <!-- Contenido principal de la página -->
-
-  <div class="main-content">
-    <div class="container">
-      <section class="intro">
-        <h1>Benvingut/da al Gestor de Plans Individualitzats</h1>
-        <p class="subtitle">
-          Aquesta eina permet agilitzar la creació i gestió dels PIs mitjançant
-          intel·ligència artificial. Selecciona una de les opcions següents per
-          començar:
-        </p>
-      </section>
-    </div>
-  </div>  
   <div class="glass-bg">
     <div class="login-card">
       <div class="card-header">
         <h1>PlaPI</h1>
-      </div>s
+      </div>
+
       <p class="subtitle">{{ t.subtitle }}</p>
 
-        <NuxtLink to="/search" class="card-gencat">
-          <div class="text-card">
-            <h3>Cercar PI d'alumne</h3>
-            <p>Cerca i accedeix a un PI ja creat.</p>
-          </div>
-          <div class="arrow">→</div>
-        </NuxtLink>
-
-        <NuxtLink to="/pi/crear-pi-def" class="card-gencat">
-          <div class="text-card">
-            <h3>Crear pi def</h3>
-          </div>
-          <div class="arrow">→</div>
-        </NuxtLink>
       <form @submit.prevent="handleLogin">
         <div class="input-wrap">
-          <input 
-            type="email" 
-            v-model="email" 
-            placeholder=" " 
+          <input
+            type="email"
+            v-model="email"
+            placeholder=" "
             required
             id="email-input"
           />
@@ -173,20 +110,20 @@ const handleLogin = async () => {
 .glass-bg {
   min-height: calc(100vh - 120px);
   display: flex;
-  align-items: flex-start; 
+  align-items: flex-start;
   justify-content: center;
-  padding-top: 8vh; 
+  padding-top: 8vh;
   background-color: #e8ecf1;
   background-image: radial-gradient(#c5cdd8 1px, transparent 1px);
   background-size: 20px 20px;
-  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
 .login-card {
   background: white;
   padding: 50px 40px;
   border-radius: 16px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
   border: 1px solid #dce1e6;
   width: 100%;
   max-width: 380px;
@@ -197,7 +134,7 @@ const handleLogin = async () => {
 
 h1 {
   margin: 0 0 10px 0; /* Un poco de margen abajo */
-  color: #D9001D;
+  color: #d9001d;
   font-weight: 800;
   letter-spacing: -1px;
   font-size: 2.5rem; /* He hecho el título un pelín más grande al quitar el logo */
@@ -224,13 +161,13 @@ h1 {
   font-size: 1rem;
   background: #f9f9f9;
   outline: none;
-  box-sizing: border-box; 
+  box-sizing: border-box;
   transition: all 0.2s;
 }
 
 .input-wrap input:focus {
   background: white;
-  border-color: #D9001D;
+  border-color: #d9001d;
   box-shadow: 0 0 0 4px rgba(217, 0, 29, 0.1);
 }
 
@@ -250,14 +187,14 @@ h1 {
   font-size: 0.75rem;
   background: white;
   padding: 0 5px;
-  color: #D9001D;
+  color: #d9001d;
   font-weight: bold;
 }
 
 .btn-primary {
   width: 100%;
   padding: 15px;
-  background: #D9001D;
+  background: #d9001d;
   color: white;
   border: none;
   border-radius: 8px;
@@ -273,7 +210,7 @@ h1 {
 }
 
 .error-msg {
-  color: #D9001D;
+  color: #d9001d;
   font-size: 0.85rem;
   margin-bottom: 15px;
   background-color: #fff5f5;
