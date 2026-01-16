@@ -1,10 +1,16 @@
 <script setup lang="ts">
+interface ApiResponse {
+  success: boolean
+  data?: any[]
+  error?: string
+}
+
 const route = useRoute()
 const studentRalc = route.params.id
 
 // Estat de càrrega
 const isLoading = ref(true)
-const error = ref(null)
+const error = ref<string | null>(null)
 const student = ref(null)
 
 // Carregar dades de l'alumne des de l'API - igual que search.vue
@@ -14,7 +20,7 @@ const loadStudent = async () => {
     error.value = null
     
     // Cridar a la mateixa API que search.vue però filtrant per aquest RALC
-    const response = await $fetch('http://localhost:3000/api/alumnes')
+    const response = await $fetch<ApiResponse>('http://localhost:3000/api/alumnes')
     
     console.log('Response completa:', response)
     
@@ -129,7 +135,7 @@ onMounted(() => {
               </div>
             </div>
             <div v-else class="empty-state">
-              <p>Aquest alumne encara no té plans individualitzats assignats.</p>
+              <p>Aquest alumne encara no té plans individualitzats assignats</p>
             </div>
           </div>
         </div>

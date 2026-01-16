@@ -1,7 +1,13 @@
 import { ref } from 'vue'
 
+interface ApiResponse {
+  success: boolean
+  data?: any[]
+  error?: string
+}
+
 export const useTable = () => {
-  const students = ref([])
+  const students = ref<any[]>([])
 
   // Columnas de la tabla
   const columns = [
@@ -39,10 +45,10 @@ export const useTable = () => {
     error.value = null
     
     try {
-      const response = await $fetch('http://localhost:3000/api/alumnes')
+      const response = await $fetch<ApiResponse>('http://localhost:3000/api/alumnes')
       
       if (response.success) {
-        students.value = response.data
+        students.value = response.data || []
       } else {
         throw new Error(response.error || 'Error carregant alumnes')
       }
