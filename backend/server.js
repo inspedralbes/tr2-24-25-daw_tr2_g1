@@ -3,7 +3,7 @@ import cors from "cors";
 import "dotenv/config";
 
 import routerLogic from "./router/routerLogic.js";
-import { pool } from "./db.js";
+import { pool } from "./api/db.js";
 
 const app = express();
 

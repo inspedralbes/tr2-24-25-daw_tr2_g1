@@ -1,7 +1,7 @@
 import { Router } from "express";
 
-import { pool } from "../db.js";
-import { loginCenter } from "../controllers/login/loginCenter.js";
+import { pool } from "../api/db.js";
+import { loginCenter } from "../api/login/loginCenter.js";
 const router = Router();
 
 // Funciones que luego les asignamos una ruta.
