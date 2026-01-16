@@ -6,8 +6,8 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: true },
   devServer: {
-    host: "0.0.0.0",
-    port: 4000,
+    host: process.env.URL_FRONTEND || "http://localhost",
+    port: Number(process.env.PORT_FRONTEND) || 5173,
   },
 
   modules: ["@nuxt/ui"],

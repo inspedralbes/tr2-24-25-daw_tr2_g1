@@ -1,6 +1,45 @@
-<script setup></script>
+<script setup>
+// import functions de services
+import { getAllStudent, getByRalcStudent } from "@/services/apiStudent.js";
+
+// definir objecte services
+const students = ref([]);
+const student = ref(null);
+const inputRalc = ref("");
+
+async function fetchStudents() {
+  const data = await getAllStudent();
+  students.value = data;
+  console.log("Students fetched:", students.value);
+}
+
+async function fetchStudentByRalc() {
+  console.log("Buscando RALC:", inputRalc.value);
+
+  const data = await getByRalcStudent(inputRalc.value);
+  student.value = data;
+  console.log("Student fetched by RALC:", data);
+}
+</script>
 
 <template>
+  <!-- Botones para probar las funciones -->
+  <button @click="fetchStudents()">
+    <span class="button-text">Get Alumnes</span>
+  </button>
+
+  <div>
+    <input
+      v-model="inputRalc"
+      type="text"
+      placeholder="Introdueix RALC + Enter"
+      @keypress.enter="fetchStudentByRalc"
+    />
+  </div>
+  <!-- OK-->
+
+  <!-- Contenido principal de la página -->
+
   <div class="main-content">
     <div class="container">
       <section class="intro">

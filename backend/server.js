@@ -1,8 +1,27 @@
-const express = require("express");
-const cors = require("cors");
-const app = express();
-const port = 3000;
+import express from "express";
+import cors from "cors";
+import "dotenv/config";
 
-app.listen(port, () => {
-  console.log(`Servidor backend escuchando en el puerto ${port}`);
+import routerLogic from "./server/router/routerLogic.js";
+import { pool } from "./db.js";
+
+const app = express();
+
+const PORT = process.env.PORT_BACKEND || 3000;
+const URL = process.env.URL_BACKEND || "http://localhost";
+
+app.use(cors());
+app.use(express.json());
+
+// Routers
+
+app.get("/", (req, res) => {
+  res.send("API funcionando correctamente");
+});
+
+app.use("/api", routerLogic);
+
+// Servidor arrancado
+app.listen(PORT, () => {
+  console.log(`Servidor backend escuchando en ${URL}:${PORT}`);
 });
