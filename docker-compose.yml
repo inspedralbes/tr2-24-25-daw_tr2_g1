@@ -47,13 +47,13 @@ services:
       # Configuración de desarrollo
       NODE_ENV: development
       # El host de la DB es el nombre del servicio: 'mysql'
-      DB_HOST: mysql
+      DB_HOST: mysql 
       # Otras variables que necesite tu backend
       DB_USER: user_dev
       DB_PASSWORD: password_dev
     ports:
-      # Puerto del backend
-      - "3000:3000"
+      # Puerto del backend (host:container) -- cambiado a 3001 para evitar conflictos
+      - "3001:3000"
     volumes:
       # Monta el código fuente de 'back' para hot-reloading (nodemon)
       - ./back:/usr/src/app
@@ -79,6 +79,7 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_ROOT_HOST: '%'
       MYSQL_DATABASE: db_plapi_dev
       MYSQL_USER: user_dev
       MYSQL_PASSWORD: password_dev
@@ -87,17 +88,7 @@ services:
       - plapi-mysql-data:/var/lib/mysql
       - ./back/db:/docker-entrypoint-initdb.d
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u",
-          "root",
-          "-p$$MYSQL_ROOT_PASSWORD",
-        ]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -proot_password"]
       interval: 10s
       timeout: 5s
       retries: 5
