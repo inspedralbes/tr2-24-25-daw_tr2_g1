@@ -55,8 +55,8 @@ services:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
-      # Volumen persistente para producción
       - plapi-mysql-data-prod:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d
     healthcheck:
       test: "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD"
       interval: 10s
