@@ -1,8 +1,4 @@
 <script setup>
-import { ref, defineProps, defineEmits } from "vue";
-// Asumo que tienes este composable basado en tu borrador anterior
-import { useGemini } from "@/composables/useGemini";
-// Importamos PDF.js dinámicamente
 import * as pdfjsLib from "pdfjs-dist";
 
 // -- PROPS & EMITS --
@@ -13,20 +9,16 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["analysis-complete", "error"]);
-
 // -- STATE --
 const pdfFile = ref(null);
 const isProcessing = ref(false);
 const errorMsg = ref("");
 const statusMessage = ref("");
-
-// Composable de IA
 const { analyzePdfContent, aiResponse, error: aiError } = useGemini();
 
-// -- WORKER SETUP (Necesario para Vite/Vue 3) --
+// -- WORKER SETUP --
 const getPdfWorker = async () => {
-  if (import.meta.env.SSR) return null; // Evitar en servidor
+  if (import.meta.env.SSR) return null;
   const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
   return worker.default;
 };
@@ -44,10 +36,7 @@ const extractTextFromPdf = async (file) => {
     const pdf = await loadingTask.promise;
 
     let fullText = "";
-    const totalPages = pdf.numPages;
-
-    // Leemos página a página
-    for (let i = 1; i <= totalPages; i++) {
+    for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
       const pageText = textContent.items
@@ -65,79 +54,73 @@ const extractTextFromPdf = async (file) => {
   }
 };
 
-// -- HANDLERS --
-const handleFileChange = async (e) => {
+// -- HANDLER (THIS WAS MISSING) --
+const handleFileChange = (e) => {
   const file = e.target.files[0];
-  if (!file) return;
-
-  // Reset
-  pdfFile.value = file;
-  errorMsg.value = "";
-  isProcessing.value = false;
+  if (file) {
+    pdfFile.value = file;
+    errorMsg.value = "";
+  }
 };
 
-const processFile = async () => {
-  if (!pdfFile.value) return;
+// -- EXPOSED FUNCTION --
+async function triggerAnalysis(studentNameForContext) {
+  if (!pdfFile.value) {
+    // Alert user visually
+    alert("Atenció: No has seleccionat cap fitxer PDF per analitzar.");
+    errorMsg.value = "Si us plau, selecciona un arxiu PDF abans de continuar.";
+    return null;
+  }
 
   isProcessing.value = true;
-  statusMessage.value = "Extraient text del document...";
+  statusMessage.value = "Llegint document...";
+  errorMsg.value = "";
 
   try {
-    // 1. Extraer Texto
     const text = await extractTextFromPdf(pdfFile.value);
 
     if (!text || text.trim().length < 10) {
-      throw new Error(
-        "El PDF sembla buit o és una imatge sense text seleccionable.",
-      );
+      throw new Error("El PDF sembla buit.");
     }
 
-    // 2. Analizar con IA
-    statusMessage.value = "Generant proposta amb Intel·ligència Artificial...";
+    statusMessage.value = `Analitzant dades per a: ${studentNameForContext}...`;
 
-    // Llamamos al composable pasando el texto y el nombre del alumno (prop)
-    await analyzePdfContent(text, props.studentName);
+    await analyzePdfContent(text, studentNameForContext);
 
-    if (aiError.value) {
-      throw new Error(aiError.value);
-    }
+    if (aiError.value) throw new Error(aiError.value);
 
-    // 3. Emitir resultados al padre
-    if (aiResponse.value) {
-      statusMessage.value = "Anàlisi completada!";
-      emit("analysis-complete", aiResponse.value);
-    } else {
-      throw new Error("La IA no ha retornat resultats vàlids.");
-    }
+    statusMessage.value = "Anàlisi completada.";
+    return aiResponse.value;
   } catch (err) {
     console.error(err);
-    errorMsg.value = err.message || "Error desconegut processant l'arxiu.";
-    emit("error", errorMsg.value);
+    errorMsg.value = err.message;
+    return null;
   } finally {
     isProcessing.value = false;
   }
-};
+}
+
+defineExpose({
+  triggerAnalysis,
+});
 </script>
 
 <template>
   <div class="file-upload-container">
     <h3>Informes Previs</h3>
-    <p class="helper-text">
-      Puja l'informe psicopedagògic o PI anterior (PDF). El sistema analitzarà
-      el contingut per omplir automàticament el pla.
-    </p>
 
     <div
       class="upload-wrapper"
       :class="{ 'has-file': pdfFile, 'is-loading': isProcessing }"
     >
       <div class="icon-area">
+        <div v-if="isProcessing" class="spinner"></div>
         <svg
-          v-if="!isProcessing"
+          v-else
           class="upload-icon"
           fill="none"
-          stroke="currentColor"
           viewBox="0 0 24 24"
+          stroke="currentColor"
         >
           <path
             stroke-linecap="round"
@@ -146,24 +129,16 @@ const processFile = async () => {
             d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
           ></path>
         </svg>
-        <div v-else class="spinner"></div>
       </div>
 
       <div class="content-area">
-        <div v-if="isProcessing">
-          <p class="status-text">{{ statusMessage }}</p>
-        </div>
+        <p v-if="isProcessing" class="status-text">{{ statusMessage }}</p>
 
         <div v-else-if="pdfFile">
           <p class="file-name">{{ pdfFile.name }}</p>
-          <div class="actions">
-            <button @click="processFile" class="btn-primary-small">
-              Analitzar Document
-            </button>
-            <button @click="pdfFile = null" class="btn-text">
-              Canviar arxiu
-            </button>
-          </div>
+          <button @click="pdfFile = null" class="btn-text">
+            Canviar arxiu
+          </button>
         </div>
 
         <div v-else>
@@ -181,9 +156,7 @@ const processFile = async () => {
       </div>
     </div>
 
-    <div v-if="errorMsg" class="error-box">
-      {{ errorMsg }}
-    </div>
+    <div v-if="errorMsg" class="error-box">{{ errorMsg }}</div>
   </div>
 </template>
 

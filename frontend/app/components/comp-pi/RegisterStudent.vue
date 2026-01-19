@@ -4,8 +4,6 @@ import { getByRalcStudent, createStudent } from "../../services/apiStudent.js";
 const inputRalc = ref("");
 const blockedInput = ref(true);
 const dniError = ref(false);
-
-// Datos del formulario
 const formData = ref({
   name: "",
   surname: "",
@@ -36,33 +34,7 @@ async function fetchStudentByRalc() {
   }
 }
 
-// Función para guardar el nuevo estudiante.
-async function saveNewStudent() {
-  // Validación básica
-  if (!formData.value.name || !inputRalc.value) {
-    alert("Faltan datos obligatorios (RALC y Nombre)");
-    return;
-  }
-
-  // Preparamos el paquete de datos uniendo el RALC con el resto
-  const paqueteAEnviar = {
-    ralc: inputRalc.value, // El RALC viene del input de arriba
-    ...formData.value, // El resto viene del formulario
-  };
-
-  console.log("Enviando:", paqueteAEnviar);
-
-  const respuesta = await createStudent(paqueteAEnviar);
-
-  if (respuesta && respuesta.success) {
-    alert("¡Alumno creado correctamente!");
-    // Opcional: Redirigir a la ficha del alumno recién creado
-    await navigateTo(`/student/${inputRalc.value}`);
-  }
-}
-
 // Función para validar el DNI
-
 function isValidDNIFormat(dni) {
   if (!dni) return false;
 
@@ -84,6 +56,59 @@ function handleDniInput() {
       formData.value.dni = formData.value.dni.toUpperCase();
   }
 }
+
+// Función para enviar datos al padre.
+
+async function submitStudentForm() {
+  if (!inputRalc.value) {
+    alert("Has d'introduir un RALC vàlid.");
+    return { success: false };
+  }
+  
+  if (!blockedInput.value) {
+     if (!formData.value.name) {
+        alert("El nom és obligatori.");
+        return { success: false };
+     }
+     
+     if (dniError.value) {
+        alert("El DNI no és vàlid.");
+        return { success: false };
+     }
+
+     const paqueteAEnviar = {
+       ralc: inputRalc.value,
+       ...formData.value,
+     };
+
+     try {
+       const respuesta = await createStudent(paqueteAEnviar);
+       if (respuesta && respuesta.success) {
+         return { success: true, data: paqueteAEnviar };
+       } else {
+         return { success: false };
+       }
+     } catch (e) {
+       console.error(e);
+       throw new Error("Error connectant amb el servidor per guardar l'alumne.");
+     }
+  } else {
+     // CASO: Alumno ya existía (o solo pusimos RALC). 
+     // Retornamos los datos mínimos necesarios para el PDF.
+     return { 
+        success: true, 
+        data: { 
+            ralc: inputRalc.value, 
+            name: formData.value.name || "Alumne", 
+            surname: formData.value.surname || inputRalc.value 
+        } 
+     };
+  }
+}
+
+defineExpose({
+  submitStudentForm
+});
 </script>
 
 <template>
@@ -173,11 +198,6 @@ function handleDniInput() {
         <input v-model="formData.grup" type="text" :disabled="blockedInput" />
       </div>
 
-      <div style="margin-top: 20px">
-        <button @click="saveNewStudent" :disabled="blockedInput">
-          Guardar Alumno
-        </button>
-      </div>
     </div>
   </div>
 </template>
