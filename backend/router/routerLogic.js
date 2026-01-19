@@ -60,7 +60,7 @@ async function getByRalcStudent(req, res) {
         pi.data_creacio,
         pi.dades_ia,
         p.nom as professorNom,
-        p.cognom as professorCognom
+        p.email as professorEmail
       FROM pis pi
       LEFT JOIN professors p ON pi.professor_id = p.id
       INNER JOIN alumnes a ON pi.alumne_id = a.id
