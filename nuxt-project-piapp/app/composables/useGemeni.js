@@ -20,22 +20,25 @@ export const useGemini = () => {
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
 
       const prompt = `
-        Actúa como un psicopedagogo experto. He extraído el texto de un informe escolar/psicológico del alumno ${studentName || "desconocido"
-        }.
-        
-        Tu tarea es analizar el texto y generar un resumen estructurado para un Plan Individualizado (PI) en formato JSON.
-        
-        IMPORTANTE: Debes devolver UNICAMENTE un objeto JSON válido con la siguiente estructura exacta:
-        {
-          "dificultat_gravetat": "Resumen breve de la dificultad y gravedad detectada",
-          "justificacio_pi": "Justificación de por qué necesita un plan individualizado",
-          "proposta_educativa": "Propuesta educativa y medidas sugeridas",
-          "observacions": "" 
-        }
+      Actúa como un psicopedagogo experto especializado en síntesis educativa. He extraído el texto de un informe del alumno ${studentName || "el alumno"}.
 
-        Nota: El campo "observacions" debe estar vacío (cadena vacía), ya que lo rellenará el profesor manualmente.
+      Tu objetivo es filtrar la información irrelevante y generar un resumen EJECUTIVO y PRÁCTICO para su Plan Individualizado (PI). El profesor debe entender el caso en menos de 1 minuto.
 
-        --- TEXTO DEL PDF ---
+      IMPORTANTE: Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta y respetando estas reglas de contenido:
+
+      {
+      "dificultat_gravetat": "Sintetiza en MÁXIMO 2 frases la dificultad principal y su impacto en el aprendizaje. Sé directo (ej: 'Dislexia severa que afecta la comprensión lectora y la velocidad de procesamiento').",
+  
+      "justificacio_pi": "Indica en 1 frase la razón normativa o funcional por la que requiere el PI (ej: 'Desfase curricular de más de un ciclo' o 'Necesidad de adaptación de acceso significativa').",
+  
+        "proposta_educativa": "Lista de 3 a 5 medidas concretas y aplicables en el aula. NO uses párrafos. Usa un formato de lista con guiones (-). Ejemplo: '- Uso de ordenador para exámenes.\n- Tiempo extra (25%).\n- Adaptación de textos a lectura fácil.'",
+  
+        "observacions": "" 
+      }
+
+      Asegúrate de que el contenido del JSON esté redactado en CATALÁN (o el idioma que use tu centro), con un tono profesional pero directo y sin tecnicismos innecesarios.
+
+      --- TEXTO DEL PDF ---
         "${pdfText.substring(0, 30000)}"
       `;
 
