@@ -79,15 +79,6 @@ onMounted(() => {
           </div>
           <div class="arrow">→</div>
         </NuxtLink>
-
-        <NuxtLink to="/pi/crear-pi-def" class="card-gencat">
-          <div class="text-card">
-            <h3>En proceso</h3>
-
-            <p>{{ t.desc_pi }}</p>
-          </div>
-          <div class="arrow">→</div>
-        </NuxtLink>
       </div>
     </div>
   </div>

@@ -1,9 +1,5 @@
-// composables/useGemini.js
 import { ref } from "vue";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const API_KEY = import.meta.env.VITE_GEMINI_KEY;
-const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const useGemini = () => {
   const aiResponse = ref(null);
@@ -13,15 +9,31 @@ export const useGemini = () => {
   const analyzePdfContent = async (pdfText, studentName) => {
     isGenerating.value = true;
     error.value = null;
-    aiResponse.value = null; // Changed from "" to null/object
+    aiResponse.value = null;
 
     try {
-      // Usamos flash para rapidez, o pro para mayor razonamiento
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
+      // 1. OBTENCIÓN DE LA CLAVE (Dentro de la función para mayor seguridad)
+      // Si usas Vite puro: import.meta.env.VITE_GEMINI_KEY
+      // Si usas Nuxt y no te funciona, prueba: useRuntimeConfig().public.GEMINI_KEY
+      const apiKey = import.meta.env.VITE_GEMINI_KEY;
+
+      if (!apiKey) {
+        throw new Error(
+          "Falta la API Key (VITE_GEMINI_KEY) en el archivo .env",
+        );
+      }
+
+      // 2. INICIALIZACIÓN
+      const genAI = new GoogleGenerativeAI(apiKey);
+
+      // 3. MODELO CORRECTO: Usamos 'gemini-1.5-flash' (2.5 no existe aún)
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        generationConfig: { responseMimeType: "application/json" },
+      });
 
       const prompt = `
-        Actúa como un psicopedagogo experto. He extraído el texto de un informe escolar/psicológico del alumno ${studentName || "desconocido"
-        }.
+        Actúa como un psicopedagogo experto. He extraído el texto de un informe escolar/psicológico del alumno ${studentName || "desconocido"}.
         
         Tu tarea es analizar el texto y generar un resumen estructurado para un Plan Individualizado (PI) en formato JSON.
         
@@ -33,7 +45,7 @@ export const useGemini = () => {
           "observacions": "" 
         }
 
-        Nota: El campo "observacions" debe estar vacío (cadena vacía), ya que lo rellenará el profesor manualmente.
+        Nota: El campo "observacions" debe estar vacío (cadena vacía).
 
         --- TEXTO DEL PDF ---
         "${pdfText.substring(0, 30000)}"
@@ -43,22 +55,30 @@ export const useGemini = () => {
       const response = await result.response;
       const text = response.text();
 
+      // 4. PARSEO SEGURO
       try {
         aiResponse.value = JSON.parse(text);
       } catch (parseError) {
         console.error("Error parsing JSON:", parseError);
-        // Fallback for non-JSON response (though we requested JSON)
+        // Si la IA falla en dar JSON, guardamos el texto plano en 'justificacio_pi' para no perderlo
         aiResponse.value = {
-          dificultat_gravetat: "Error parseando respuesta",
-          justificacio_pi: text,
-          proposta_educativa: "",
-          observacions: ""
+          dificultat_gravetat: "Format incorrecte de la IA",
+          justificacio_pi: text, // Guardamos lo que haya dicho la IA
+          proposta_educativa: "Revisar manualment",
+          observacions: "",
         };
       }
-
     } catch (e) {
-      console.error("Gemini Error:", e);
-      error.value = "Error al conectar con la IA.";
+      console.error("Gemini Error Detallado:", e);
+      // Mensaje de error más descriptivo para ti
+      if (e.message.includes("404") || e.message.includes("not found")) {
+        error.value =
+          "Error: El modelo de IA no existe o la ruta es incorrecta.";
+      } else if (e.message.includes("API key")) {
+        error.value = "Error: API Key inválida o no encontrada.";
+      } else {
+        error.value = "Error al conectar con la IA: " + e.message;
+      }
     } finally {
       isGenerating.value = false;
     }
