@@ -954,21 +954,62 @@ INSERT INTO `centres` (`codi_centre`, `denominacio_completa`, `email_centre`, `t
 ('08079560','MA Espai Educatiu','a8079560@xtec.cat',0,'Privat','08023','c. Ballester, 14-18','Barcelona'),
 ('08079572','The Learn Academy','a8079572@xtec.cat',648846689,'Privat','08017','Av. Diagonal, 646 bis','Barcelona');
 
--- 1. INSERTAR PROFESSOR (Manolo)
--- El vinculem a l'Escola Baixeras (codi 08001595) que segur que la tens
-INSERT INTO `professors` (`nom`, `email`, `password`, `centre_id`) 
-VALUES ('Manolo', 'manologarcia@institut.cat', '1234', (SELECT id FROM `centres` WHERE `codi_centre` = '08001595'));
 
--- 2. INSERTAR ALUMNE (Pepe)
--- El vinculem també a l'Escola Baixeras
-INSERT INTO `alumnes` (`nom`, `cognom`, `ralc`, `dni`, `data_naixement`, `centre_procedencia_id`) 
-VALUES ('Pepe', 'Lopez', '111222333', '22222222N', '2000-01-01', (SELECT id FROM `centres` WHERE `codi_centre` = '08001595'));
+-- ---------------------------------------------------------
+-- Poblamos la tabla PROFESSORS
+-- ---------------------------------------------------------
+INSERT INTO `professors` (`id`, `nom`, `email`, `password`, `centre_id`) VALUES
+(1, 'Laura Garcia', 'lgarcia@itb.cat', 'password_hash_seguro_123', 1),
+(2, 'Marc Dalmau', 'mdalmau@itb.cat', 'password_hash_seguro_456', 1),
+(3, 'Anna Ribes', 'aribes@jmiro.cat', 'password_hash_seguro_789', 2);
 
--- 3. INSERTAR EL PI (Pla Individualitzat)
--- El vinculem a l'alumne Pepe i al profe Manolo
-INSERT INTO `pis` (`alumne_id`, `professor_id`, `estat`, `ruta_pdf`, `dades_ia`, `data_creacio`) 
-VALUES (
-    (SELECT id FROM `alumnes` WHERE `ralc` = '111222333'), 
-    (SELECT id FROM `professors` WHERE `email` = 'manologarcia@institut.cat'), 
-    'pendent', 'documento.pdf', 'test', NOW()
+-- ---------------------------------------------------------
+-- Poblamos la tabla ALUMNES
+-- Nota: Usamos RALC alfanuméricos como definiste en la estructura.
+-- ---------------------------------------------------------
+INSERT INTO `alumnes` (`ralc`, `nom`, `cognom`, `dni`, `data_naixement`, `curs`, `grup`, `centre_procedencia_id`) VALUES
+('A111222333', 'Pau', 'López Martínez', '41112223A', '2008-05-15', '3r ESO', 'A', 1),
+('B444555666', 'Júlia', 'Fernàndez Puig', '44455566B', '2009-02-20', '2n ESO', 'B', 2),
+('C777888999', 'Mohammed', 'El Amrani', 'X1234567Z', '2007-11-10', '4t ESO', 'C', 835),
+('D000111222', 'Sofia', 'Ruiz Costa', '40001112D', '2010-07-30', '1r ESO', 'A', 1);
+
+-- ---------------------------------------------------------
+-- 4. Poblamos la tabla PIS (Planes Individualizados)
+-- Nota: Relacionamos el 'alumne_ralc' con los inserts anteriores.
+-- ---------------------------------------------------------
+INSERT INTO `pis` (`alumne_ralc`, `professor_id`, `dificultat`, `gravetat`, `justificacio`, `proposta_educativa`, `observacio`, `ruta_pdf`, `data_creacio`) VALUES
+(
+    'A111222333', -- Alumno Pau
+    1,            -- Profesora Laura
+    'Dificultat en la comprensió lectora i atenció dispersa.',
+    'Mitjana',
+    'L\'alumne presenta un retard significatiu en l\'assoliment de les competències lingüístiques.',
+    'Adaptació curricular no significativa. Reforç a l\'aula d\'acollida 2 hores setmanals.',
+    'La família està informada i col·labora.',
+    '/uploads/pis/2024/pau_lopez_pi.pdf',
+    NOW()
+),
+(
+    'B444555666', -- Alumna Júlia
+    3,            -- Profesora Anna
+    'Discalcúlia detectada recentment.',
+    'Alta',
+    'Dificultats greus per realitzar càlculs bàsics que afecten a totes les matèries científiques.',
+    'Ús de calculadora permès a exàmens. Temps extra en proves escrites.',
+    'Pendent de revisió per l\'EAP.',
+    '/uploads/pis/2024/julia_fernandez_pi.pdf',
+    NOW()
+),
+(
+    'C777888999', -- Alumno Mohammed
+    2,            -- Profesor Marc
+    'Incorporació tardana al sistema educatiu.',
+    'Baixa',
+    'L\'alumne entén l\'idioma però necessita suport en vocabulari tècnic.',
+    'Suport lingüístic puntual a les matèries de socials i naturals.',
+    'Progrés molt favorable.',
+    '/uploads/pis/2024/mohammed_elamrani_pi.pdf',
+    NOW()
 );
+
+SET foreign_key_checks = 1;
