@@ -46,10 +46,10 @@ const handleLogin = async () => {
 
   try {
     loading.value = true;
-    errorMessage.value = '';
-    const response = await fetch('http://localhost:3000/api/login-centre', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    errorMessage.value = "";
+    const response = await fetch("http://localhost:3000/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.value }),
     });
 
@@ -59,14 +59,15 @@ const handleLogin = async () => {
       localStorage.setItem("user_centre", JSON.stringify(data.centre));
       router.push("/home");
     } else {
-      if (data.error && typeof data.error === 'string') {
+      if (data.error && typeof data.error === "string") {
         errorMessage.value = data.error;
       } else {
-        errorMessage.value = 'Correu incorrecte o accés denegat.'; 
+        errorMessage.value = "Correu incorrecte o accés denegat.";
       }
       // Si el backend devuelve un error, lo mostramos tal cual}
+    }
   } catch (error) {
-    console.error(error); // Para ver errores en la consola del navegador
+    console.error(error);
     errorMessage.value = t.value.error_connexio;
   } finally {
     loading.value = false;
