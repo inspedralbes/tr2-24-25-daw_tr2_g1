@@ -30,8 +30,8 @@ jobs:
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./front
-          file: ./front/Dockerfile.prod
+          context: ./frontend
+          file: ./frontend/Dockerfile.prod
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
           build-args: |
@@ -42,8 +42,8 @@ jobs:
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./back
-          file: ./back/Dockerfile.prod
+          context: ./backend
+          file: ./backend/docker/Dockerfile.prod
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
 

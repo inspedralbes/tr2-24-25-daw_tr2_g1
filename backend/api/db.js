@@ -4,10 +4,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const localdbConfig = {
-  host: process.env.DB_HOST_LOCAL,
-  user: process.env.DB_USER_LOCAL,
-  password: process.env.DB_PASSWORD_LOCAL,
-  database: process.env.DB_NAME_LOCAL,
+  host: process.env.DB_HOST || process.env.DB_HOST_LOCAL,
+  user: process.env.DB_USER || process.env.DB_USER_LOCAL,
+  password: process.env.DB_PASSWORD || process.env.DB_PASSWORD_LOCAL,
+  database: process.env.DB_NAME || process.env.DB_NAME_LOCAL,
   connectionLimit: 10,
   waitForConnections: true,
   queueLimit: 0,

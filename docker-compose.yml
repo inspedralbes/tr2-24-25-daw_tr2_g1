@@ -1,6 +1,6 @@
 # Fichero: docker-compose.yml
 # Descripción: Configuración de Docker Compose para el entorno de desarrollo
-# del proyecto PlaPI. Incluye frontend (Vue/Vite), backend (Node/Express),
+# del proyecto PlaPI. Incluye frontend (Nuxt), backend (Node/Express),
 # MySQL y Adminer, con hot-reloading configurado para el desarrollo.
 #
 # Para levantar este entorno, se debe usar el comando:
@@ -8,62 +8,51 @@
 
 services:
   # ----------------------------------------
-  # 1. Servicio del frontend (PlaPI Vue/Vite)
+  # 1. Servicio del frontend (Nuxt/Vue)
   # ----------------------------------------
   frontend:
     container_name: plapi_frontend
     build:
-      # Contexto: La carpeta 'front' donde está el código
-      context: ./nuxt-project-piapp
+      context: ./frontend
       dockerfile: Dockerfile
     environment:
-      # Configuración específica de desarrollo
-      VITE_NODE_ENV: development
-      # Conexión al backend usando el nombre del servicio 'backend'
-      VITE_SOCKET_URL: http://backend:3000
+      NODE_ENV: development
       HOST: "0.0.0.0"
+      PORT: "3000"
     ports:
-      - "5173:3000" # Puerto de desarrollo de nuxt
+      - "3001:3000"
     volumes:
-      # Monta el código fuente de 'front' para hot-reloading
-      - ./nuxt-project-piapp:/app
-      # Volumen anónimo para preservar node_modules del contenedor
+      - ./frontend:/app
       - /app/node_modules
-    # Asegúrate de que tu package.json en 'front' tenga un script 'dev'
+      - /app/.nuxt
     command: sh -c "npm install && npm run dev"
     networks:
       - plapi-network
+    depends_on:
+      - backend
 
   # ----------------------------------------
-  # 2. Servicio del backend (PlaPI Node.js/Express)
+  # 2. Servicio del backend (Node.js/Express)
   # ----------------------------------------
   backend:
     container_name: plapi_backend
     build:
-      # Contexto: La carpeta 'back' donde está el código
-      context: ./back
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: docker/Dockerfile
     environment:
-      # Configuración de desarrollo
       NODE_ENV: development
-      # El host de la DB es el nombre del servicio: 'mysql'
       DB_HOST: mysql
-      # Otras variables que necesite tu backend
       DB_USER: user_dev
       DB_PASSWORD: password_dev
+      DB_NAME: db_plapi_dev
+      DB_PORT: 3306
     ports:
-      # Puerto del backend
       - "3000:3000"
     volumes:
-      # Monta el código fuente de 'back' para hot-reloading (nodemon)
-      - ./back:/usr/src/app
-      # Evita sobreescribir node_modules del contenedor
+      - ./backend:/usr/src/app
       - /usr/src/app/node_modules
-    # Comando para iniciar el servidor de desarrollo (nodemon o similar)
-    # Asegúrate de que tu package.json en 'back' tenga un script 'dev'
     command: sh -c "npm install && npm run dev"
     depends_on:
-      # Espera a que MySQL esté saludable antes de iniciar el backend
       mysql:
         condition: service_healthy
     networks:
@@ -85,7 +74,7 @@ services:
     volumes:
       # Persistencia de los datos
       - plapi-mysql-data:/var/lib/mysql
-      - ./back/db:/docker-entrypoint-initdb.d
+      - ./backend/db:/docker-entrypoint-initdb.d
     healthcheck:
       test:
         [
@@ -133,7 +122,8 @@ services:
     depends_on:
       - mysql
     networks:
-      - plapi-networkdb
+      - plapi-network
+
 # ----------------------------------------
 # Definición de la red y volúmenes
 # ----------------------------------------
@@ -142,4 +132,5 @@ networks:
     driver: bridge
 
 volumes:
+
   plapi-mysql-data:
