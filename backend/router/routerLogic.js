@@ -6,17 +6,73 @@ const router = Router();
 
 // Funciones que luego les asignamos una ruta.
 async function getAllStudent(req, res) {
-  const [rows] = await pool.query("SELECT * FROM alumnes");
-  res.json(rows);
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        a.id,
+        a.ralc,
+        a.nom,
+        a.cognom as cognoms,
+        a.dni,
+        a.data_naixement as dataNaixement,
+        '1r ESO' as curs,
+        c.denominacio_completa as centreProcedencia
+      FROM alumnes a
+      LEFT JOIN centres c ON a.centre_procedencia_id = c.id
+    `);
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 }
 
 async function getByRalcStudent(req, res) {
-  const studentRalc = req.params.ralc;
-
-  const [result] = await pool.query("SELECT * FROM alumnes WHERE ralc = ?", [
-    studentRalc,
-  ]);
-  res.json(result);
+  try {
+    const studentRalc = req.params.ralc;
+    
+    // Obtener datos del alumno
+    const [alumnes] = await pool.query(`
+      SELECT 
+        a.ralc,
+        a.nom,
+        a.cognom as cognoms,
+        a.dni,
+        a.data_naixement as dataNaixement,
+        '1r ESO' as curs,
+        c.denominacio_completa as centreProcedencia
+      FROM alumnes a
+      LEFT JOIN centres c ON a.centre_procedencia_id = c.id
+      WHERE a.ralc = ?
+    `, [studentRalc]);
+    
+    if (alumnes.length === 0) {
+      return res.status(404).json({ success: false, error: 'Alumne no trobat' });
+    }
+    
+    const alumne = alumnes[0];
+    
+    // Obtener PIs del alumno
+    const [pis] = await pool.query(`
+      SELECT 
+        pi.id,
+        pi.estat,
+        pi.ruta_pdf,
+        pi.data_creacio,
+        pi.dades_ia,
+        p.nom as professorNom,
+        p.cognom as professorCognom
+      FROM pis pi
+      LEFT JOIN professors p ON pi.professor_id = p.id
+      INNER JOIN alumnes a ON pi.alumne_id = a.id
+      WHERE a.ralc = ?
+    `, [studentRalc]);
+    
+    alumne.pis = pis || [];
+    
+    res.json({ success: true, data: alumne });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 }
 
 async function getAllCenter(req, res) {

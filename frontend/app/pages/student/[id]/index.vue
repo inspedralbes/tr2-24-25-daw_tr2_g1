@@ -7,31 +7,22 @@ const isLoading = ref(true);
 const error = ref(null);
 const student = ref(null);
 
-// Carregar dades de l'alumne des de l'API - igual que search.vue
+// Carregar dades de l'alumne des de l'API
 const loadStudent = async () => {
   try {
     isLoading.value = true;
     error.value = null;
 
-    // Cridar a la mateixa API que search.vue però filtrant per aquest RALC
-    const response = await $fetch("http://localhost:3000/api/alumnes");
+    // Cridar directament al endpoint de l'alumne per RALC
+    const response = await $fetch(`http://localhost:3000/api/alumne/${studentRalc}`);
 
     console.log("Response completa:", response);
 
-    if (response?.success && Array.isArray(response.data)) {
-      // Buscar l'alumne amb aquest RALC
-      const foundStudent = response.data.find(
-        (s: any) => s.ralc === studentRalc
-      );
-
-      if (foundStudent) {
-        student.value = foundStudent;
-        console.log("Alumne trobat:", foundStudent);
-      } else {
-        error.value = "No s'ha trobat l'alumne amb aquest RALC";
-      }
+    if (response?.success && response.data) {
+      student.value = response.data;
+      console.log("Alumne trobat:", response.data);
     } else {
-      error.value = "Error al carregar les dades";
+      error.value = response.error || "Error al carregar les dades";
       console.error("Format de resposta incorrecte:", response);
     }
   } catch (e) {
@@ -52,7 +43,7 @@ onMounted(() => {
   <div class="student-detail-page">
     <!-- Navegació -->
     <div class="nav-back">
-      <NuxtLink to="/search" class="btn-back"> ← Tornar a la cerca </NuxtLink>
+      <NuxtLink to="../pi/search" class="btn-back"> ← Tornar a la cerca </NuxtLink>
     </div>
 
     <!-- Loading -->
