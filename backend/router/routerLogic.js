@@ -1,7 +1,9 @@
 import { Router } from "express";
 
 import { pool } from "../api/db.js";
-import { loginCenter } from "../api/login/loginCenter.js";
+import { loginCenter } from "../api/login/loginCenter.js"; // LOGIN CENTRO
+import { createStudent } from "../api/create/createStudent.js"; // CREAR ALUMNO
+
 const router = Router();
 
 // Funciones que luego les asignamos una ruta.
@@ -37,6 +39,7 @@ async function getByEmailCenter(req, res) {
 router.post("/login", loginCenter);
 
 router.get("/alumnes", getAllStudent);
+router.post("/alumne", createStudent);
 router.get("/alumne/:ralc", getByRalcStudent);
 
 router.get("/centres", getAllCenter);

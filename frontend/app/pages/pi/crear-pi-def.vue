@@ -8,6 +8,21 @@ function nextStep() {
 function previousStep() {
   if (step.value > 1) step.value--;
 }
+
+// Variables para analisis y revisión del PI.
+
+const piAnalysisData = ref(null);
+
+const studentForm = ref({ name: "", surname: "" });
+
+function handleAnalysisComplete(data) {
+  console.log("Datos recibidos de la IA:", data);
+  // Guardamos los datos
+  piAnalysisData.value = data;
+
+  // Avanzamos automáticamente al paso 2
+  step.value = 2;
+}
 </script>
 
 <template>
@@ -23,6 +38,7 @@ function previousStep() {
 
   <div v-if="step === 1">
     <RegisterStudent /> <br />
+    <FileUpload />
     <!-- <button @click="nextStep">Ir al Paso 2</button> -->
   </div>
 
