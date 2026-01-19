@@ -9,7 +9,7 @@ const email = ref("");
 const errorMessage = ref("");
 const loading = ref(false);
 
-// 2. DICCIONARIO DE TRADUCCIONES LOGIN
+// 2. DICCIONARIO DE TRADUCCIONS LOGIN
 const t = computed(() => {
   const textos = {
     ca: {
@@ -45,9 +45,11 @@ const handleLogin = async () => {
   errorMessage.value = "";
 
   try {
-    const response = await fetch("http://localhost:3000/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    loading.value = true;
+    errorMessage.value = '';
+    const response = await fetch('http://localhost:3000/api/login-centre', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.value }),
     });
 
@@ -57,11 +59,14 @@ const handleLogin = async () => {
       localStorage.setItem("user_centre", JSON.stringify(data.centre));
       router.push("/home");
     } else {
-      // Si el backend devuelve un error, lo mostramos tal cual
-      // O podrías traducirlo si el backend devolviera códigos de error
-      errorMessage.value = data.error || "Error al iniciar sessió";
-    }
+      if (data.error && typeof data.error === 'string') {
+        errorMessage.value = data.error;
+      } else {
+        errorMessage.value = 'Correu incorrecte o accés denegat.'; 
+      }
+      // Si el backend devuelve un error, lo mostramos tal cual}
   } catch (error) {
+    console.error(error); // Para ver errores en la consola del navegador
     errorMessage.value = t.value.error_connexio;
   } finally {
     loading.value = false;
