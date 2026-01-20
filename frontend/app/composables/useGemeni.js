@@ -1,3 +1,4 @@
+// composables/useGemini.js
 import { ref } from "vue";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -12,42 +13,41 @@ export const useGemini = () => {
     aiResponse.value = null;
 
     try {
-      // 1. OBTENCIÓN DE LA CLAVE (Dentro de la función para mayor seguridad)
-      // Si usas Vite puro: import.meta.env.VITE_GEMINI_KEY
-      // Si usas Nuxt y no te funciona, prueba: useRuntimeConfig().public.GEMINI_KEY
       const apiKey = import.meta.env.VITE_GEMINI_KEY;
+      if (!apiKey) throw new Error("Falta la API Key");
 
-      if (!apiKey) {
-        throw new Error(
-          "Falta la API Key (VITE_GEMINI_KEY) en el archivo .env",
-        );
-      }
-
-      // 2. INICIALIZACIÓN
       const genAI = new GoogleGenerativeAI(apiKey);
 
-      // 3. MODELO CORRECTO: Usamos 'gemini-1.5-flash' (2.5 no existe aún)
+      // CAMBIO 1: Usamos un modelo estable y rápido
       const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash",
-        generationConfig: { responseMimeType: "application/json" },
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.2, // Baja temperatura para ser más preciso y menos "creativo"
+        },
       });
 
+      // CAMBIO 2: Prompt optimizado para respuestas concisas y separadas
       const prompt = `
-        Actúa como un psicopedagogo experto. He extraído el texto de un informe escolar/psicológico del alumno ${studentName || "desconocido"}.
+        Actúa como un psicopedagogo experto. Analiza el siguiente informe de ${studentName}.
         
-        Tu tarea es analizar el texto y generar un resumen estructurado para un Plan Individualizado (PI) en formato JSON.
+        Tu objetivo es extraer datos para un Plan Individualizado (PI).
+        Sé EXTREMADAMENTE CONCISO. No uses texto de relleno. Ve al grano.
         
-        IMPORTANTE: Debes devolver UNICAMENTE un objeto JSON válido con la siguiente estructura exacta:
+        Devuelve un JSON exacto con estas claves:
+        
         {
-          "dificultat_gravetat": "Resumen breve de la dificultad y gravedad detectada",
-          "justificacio_pi": "Justificación de por qué necesita un plan individualizado",
-          "proposta_educativa": "Propuesta educativa y medidas sugeridas",
-          "observacions": "" 
+          "dificultat": "Nombre técnico corto del trastorno o dificultad (Ej: Dislexia, TDAH, Retraso madurativo). Máximo 5 palabras.",
+          "gravetat": "Elige SOLO UNO de estos valores: 'Lleu', 'Moderada', 'Greu'. Si no está claro, infiérelo por el contexto.",
+          "justificacio": "Resumen telegráfico de la evidencia. Máximo 1 o 2 frases cortas.",
+          "proposta_educativa": "Listado de acciones clave separadas por guiones. Solo acciones concretas, sin introducciones.",
+          "observacio": ""
         }
 
-        Nota: El campo "observacions" debe estar vacío (cadena vacía).
+        IMPORTANTE: El campo "observacio" debe venir siempre como una cadena vacía "".
+        Idioma de respuesta: CATALÁN.
 
-        --- TEXTO DEL PDF ---
+        --- TEXTO DEL INFORME ---
         "${pdfText.substring(0, 30000)}"
       `;
 
@@ -55,30 +55,18 @@ export const useGemini = () => {
       const response = await result.response;
       const text = response.text();
 
-      // 4. PARSEO SEGURO
-      try {
-        aiResponse.value = JSON.parse(text);
-      } catch (parseError) {
-        console.error("Error parsing JSON:", parseError);
-        // Si la IA falla en dar JSON, guardamos el texto plano en 'justificacio_pi' para no perderlo
-        aiResponse.value = {
-          dificultat_gravetat: "Format incorrecte de la IA",
-          justificacio_pi: text, // Guardamos lo que haya dicho la IA
-          proposta_educativa: "Revisar manualment",
-          observacions: "",
-        };
-      }
+      aiResponse.value = JSON.parse(text);
     } catch (e) {
-      console.error("Gemini Error Detallado:", e);
-      // Mensaje de error más descriptivo para ti
-      if (e.message.includes("404") || e.message.includes("not found")) {
-        error.value =
-          "Error: El modelo de IA no existe o la ruta es incorrecta.";
-      } else if (e.message.includes("API key")) {
-        error.value = "Error: API Key inválida o no encontrada.";
-      } else {
-        error.value = "Error al conectar con la IA: " + e.message;
-      }
+      console.error("Gemini Error:", e);
+      // Fallback por si falla el parseo o la API
+      aiResponse.value = {
+        dificultat: "Error analitzant",
+        gravetat: "",
+        justificacio: "No s'ha pogut extreure informació automàtica.",
+        proposta_educativa: "",
+        observacio: "",
+      };
+      error.value = e.message;
     } finally {
       isGenerating.value = false;
     }

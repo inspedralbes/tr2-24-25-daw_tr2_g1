@@ -979,12 +979,12 @@ INSERT INTO `alumnes` (`ralc`, `nom`, `cognom`, `dni`, `data_naixement`, `curs`,
 -- ---------------------------------------------------------
 INSERT INTO `pis` (`alumne_ralc`, `professor_id`, `dificultat`, `gravetat`, `justificacio`, `proposta_educativa`, `observacio`, `ruta_pdf`, `data_creacio`) VALUES
 (
-    'A111222333', -- Alumno Pau
-    1,            -- Profesora Laura
+    'A111222333', 
+    1, 
     'Dificultat en la comprensió lectora i atenció dispersa.',
     'Mitjana',
-    'L\'alumne presenta un retard significatiu en l\'assoliment de les competències lingüístiques.',
-    'Adaptació curricular no significativa. Reforç a l\'aula d\'acollida 2 hores setmanals.',
+    'L''alumne presenta un retard significatiu en l''assoliment de les competències lingüístiques.',
+    'Adaptació curricular no significativa. Reforç a l''aula d''acollida 2 hores setmanals.',
     'La família està informada i col·labora.',
     '/uploads/pis/2024/pau_lopez_pi.pdf',
     NOW()
@@ -996,18 +996,18 @@ INSERT INTO `pis` (`alumne_ralc`, `professor_id`, `dificultat`, `gravetat`, `jus
     'Alta',
     'Dificultats greus per realitzar càlculs bàsics que afecten a totes les matèries científiques.',
     'Ús de calculadora permès a exàmens. Temps extra en proves escrites.',
-    'Pendent de revisió per l\'EAP.',
+    'Pendent de revisió per l''EAP.',
     '/uploads/pis/2024/julia_fernandez_pi.pdf',
     NOW()
 ),
 (
-    'C777888999', -- Alumno Mohammed
-    2,            -- Profesor Marc
-    'Incorporació tardana al sistema educatiu.',
-    'Baixa',
-    'L\'alumne entén l\'idioma però necessita suport en vocabulari tècnic.',
-    'Suport lingüístic puntual a les matèries de socials i naturals.',
-    'Progrés molt favorable.',
+    'C777888999', 
+    2, 
+    'Incorporació tardana al sistema educatiu.', 
+    'Baixa', 
+    'L''alumne entén l''idioma però necessita suport en vocabulari tècnic.',    
+    'Suport lingüístic puntual a les matèries de socials i naturals.', 
+    'Progrés molt favorable.', 
     '/uploads/pis/2024/mohammed_elamrani_pi.pdf',
     NOW()
 );

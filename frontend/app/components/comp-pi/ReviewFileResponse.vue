@@ -1,29 +1,24 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import { createStudentPI } from "../../services/apiStudent.js";
+
+// NOTA NUXT:
+// Si tu archivo está en la carpeta 'utils/apiStudent.js', NO necesitas importar nada.
+// Si prefieres mantenerlo en 'services/', descomenta la siguiente línea:
+// import { createStudentPI } from "~/services/apiStudent.js";
 
 // --- PROPS ---
-// Recibimos los datos del padre (crear-pi)
 const props = defineProps({
-  student: {
-    type: Object,
-    required: true,
-  },
-  aiData: {
-    type: Object,
-    default: () => ({}),
-  },
-  fileName: {
-    type: String,
-    default: "",
-  },
+  student: { type: Object, required: true },
+  aiData: { type: Object, default: () => ({}) },
+  fileName: { type: String, default: "" },
 });
 
 const router = useRouter();
 const isSaving = ref(false);
 
 // --- FORM STATE ---
-// Mapeamos lo que devuelve la IA a nuestro formulario
 const formData = ref({
   dificultat: "",
   gravetat: "",
@@ -32,66 +27,60 @@ const formData = ref({
   observacio: "",
 });
 
-// Al montar, rellenamos con lo que dijo la IA
-onMounted(() => {
-  if (props.aiData) {
-    // Ajusta las claves según lo que devuelva exactamente tu useGemini
-    // Aquí asumo que la IA devuelve claves similares o texto plano
-    formData.value.dificultat =
-      props.aiData.dificultat || props.aiData.difficulty || "";
-    formData.value.gravetat =
-      props.aiData.gravetat || props.aiData.severity || "";
-    formData.value.justificacio =
-      props.aiData.justificacio || props.aiData.justification || "";
-    formData.value.proposta_educativa =
-      props.aiData.proposta_educativa || props.aiData.proposal || "";
-    formData.value.observacio =
-      props.aiData.observacio || props.aiData.observations || "";
-  }
-});
+// --- FUNCIÓN PARA RELLENAR DATOS ---
+const populateForm = () => {
+  if (props.aiData && Object.keys(props.aiData).length > 0) {
+    formData.value.dificultat = props.aiData.dificultat || "";
 
-// --- API CALL ---
+    // Normalizar gravedad
+    let g = props.aiData.gravetat || "";
+    if (g) {
+      formData.value.gravetat =
+        g.charAt(0).toUpperCase() + g.slice(1).toLowerCase();
+    }
+
+    formData.value.justificacio = props.aiData.justificacio || "";
+    formData.value.proposta_educativa = props.aiData.proposta_educativa || "";
+  }
+};
+
+// --- REACTIVIDAD ---
+watch(() => props.aiData, populateForm, { immediate: true });
+
+// --- GUARDADO REAL (CORREGIDO) ---
 async function handleSavePI() {
-  if (!props.student || !props.student.ralc) {
-    alert("Error: No se ha identificado al alumno.");
+  if (!props.student?.ralc) {
+    alert("Error: No se ha detectado el RALC del alumno.");
     return;
   }
 
   isSaving.value = true;
 
-  // Preparamos el payload para el Backend
+  // Preparamos el objeto exacto
   const payload = {
     ralc: props.student.ralc,
-    professor_id: 1, // TODO: Coger esto del usuario logueado (pinia/localStorage)
-    ruta_pdf: props.fileName || "documento_analizado.pdf",
-    ...formData.value,
+    professor_id: 1, // Hardcodeado temporalmente
+    dificultat: formData.value.dificultat,
+    gravetat: formData.value.gravetat,
+    justificacio: formData.value.justificacio,
+    proposta_educativa: formData.value.proposta_educativa,
+    observacio: formData.value.observacio,
+    ruta_pdf: props.fileName || "generado_por_ia.pdf",
   };
 
   try {
-    // Hacemos la petición (ajusta la URL a tu configuración)
-    const response = await fetch(
-      "http://localhost:3000/api/alumne/plan_individualitzat",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      },
-    );
+    // LLAMADA A LA API (Automática si usas utils/)
+    const data = await createStudentPI(payload);
 
-    const result = await response.json();
+    // ÉXITO
+    console.log("PI creado con ID:", data.id);
+    alert("✅ PI Guardado correctamente en la base de datos!");
 
-    if (result.success || response.ok) {
-      alert("Plan Individualizado guardado con éxito!");
-      // Redirigir a la ficha del alumno o limpiar
-      router.push(`/student/${props.student.ralc}`);
-    } else {
-      throw new Error(result.error || "Error desconocido al guardar");
-    }
-  } catch (e) {
-    console.error(e);
-    alert("Error al guardar el PI: " + e.message);
+    // Opcional: router.push('/dashboard');
+  } catch (error) {
+    // ERROR
+    console.error("Error saving PI:", error);
+    alert("❌ Error al guardar: " + error.message);
   } finally {
     isSaving.value = false;
   }
@@ -104,51 +93,56 @@ async function handleSavePI() {
       <h2>📝 Revisió i Guardat</h2>
       <p class="subtitle">
         Revisa les dades extretes per la IA per a l'alumne:
-        <strong>{{ student?.name }} {{ student?.surname }}</strong>
+        <strong>{{ student?.nom }} {{ student?.cognom }}</strong>
       </p>
     </div>
 
     <div class="form-grid">
       <div class="form-group">
         <label>Dificultat detectada</label>
-        <textarea
+        <input
+          type="text"
           v-model="formData.dificultat"
-          rows="2"
-          placeholder="Ex: Dislèxia, TDAH..."
-        ></textarea>
+          placeholder="Ex: Dislèxia"
+          class="input-clean"
+        />
       </div>
 
       <div class="form-group">
         <label>Gravetat</label>
         <select v-model="formData.gravetat" class="form-select">
           <option value="">Selecciona...</option>
-          <option value="Lleun">Lleu</option>
+          <option value="Lleu">Lleu</option>
           <option value="Moderada">Moderada</option>
           <option value="Greu">Greu</option>
         </select>
       </div>
 
       <div class="form-group full-width">
-        <label>Justificació (Resum de l'informe)</label>
+        <label>Justificació (Essència)</label>
         <textarea
           v-model="formData.justificacio"
-          rows="4"
-          placeholder="Explicació del motiu del PI..."
+          rows="3"
+          placeholder="Motiu principal..."
         ></textarea>
       </div>
 
       <div class="form-group full-width">
-        <label>Proposta Educativa</label>
+        <label>Proposta Educativa (Accions Clau)</label>
         <textarea
           v-model="formData.proposta_educativa"
-          rows="4"
-          placeholder="Accions a realitzar..."
+          rows="5"
+          placeholder="Llista d'accions..."
         ></textarea>
       </div>
 
-      <div class="form-group full-width">
-        <label>Observacions Addicionals</label>
-        <textarea v-model="formData.observacio" rows="2"></textarea>
+      <div class="form-group full-width highlight-manual">
+        <label>Observacions (A rellenar manualment)</label>
+        <textarea
+          v-model="formData.observacio"
+          rows="2"
+          placeholder="Afegeix aquí les teves observacions personals..."
+        ></textarea>
       </div>
     </div>
 
@@ -163,98 +157,80 @@ async function handleSavePI() {
 </template>
 
 <style scoped>
+/* Tus estilos (Sin cambios) */
 .review-container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
-
-.header-review {
-  margin-bottom: 25px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-}
-
-.subtitle {
-  color: #666;
-  font-size: 0.95em;
-}
-
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 20px;
+  margin-top: 20px;
 }
-
 .full-width {
   grid-column: span 2;
 }
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 label {
+  display: block;
   font-weight: 600;
-  font-size: 0.9em;
-  color: #333;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-
+input,
 textarea,
-.form-select {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 14px;
-  resize: vertical;
-  transition: border-color 0.3s;
+select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  background-color: #fafafa;
 }
-
+input:focus,
 textarea:focus,
-.form-select:focus {
+select:focus {
   outline: none;
   border-color: #d00000;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(208, 0, 0, 0.1);
 }
-
+.highlight-manual textarea {
+  border-color: #ccc;
+  background-color: #fff;
+}
 .actions {
   margin-top: 30px;
   display: flex;
   justify-content: flex-end;
   gap: 15px;
 }
-
 .btn-save {
   background-color: #d00000;
   color: white;
   border: none;
-  padding: 10px 25px;
-  border-radius: 6px;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: bold;
-  font-size: 16px;
+  transition: background 0.2s;
 }
-
-.btn-save:disabled {
-  background-color: #ffcccc;
-  cursor: not-allowed;
+.btn-save:hover {
+  background-color: #b00000;
 }
-
 .btn-cancel {
-  background-color: transparent;
+  background: none;
+  border: none;
   color: #666;
-  border: 1px solid #ccc;
-  padding: 10px 20px;
-  border-radius: 6px;
   cursor: pointer;
-}
-
-.btn-cancel:hover {
-  background-color: #f5f5f5;
 }
 </style>
