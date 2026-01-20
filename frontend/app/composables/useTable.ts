@@ -1,7 +1,24 @@
 import { ref } from 'vue'
 
+interface ApiResponse {
+  success: boolean
+  data?: Student[]
+  error?: string
+}
+
+interface Student {
+  id?: number
+  ralc: string
+  nom: string
+  cognoms: string
+  dni?: string
+  dataNaixement?: string
+  curs?: string
+  centreProcedencia?: string
+}
+
 export const useTable = () => {
-  const students = ref([])
+  const students = ref<Student[]>([])
 
   // Columnas de la tabla
   const columns = [
@@ -40,10 +57,10 @@ export const useTable = () => {
 
     try {
       const baseURL = import.meta.server ? 'http://backend:3000' : 'http://localhost:3000'
-      const response = await $fetch(`${baseURL}/api/alumnes`)
+      const response = await $fetch<ApiResponse>(`${baseURL}/api/alumnes`)
 
       if (response.success) {
-        students.value = response.data
+        students.value = response.data || []
       } else {
         throw new Error(response.error || 'Error carregant alumnes')
       }

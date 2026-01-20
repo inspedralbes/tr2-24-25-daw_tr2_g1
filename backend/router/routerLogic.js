@@ -17,8 +17,6 @@ async function getAllStudent(req, res) {
         a.cognom as cognoms,
         a.dni,
         a.data_naixement as dataNaixement,
-        a.curs,
-        a.grup,
         c.denominacio_completa as centreProcedencia
       FROM alumnes a
       LEFT JOIN centres c ON a.centre_procedencia_id = c.id
@@ -37,13 +35,12 @@ async function getByRalcStudent(req, res) {
     const [alumnes] = await pool.query(
       `
       SELECT 
+        a.id,
         a.ralc,
         a.nom,
         a.cognom as cognoms,
         a.dni,
         a.data_naixement as dataNaixement,
-        a.curs,
-        a.grup,
         c.denominacio_completa as centreProcedencia
       FROM alumnes a
       LEFT JOIN centres c ON a.centre_procedencia_id = c.id
@@ -61,26 +58,21 @@ async function getByRalcStudent(req, res) {
     const alumne = alumnes[0];
 
     // B) Obtener PIs del alumno
-    // CORRECCIÓN: Usamos 'alumne_ralc' y quitamos columnas que no existen (estat, dades_ia)
-    // CORRECCIÓN: La tabla 'professors' solo tiene 'nom', no 'cognom'
     const [pis] = await pool.query(
       `
       SELECT 
         pi.id,
-        pi.dificultat,
-        pi.gravetat,
-        pi.justificacio,
+        pi.estat,
         pi.ruta_pdf,
         pi.data_creacio,
         pi.dades_ia,
         p.nom as professorNom,
-        p.cognom as professorCognom
         p.email as professorEmail
       FROM pis pi
       LEFT JOIN professors p ON pi.professor_id = p.id
-      WHERE pi.alumne_ralc = ?
+      WHERE pi.alumne_id = ?
     `,
-      [studentRalc],
+      [alumnes[0].id],
     );
 
     alumne.pis = pis || [];
