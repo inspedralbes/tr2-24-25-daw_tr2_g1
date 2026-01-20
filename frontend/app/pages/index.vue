@@ -47,7 +47,8 @@ const handleLogin = async () => {
   try {
     loading.value = true;
     errorMessage.value = "";
-    const response = await fetch("http://localhost:3000/api/login", {
+    const baseURL = import.meta.server ? 'http://backend:3000' : 'http://localhost:3000'
+    const response = await fetch(`${baseURL}/api/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.value }),

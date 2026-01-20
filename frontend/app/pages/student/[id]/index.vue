@@ -26,8 +26,9 @@ const loadStudent = async () => {
     isLoading.value = true;
     error.value = null;
 
-    // Cridar directament al endpoint de l'alumne per RALC
-    const response = await $fetch<ApiResponse>(`http://localhost:3000/api/alumne/${studentRalc}`);
+    // Detectar si estem al servidor o al client per usar la URL correcta
+    const baseURL = import.meta.server ? 'http://backend:3000' : 'http://localhost:3000'
+    const response = await $fetch<ApiResponse>(`${baseURL}/api/alumne/${studentRalc}`);
 
     console.log("Response completa:", response);
 
@@ -43,6 +44,26 @@ const loadStudent = async () => {
     error.value = "Error al carregar les dades de l'alumne";
   } finally {
     isLoading.value = false;
+  }
+};
+
+// Funció per parsejar les dades de la IA
+const getParsedData = (dadesIa: any) => {
+  if (!dadesIa) return null;
+  
+  try {
+    // Si ja és un objecte, retornar-lo directament
+    if (typeof dadesIa === 'object') return dadesIa;
+    
+    // Si és un string, intentar parsejar-lo com JSON
+    if (typeof dadesIa === 'string') {
+      return JSON.parse(dadesIa);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error parsejant dades IA:', error);
+    return null;
   }
 };
 
@@ -191,12 +212,67 @@ onMounted(() => {
               <div v-if="activeTab === 'ia'" class="tab-panel">
                 <div class="ia-preview">
                   <h3>Informe generat previament</h3>
-                  <div class="ia-content">
+                  <div v-if="student?.pis && student.pis.length > 0" class="ia-content">
+                    <div v-for="pi in student.pis" :key="pi.id" class="pi-section">
+                      <div class="pi-header">
+                        <h4>Pla Individualitzat #{{ pi.id }}</h4>
+                        
+                      </div>
+                      
+                      <div class="pi-info-row">
+                        <div class="pi-info-field">
+                          <label class="info-label">Data de creació:</label>
+                          <p class="info-value">{{ new Date(pi.data_creacio).toLocaleDateString('ca-ES') }}</p>
+                        </div>
+                        <div class="pi-info-field">
+                          <label class="info-label">Professor responsable:</label>
+                          <p class="info-value">{{ pi.professorNom }} ({{ pi.professorEmail }})</p>
+                        </div>
+                      </div>
+
+                      <!-- Camps del pla individualitzat -->
+                      <div class="pi-form-fields">
+                        <div class="form-row">
+                          <div class="form-field half-width">
+                            <label class="field-label">Dificultat:</label>
+                            <div class="field-input" :class="{ 'empty-state': !pi.dificultat }">
+                              {{ pi.dificultat || '' }}
+                            </div>
+                          </div>
+                          <div class="form-field half-width">
+                            <label class="field-label">Gravetat:</label>
+                            <div class="field-input" :class="{ 'empty-state': !pi.gravetat }">
+                              {{ pi.gravetat || '' }}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="form-field">
+                          <label class="field-label">Justificació:</label>
+                          <div class="field-textarea" :class="{ 'empty-state': !pi.justificacio }">
+                            {{ pi.justificacio || '' }}
+                          </div>
+                        </div>
+
+                        <div class="form-field">
+                          <label class="field-label">Proposta educativa:</label>
+                          <div class="field-textarea" :class="{ 'empty-state': !pi.proposta_educativa }">
+                            {{ pi.proposta_educativa || '' }}
+                          </div>
+                        </div>
+
+                        <div class="form-field">
+                          <label class="field-label">Observacions:</label>
+                          <div class="field-textarea" :class="{ 'empty-state': !pi.observacio }">
+                            {{ pi.observacio || '' }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="ia-content empty-content">
                     <p class="placeholder-text">
-                      Aquí es mostraran les dades generades previament amb ajusts del professor.
-                    </p>
-                    <p class="placeholder-text">
-                      Aquesta funcionalitat s'implementarà properament i inclourà l'anàlisi complet del pla individualitzat.
+                      Aquest alumne encara no té cap pla individualitzat generat.
                     </p>
                   </div>
                 </div>
@@ -553,6 +629,145 @@ onMounted(() => {
   padding: 25px;
   border-radius: 6px;
   border-left: 4px solid #c8102e;
+}
+
+.pi-section {
+  background-color: white;
+  padding: 20px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pi-section:last-child {
+  margin-bottom: 0;
+}
+
+.pi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.pi-header h4 {
+  font-family: "Open Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.pi-status {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-pendent {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.status-aprovat {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-revisat {
+  background-color: #17a2b8;
+  color: white;
+}
+
+/* Info row amb dos camps */
+.pi-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.pi-info-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.info-value {
+  font-family: "Open Sans", sans-serif;
+  font-size: 15px;
+  color: #333;
+  margin: 0;
+}
+
+/* Formulari de camps del PI */
+.pi-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field.half-width {
+  flex: 1;
+}
+
+.field-label {
+  font-family: "Open Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.field-input,
+.field-textarea {
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  color: #333;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.field-textarea {
+  min-height: 100px;
+  align-items: flex-start;
+  white-space: pre-wrap;
+}
+
+.empty-state {
+  background-color: white;
+  border: 1px solid #e5e7eb;
 }
 
 /* Pestanya PDF */

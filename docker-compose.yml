@@ -36,7 +36,7 @@ services:
       dockerfile: Dockerfile
     environment:
       NODE_ENV: development
-      DB_HOST: mysql 
+      DB_HOST: mysql
       DB_USER: user_dev
       DB_PASSWORD: password_dev
       DB_NAME: db_plapi_dev
@@ -63,16 +63,17 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_HOST: "%"
       MYSQL_DATABASE: db_plapi_dev
       MYSQL_USER: user_dev
       MYSQL_PASSWORD: password_dev
     volumes:
       # Persistencia de los datos
       - plapi-mysql-data:/var/lib/mysql
-      - ./back/db:/docker-entrypoint-initdb.d
+      - ./backend/db:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -proot_password"]
+      test:
+        ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -proot_password"]
       interval: 10s
       timeout: 5s
       retries: 5
