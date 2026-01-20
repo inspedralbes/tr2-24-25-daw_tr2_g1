@@ -72,7 +72,10 @@ async function getByRalcStudent(req, res) {
         pi.justificacio,
         pi.ruta_pdf,
         pi.data_creacio,
-        p.nom as professorNom
+        pi.dades_ia,
+        p.nom as professorNom,
+        p.cognom as professorCognom
+        p.email as professorEmail
       FROM pis pi
       LEFT JOIN professors p ON pi.professor_id = p.id
       WHERE pi.alumne_ralc = ?

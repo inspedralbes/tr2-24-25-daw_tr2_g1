@@ -1,11 +1,24 @@
 <script setup lang="ts">
+interface ApiResponse {
+  success: boolean
+  data?: any
+  error?: string
+}
+
 const route = useRoute();
 const studentRalc = route.params.id;
 
 // Estat de càrrega
 const isLoading = ref(true);
-const error = ref(null);
-const student = ref(null);
+const error = ref<string | null>(null);
+const student = ref<any>(null);
+
+// Estat per les pestanyes de previsualització
+const activeTab = ref<'ia' | 'pdf'>('ia');
+
+const changeTab = (tab: 'ia' | 'pdf') => {
+  activeTab.value = tab;
+};
 
 // Carregar dades de l'alumne des de l'API
 const loadStudent = async () => {
@@ -14,7 +27,7 @@ const loadStudent = async () => {
     error.value = null;
 
     // Cridar directament al endpoint de l'alumne per RALC
-    const response = await $fetch(`http://localhost:3000/api/alumne/${studentRalc}`);
+    const response = await $fetch<ApiResponse>(`http://localhost:3000/api/alumne/${studentRalc}`);
 
     console.log("Response completa:", response);
 
@@ -25,7 +38,7 @@ const loadStudent = async () => {
       error.value = response.error || "Error al carregar les dades";
       console.error("Format de resposta incorrecte:", response);
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error("Error carregant alumne:", e);
     error.value = "Error al carregar les dades de l'alumne";
   } finally {
@@ -43,7 +56,7 @@ onMounted(() => {
   <div class="student-detail-page">
     <!-- Navegació -->
     <div class="nav-back">
-      <NuxtLink to="../pi/search" class="btn-back"> ← Tornar a la cerca </NuxtLink>
+      <NuxtLink to="/pi/search" class="btn-back"> ← Tornar a la cerca </NuxtLink>
     </div>
 
     <!-- Loading -->
@@ -153,11 +166,57 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- DRETA: Previsualització PDF (placeholder) -->
+        <!-- DRETA: Previsualització amb pestanyes -->
         <div class="detail-right">
-          <div class="pdf-preview">
-            <p>Previsualització del PDF</p>
-            <small>Aquesta funcionalitat s'implementarà properament</small>
+          <div class="preview-container">
+            <!-- Pestanyes -->
+            <div class="tabs-header">
+              <button 
+                :class="['tab-button', { active: activeTab === 'ia' }]"
+                @click="changeTab('ia')"
+              >
+                Dades generades previament
+              </button>
+              <button 
+                :class="['tab-button', { active: activeTab === 'pdf' }]"
+                @click="changeTab('pdf')"
+              >
+                PDF Original
+              </button>
+            </div>
+
+            <!-- Contingut de les pestanyes -->
+            <div class="tabs-content">
+              <!-- Pestanya: Dades generades per IA -->
+              <div v-if="activeTab === 'ia'" class="tab-panel">
+                <div class="ia-preview">
+                  <h3>Informe generat previament</h3>
+                  <div class="ia-content">
+                    <p class="placeholder-text">
+                      Aquí es mostraran les dades generades previament amb ajusts del professor.
+                    </p>
+                    <p class="placeholder-text">
+                      Aquesta funcionalitat s'implementarà properament i inclourà l'anàlisi complet del pla individualitzat.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pestanya: PDF Original -->
+              <div v-if="activeTab === 'pdf'" class="tab-panel">
+                <div class="pdf-preview">
+                  <h3>Document PDF original</h3>
+                  <div class="pdf-viewer-placeholder">
+                    <p class="placeholder-text">
+                      Aquí es mostrarà la previsualització del document PDF original carregat pel professor.
+                    </p>
+                    <p class="placeholder-text">
+                      Aquesta funcionalitat s'implementarà properament amb un visor de PDFs integrat.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -416,31 +475,124 @@ onMounted(() => {
   justify-content: center;
 }
 
-.pdf-preview {
+/* Contenidor de pestanyes */
+.preview-container {
   width: 100%;
-  height: 700px;
-  background-color: #2c2c2c;
+  background-color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Header de les pestanyes */
+.tabs-header {
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  background-color: #f8f8f8;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 16px 24px;
+  background: none;
+  border: none;
+  font-family: "Open Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-button:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.tab-button.active {
+  color: #c8102e;
+  background-color: white;
+  border-bottom-color: #c8102e;
+}
+
+/* Contingut de les pestanyes */
+.tabs-content {
+  min-height: 600px;
+}
+
+.tab-panel {
+  padding: 30px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Pestanya IA */
+.ia-preview h3 {
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.ia-content {
+  background-color: #f8f9fa;
+  padding: 25px;
+  border-radius: 6px;
+  border-left: 4px solid #c8102e;
+}
+
+/* Pestanya PDF */
+.pdf-preview {
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-preview h3 {
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.pdf-viewer-placeholder {
+  background-color: #2c2c2c;
+  padding: 60px 40px;
+  border-radius: 6px;
+  text-align: center;
+  min-height: 400px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: white;
-  padding: 40px;
 }
 
-.pdf-preview p {
+.placeholder-text {
   font-family: "Open Sans", sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 10px 0;
+  font-size: 15px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 15px;
 }
 
-.pdf-preview small {
-  font-family: "Open Sans", sans-serif;
-  font-size: 14px;
-  opacity: 0.7;
+.pdf-viewer-placeholder .placeholder-text {
+  color: #aaa;
 }
 
 @media (max-width: 1024px) {
