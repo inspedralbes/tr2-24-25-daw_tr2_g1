@@ -1,6 +1,8 @@
 <script setup>
 import { getByRalcStudent, createStudent } from "../../services/apiStudent.js";
 
+const router = useRouter();
+
 const inputRalc = ref("");
 const blockedInput = ref(true);
 const dniError = ref(false);
@@ -15,21 +17,34 @@ const formData = ref({
 
 // Función para comprobar si el estudiante existe.
 async function fetchStudentByRalc() {
-  console.log("Buscando RALC:", inputRalc.value);
+  console.log("--- INICIO BÚSQUEDA ---");
+  // ... logs ...
 
   if (!inputRalc.value) return;
 
-  const data = await getByRalcStudent(inputRalc.value);
+  try {
+    const response = await getByRalcStudent(inputRalc.value);
+    console.log("2. Datos recibidos:", response); 
 
-  const existStudent = data && data.length > 0;
+    let existStudent = false;
 
-  if (existStudent) {
-    // CASO A: SI EXISTE -> Navegar
+    if (Array.isArray(response)) {
+        existStudent = response.length > 0;
+    } 
+    else if (response && response.success === true && response.data) {
+        existStudent = Object.keys(response.data).length > 0;
+    }
+    else if (response && (response.ralc || response.id)) {
+        existStudent = true;
+    }
 
-    await navigateTo(`/student/${inputRalc.value}`);
-  } else {
-    // CASO B: NO EXISTE -> Desbloquear el formulario
-
+    if (existStudent) {      
+      await navigateTo(`/student/${inputRalc.value}`); 
+    } else {
+      blockedInput.value = false;
+    }
+  } catch (e) {
+    console.error("ERROR EN BÚSQUEDA:", e);
     blockedInput.value = false;
   }
 }
@@ -58,52 +73,46 @@ function handleDniInput() {
 }
 
 // Función para enviar datos al padre.
-
 async function submitStudentForm() {
+  // 1. Basic validation
   if (!inputRalc.value) {
     alert("Has d'introduir un RALC vàlid.");
     return { success: false };
   }
-  
+
+  // 2. Creation Logic (Only if form is unblocked)
   if (!blockedInput.value) {
-     if (!formData.value.name) {
-        alert("El nom és obligatori.");
-        return { success: false };
-     }
-     
-     if (dniError.value) {
-        alert("El DNI no és vàlid.");
-        return { success: false };
-     }
+    if (!formData.value.name) {
+      alert("El nom és obligatori.");
+      return { success: false };
+    }
 
-     const paqueteAEnviar = {
-       ralc: inputRalc.value,
-       ...formData.value,
-     };
+    if (dniError.value) {
+      alert("El DNI no és vàlid.");
+      return { success: false };
+    }
 
-     try {
-       const respuesta = await createStudent(paqueteAEnviar);
-       if (respuesta && respuesta.success) {
-         return { success: true, data: paqueteAEnviar };
-       } else {
-         return { success: false };
-       }
-     } catch (e) {
-       console.error(e);
-       throw new Error("Error connectant amb el servidor per guardar l'alumne.");
-     }
-  } else {
-     // CASO: Alumno ya existía (o solo pusimos RALC). 
-     // Retornamos los datos mínimos necesarios para el PDF.
-     return { 
-        success: true, 
-        data: { 
-            ralc: inputRalc.value, 
-            name: formData.value.name || "Alumne", 
-            surname: formData.value.surname || inputRalc.value 
-        } 
-     };
+    const paqueteAEnviar = {
+      ralc: inputRalc.value,
+      ...formData.value,
+    };
+
+    try {
+      const respuesta = await createStudent(paqueteAEnviar);
+      
+      if (respuesta && (respuesta.success || respuesta.id)) { // Adjusted check based on typical API
+        return { success: true, data: paqueteAEnviar };
+      } else {
+        return { success: false };
+      }
+    } catch (e) {
+      console.error(e);
+      // Ideally, don't throw inside a function called by parent, return false or error obj
+      return { success: false, error: e.message }; 
+    }
   }
+  
+  return { success: false, message: "Form is blocked" };
 }
 
 defineExpose({
@@ -121,7 +130,7 @@ defineExpose({
         v-model="inputRalc"
         type="text"
         placeholder="Introduce RALC + Enter"
-        @keypress.enter="fetchStudentByRalc"
+        @keypress.enter.prevent="fetchStudentByRalc"
         :disabled="!blockedInput"
       />
     </div>

@@ -3,65 +3,69 @@ import { pool } from "../db.js";
 export async function createStudentPI(req, res) {
   console.log("--> HE RECIBIDO ESTO EN EL BODY (PI):", req.body);
 
-  // 1. Desestructuramos los datos.
-  // Nota: 'ralc' vendrá del front y lo usaremos para 'alumne_ralc'
   const {
     ralc,
-    professor_id,
+    professor_id, // Asegúrate de enviar esto desde el front (o hardcodeado por ahora)
     dificultat,
     gravetat,
     justificacio,
     proposta_educativa,
     observacio,
-    ruta_pdf,
+    ruta_pdf, // Puede ser el nombre del archivo si no lo guardas en disco aún
   } = req.body;
 
-  // 2. Validamos los campos que son NOT NULL en tu base de datos
-  if (!ralc || !professor_id || !ruta_pdf) {
+  // 1. Validación básica.
+  // Nota: Si 'ruta_pdf' no es crítica, quítala de aquí.
+  if (!ralc) {
     res.status(400).json({
-      error: "Faltan datos obligatorios (RALC, ID Profesor o Ruta PDF)",
+      error: "Falta el RALC del alumno.",
     });
     return;
   }
 
   try {
-    // 3. Ejecutamos la inserción
-    const [result] = await pool.query(
-      `INSERT INTO pis 
-      (alumne_ralc, professor_id, dificultat, gravetat, justificacio, proposta_educativa, observacio, ruta_pdf) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        ralc,
-        professor_id,
-        dificultat,
-        gravetat,
-        justificacio,
-        proposta_educativa,
-        observacio,
-        ruta_pdf,
-      ],
-    );
+    // 2. Ejecutamos la inserción
+    // Usamos NULL si algún campo de texto viene vacío
+    const query = `
+      INSERT INTO pis 
+      (alumne_ralc, professor_id, dificultat, gravetat, justificacio, proposta_educativa, observacio, ruta_pdf, data_creacio) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `;
+
+    const values = [
+      ralc,
+      professor_id || 1, // Fallback: Si no llega ID, asigna el 1 (asegúrate que existe un profe con id 1)
+      dificultat || null,
+      gravetat || null,
+      justificacio || null,
+      proposta_educativa || null,
+      observacio || null,
+      ruta_pdf || "archivo_pendiente.pdf",
+    ];
+
+    const [result] = await pool.query(query, values);
 
     console.log("PI creado con ID:", result.insertId);
 
-    // 4. Devolvemos respuesta de éxito
     res.status(201).json({
+      success: true,
       message: "Plan Individualizado creado correctamente",
       id: result.insertId,
     });
   } catch (error) {
-    // 5. Manejo de errores
     console.error("Error al crear PI:", error);
 
-    // Error 1452 en MySQL significa que falló una Foreign Key
-    // (es decir, el RALC del alumno o el ID del profesor no existen)
     if (error.errno === 1452) {
       res.status(400).json({
+        success: false,
         error:
-          "No se puede crear el PI: El Alumno (RALC) o el Profesor (ID) no existen.",
+          "Error de Relación: El Alumno (RALC) o el Profesor no existen en la base de datos.",
       });
     } else {
-      res.status(500).json({ error: "Error al guardar en la base de datos" });
+      res.status(500).json({
+        success: false,
+        error: "Error interno al guardar en la base de datos",
+      });
     }
   }
 }

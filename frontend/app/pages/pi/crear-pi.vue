@@ -82,7 +82,14 @@ async function handleSaveAndAnalyze() {
     </div>
   </div>
 
-  <div v-if="step === 2"></div>
+  <div v-if="step === 2">
+    <ReviewFileResponse
+      :student="studentData"
+      :aiData="piAnalysisData"
+      :fileName="fileUploadRef?.pdfFile?.name"
+      @back="step = 1"
+    />
+  </div>
 </template>
 
 <style scoped>

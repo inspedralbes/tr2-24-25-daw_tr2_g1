@@ -18,6 +18,11 @@ export async function createStudent(req, res) {
       [ralc, name, surname, dni, date, course, group],
     );
     console.log("Alumno creado con ID:", result.insertId);
+    res.json({
+      success: true,
+      id: result.insertId,
+      message: "Alumno creado correctamente",
+    });
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") {
       res.status(409).json({ error: "Ya existe un alumno con este RALC" });

@@ -102,6 +102,7 @@ async function triggerAnalysis(studentNameForContext) {
 
 defineExpose({
   triggerAnalysis,
+  pdfFile: ref(null),
 });
 </script>
 
