@@ -13,9 +13,11 @@ export async function createStudent(req, res) {
   }
 
   try {
+    const formattedDate = new Date(date).toISOString().slice(0, 10); // Becomes "2024-01-20"
+
     const [result] = await pool.query(
       "INSERT INTO alumnes (ralc, nom, cognom, dni, data_naixement, curs, grup) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [ralc, name, surname, dni, date, course, group],
+      [ralc, name, surname, dni, formattedDate, course, group],
     );
     console.log("Alumno creado con ID:", result.insertId);
     res.json({

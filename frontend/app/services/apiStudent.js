@@ -29,3 +29,22 @@ export async function createStudent(studentData) {
 
   return await response.json();
 }
+
+export async function createStudentPI(piData) {
+  // Asegúrate de que esta URL coincida con tu routes.js del backend.
+  // En pasos anteriores usamos '/api/pis', aquí he puesto la que usaste en tu ejemplo.
+  const response = await fetch(`${API_URL}/api/alumne/plan_individualitzat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(piData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Error al guardar el PI");
+  }
+
+  return await response.json();
+}
