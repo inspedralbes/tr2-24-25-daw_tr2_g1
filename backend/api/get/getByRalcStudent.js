@@ -13,6 +13,8 @@ export async function getByRalcStudent(req, res) {
         a.cognom as cognoms,
         a.dni,
         a.data_naixement as dataNaixement,
+        a.curs,
+        a.grup,
         c.denominacio_completa as centreProcedencia
       FROM alumnes a
       LEFT JOIN centres c ON a.centre_procedencia_id = c.id
@@ -35,8 +37,11 @@ export async function getByRalcStudent(req, res) {
         pi.id,
         pi.ruta_pdf,
         pi.data_creacio,
-        pi.dificultat,        -- Agregado: útil para el frontend
-        pi.gravetat,          -- Agregado: útil para el frontend
+        pi.dificultat,    
+        pi.gravetat,
+        pi.justificacio,
+        pi.proposta_educativa,
+        pi.observacio,         
         p.nom as professorNom,
         p.email as professorEmail
       FROM pis pi
