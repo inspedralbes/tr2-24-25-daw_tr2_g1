@@ -10,6 +10,11 @@ SET NAMES utf8mb4;
 
 -- 1. INSERTAR CENTRES DE BARCELONA (Selecció neta)
 INSERT INTO `centres` (`codi_centre`, `denominacio_completa`, `email_centre`, `telefon`, `nom_naturalesa`, `codi_postal`, `adreca`, `nom_municipi`) VALUES
+('00000001','Jaume','a24jauhurgon@inspedralbes.cat',000111000,'Públic','08950','INS PEDRALBES PRUEBA','Barcelona'),
+('00000002','Oleksiy','a24oleproyat@inspedralbes.cat',000111000,'Públic','08950','INS PEDRALBES PRUEBA','Barcelona'),
+('00000003','Amin','a24amioulabi@inspedralbes.cat',000111000,'Públic','08950','INS PEDRALBES PRUEBA','Barcelona'),
+('00000004','Pol','a24polmolmun@inspedralbes.cat',000111000,'Públic','08950','INS PEDRALBES PRUEBA','Barcelona'),
+('00000001','Brian','a24bribriera@inspedralbes.cat',000111000,'Públic','08950','INS PEDRALBES PRUEBA','Barcelona'),
 ('08001595','Escola Baixeras','a8001595@xtec.cat',933105295,'Públic','08002','c. Salvador Aulet, 1','Barcelona'),
 ('08001601','Escola Parc de la Ciutadella','a8001601@xtec.cat',933195847,'Públic','08003','pg. de Circumval.lació, 5','Barcelona'),
 ('08001649','Escola Mossèn Jacint Verdaguer','a8001649@xtec.cat',934240201,'Públic','08004','c. Lleida, 32','Barcelona'),
