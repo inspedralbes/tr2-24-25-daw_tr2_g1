@@ -67,6 +67,30 @@ const getParsedData = (dadesIa: any) => {
   }
 };
 
+// Funció per obtenir l'URL del PDF identificat pel RALC
+const getPdfUrl = () => {
+  if (!student.value?.ralc) return null;
+  
+  const baseURL = 'http://localhost:3000';
+  
+  // Utilitzar el RALC de l'alumne per obtenir el seu PDF
+  return `${baseURL}/api/pdf/${student.value.ralc}`;
+};
+
+// Funció per descarregar el PDF
+const downloadPDF = () => {
+  const pdfUrl = getPdfUrl();
+  if (!pdfUrl) return;
+  
+  const link = document.createElement('a');
+  link.href = pdfUrl;
+  link.download = `${student.value?.ralc}.pdf`;
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 // Carregar dades al muntar el component
 onMounted(() => {
   loadStudent();
@@ -281,14 +305,21 @@ onMounted(() => {
               <!-- Pestanya: PDF Original -->
               <div v-if="activeTab === 'pdf'" class="tab-panel">
                 <div class="pdf-preview">
-                  <h3>Document PDF original</h3>
-                  <div class="pdf-viewer-placeholder">
-                    <p class="placeholder-text">
-                      Aquí es mostrarà la previsualització del document PDF original carregat pel professor.
-                    </p>
-                    <p class="placeholder-text">
-                      Aquesta funcionalitat s'implementarà properament amb un visor de PDFs integrat.
-                    </p>
+                  <div class="pdf-header">
+                    <h3>Document PDF original</h3>
+                  </div>
+                  <div class="pdf-viewer-container">
+                    <iframe 
+                      v-if="getPdfUrl()" 
+                      :src="getPdfUrl() ?? undefined" 
+                      class="pdf-iframe"
+                      frameborder="0"
+                    ></iframe>
+                    <div v-else class="pdf-viewer-placeholder">
+                      <p class="placeholder-text">
+                        Aquest alumne encara no té cap document PDF carregat.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -776,18 +807,69 @@ onMounted(() => {
   flex-direction: column;
 }
 
-.pdf-preview h3 {
-  font-family: "Open Sans", sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
+.pdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 2px solid #e0e0e0;
 }
 
+.pdf-header h3 {
+  font-family: "Open Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.btn-download {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #c8102e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.btn-download:hover:not(:disabled) {
+  background-color: #a00d25;
+}
+
+.btn-download:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-download svg {
+  flex-shrink: 0;
+}
+
+.pdf-viewer-container {
+  width: 100%;
+  height: 600px;
+  border-top: 2px solid #e0e0e0;
+  padding-top: 0;
+  background-color: #f5f5f5;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: white;
+}
+
 .pdf-viewer-placeholder {
-  background-color: #2c2c2c;
+  background-color: #f5f5f5;
   padding: 60px 40px;
   border-radius: 6px;
   text-align: center;
