@@ -100,8 +100,57 @@ async function triggerAnalysis(studentNameForContext) {
   }
 }
 
+// ---------------------------------------------------------
+// --- NUEVA FUNCION: ENVIAR AL BACKEND (Express/Multer) ---
+// ---------------------------------------------------------
+const uploadPdfAndSaveData = async (studentRalc, aiData) => {
+  if (!pdfFile.value) {
+    throw new Error("No s'ha trobat l'arxiu PDF per pujar.");
+  }
+
+  // 1. Creamos un FormData para enviar archivo binario + texto
+  const formData = new FormData();
+
+  // Datos obligatorios - IMPORTANTE: Añadir antes del archivo para que Multer pueda leerlo en el filename
+  formData.append("ralc", studentRalc);
+
+  // 'pdfFile' debe coincidir con upload.single('pdfFile') en tu backend
+  formData.append("pdfFile", pdfFile.value);
+
+  // Datos de la IA (Verificamos que existan)
+  if (aiData) {
+    formData.append("dificultat", aiData.dificultat || "");
+    formData.append("gravetat", aiData.gravetat || "");
+    formData.append("justificacio", aiData.justificacio || "");
+    formData.append("proposta", aiData.proposta_educativa || ""); // Ojo: en BD es proposta_educativa
+    formData.append("observacio", aiData.observacio || "");
+  }
+
+  try {
+    // Ajusta la URL a tu backend (http://localhost:3000/api/save-pi)
+    // Si tienes configurado un proxy en nuxt.config, usa solo "/api/save-pi"
+    const response = await fetch("http://localhost:3000/api/save-pi", {
+      method: "POST",
+      body: formData,
+      // IMPORTANTE: NO añadir headers de Content-Type manuales.
+      // El navegador lo gestiona automáticamente para multipart/form-data
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Error al guardar al servidor");
+    }
+
+    return await response.json(); // Devuelve { success: true, id: ..., path: ... }
+  } catch (error) {
+    console.error("Error upload:", error);
+    throw error;
+  }
+};
+
 defineExpose({
   triggerAnalysis,
+  uploadPdfAndSaveData,
   pdfFile: ref(null),
 });
 </script>

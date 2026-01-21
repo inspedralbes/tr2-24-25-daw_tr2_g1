@@ -15,6 +15,8 @@ const props = defineProps({
   fileName: { type: String, default: "" },
 });
 
+const emit = defineEmits(["back", "save"]);
+
 const router = useRouter();
 const isSaving = ref(false);
 
@@ -48,42 +50,19 @@ const populateForm = () => {
 watch(() => props.aiData, populateForm, { immediate: true });
 
 // --- GUARDADO REAL (CORREGIDO) ---
-async function handleSavePI() {
-  if (!props.student?.ralc) {
-    alert("Error: No se ha detectado el RALC del alumno.");
-    return;
-  }
-
-  isSaving.value = true;
-
-  // Preparamos el objeto exacto
-  const payload = {
-    ralc: props.student.ralc,
-    professor_id: 1, // Hardcodeado temporalmente
+// --- REEMPLAZADO POR EMIT para que el padre gestione la subida de archivo ---
+function handleSavePI() {
+  // Emitimos los datos limpios al padre (crear-pi.vue)
+  // El padre llamará a fileUpload.uploadPdfAndSaveData con estos datos
+  const dataToSave = {
     dificultat: formData.value.dificultat,
     gravetat: formData.value.gravetat,
     justificacio: formData.value.justificacio,
     proposta_educativa: formData.value.proposta_educativa,
     observacio: formData.value.observacio,
-    ruta_pdf: props.fileName || "generado_por_ia.pdf",
   };
-
-  try {
-    // LLAMADA A LA API (Automática si usas utils/)
-    const data = await createStudentPI(payload);
-
-    // ÉXITO
-    console.log("PI creado con ID:", data.id);
-    alert("✅ PI Guardado correctamente en la base de datos!");
-
-    // Opcional: router.push('/dashboard');
-  } catch (error) {
-    // ERROR
-    console.error("Error saving PI:", error);
-    alert("❌ Error al guardar: " + error.message);
-  } finally {
-    isSaving.value = false;
-  }
+  
+  emit("save", dataToSave);
 }
 </script>
 
