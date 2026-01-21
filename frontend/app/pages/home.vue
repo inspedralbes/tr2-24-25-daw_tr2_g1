@@ -72,10 +72,10 @@ onMounted(() => {
           <div class="arrow">→</div>
         </NuxtLink>
 
-        <NuxtLink to="/pi/search" class="card-gencat">
+        <NuxtLink to="/centre/dashboard" class="card-gencat">
           <div class="text-card">
-            <h3>{{ t.opcion_form }}</h3>
-            <p>{{ t.desc_form }}</p>
+            <h3>Crear professors</h3>
+            <p>Introdueix el correu (XTEC/Gmail) del docent per donar-li accés als PIs d'aquest centre.</p>
           </div>
           <div class="arrow">→</div>
         </NuxtLink>
