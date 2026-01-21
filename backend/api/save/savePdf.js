@@ -17,18 +17,17 @@ if (!fs.existsSync(uploadDir)) {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadDir); // Carpeta donde se guardan
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // Generamos nombre único: ralc-timestamp.pdf
-    // Intentamos recuperar el RALC del body (debe venir ANTES del archivo en FormData)
+    // 1. Recuperamos el RALC del body
+    // Nota: Es vital que en el FormData del frontend, el campo 'ralc' 
+    // se añada ANTES que el campo del archivo ('file').
     const ralc = req.body.ralc ? req.body.ralc.trim() : "unknown";
-    const uniqueSuffix = Date.now();
-    // Limpiamos el nombre original de caracteres raros
-    const sanitizedOriginal = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
 
-    // Nombre final: pi-[RALC]-[TIMESTAMP].pdf
-    cb(null, `pi-${ralc}-${uniqueSuffix}.pdf`);
+    // 2. Definimos el nombre final directamente
+    // Estructura: [RALC].pdf
+    cb(null, `${ralc}.pdf`);
   },
 });
 
