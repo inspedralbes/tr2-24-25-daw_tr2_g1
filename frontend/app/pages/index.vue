@@ -1,84 +1,111 @@
 <script setup>
 import { useRouter } from "vue-router";
+import { onMounted, ref, computed } from "vue";
 
-// 1. Importamos el idioma global
-const idioma = useIdioma();
+// ID DE CLIENTE
+const GOOGLE_CLIENT_ID = "182669171058-e7grkc62veee2a4t7k00dfqb450vo6j3.apps.googleusercontent.com";
+
+const idioma = useIdioma(); // Asumo que tienes este composable
 const router = useRouter();
 
-const email = ref("");
 const errorMessage = ref("");
 const loading = ref(false);
 
-// 2. DICCIONARIO DE TRADUCCIONS LOGIN
+// Traducciones
 const t = computed(() => {
   const textos = {
     ca: {
       subtitle: "Accés per a Centres Educatius",
-      label_email: "Correu electrònic (xtec)",
-      btn_entrar: "Entrar",
-      btn_loading: "Entrant...",
+      btn_loading: "Validant...",
       footer: "© Generalitat de Catalunya",
       error_connexio: "Error de connexió amb el servidor",
+      error_no_centre: "Aquest correu no pertany a cap centre registrat.",
+      error_generic: "No s'ha pogut iniciar sessió."
     },
     es: {
       subtitle: "Acceso para Centros Educativos",
-      label_email: "Correo electrónico (xtec)",
-      btn_entrar: "Entrar",
-      btn_loading: "Entrando...",
+      btn_loading: "Validando...",
       footer: "© Generalitat de Catalunya",
       error_connexio: "Error de conexión con el servidor",
+      error_no_centre: "Este correo no pertenece a ningún centro registrado.",
+      error_generic: "No se pudo iniciar sesión."
     },
     en: {
       subtitle: "Access for Educational Centers",
-      label_email: "Email address (xtec)",
-      btn_entrar: "Log In",
-      btn_loading: "Logging in...",
+      btn_loading: "Validating...",
       footer: "© Generalitat de Catalunya",
       error_connexio: "Connection error with server",
+      error_no_centre: "This email does not belong to any registered center.",
+      error_generic: "Could not login."
     },
   };
-  return textos[idioma.value];
+  return textos[idioma.value] || textos.ca;
 });
 
-const handleLogin = async () => {
+// Respuesta de Google
+const handleGoogleResponse = async (response) => {
   loading.value = true;
   errorMessage.value = "";
 
   try {
-    loading.value = true;
-    errorMessage.value = "";
-    const baseURL = import.meta.server ? 'http://backend:3000' : 'http://localhost:3000'
-    const response = await fetch(`${baseURL}/api/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.value }),
+    // Usamos el puerto 3000 porque el Backend está ahí
+    const baseURL = 'http://localhost:3000'; 
+    
+    // Enviamos el token al backend para que verifique contra la DB
+    const res = await fetch(`${baseURL}/api/login-google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: response.credential }),
     });
 
-    const data = await response.json();
+    const data = await res.json();
 
-    if (response.ok) {
-      localStorage.setItem("user_centre", JSON.stringify(data.centre));
-      router.push("/home");
+    if (res.ok && data.success) {
+      // Login correcto: Guardamos datos y redirigimos
+      localStorage.setItem('user_centre', JSON.stringify(data.centre));
+      router.push('/home');
     } else {
-      if (data.error && typeof data.error === "string") {
-        errorMessage.value = data.error;
+      // Errores controlados (404, etc)
+      if (res.status === 404) {
+        errorMessage.value = t.value.error_no_centre;
       } else {
-        errorMessage.value = "Correu incorrecte o accés denegat.";
+        errorMessage.value = data.error || t.value.error_generic;
       }
-      // Si el backend devuelve un error, lo mostramos tal cual}
     }
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     errorMessage.value = t.value.error_connexio;
   } finally {
     loading.value = false;
   }
 };
+
+onMounted(() => {
+  // Función recursiva para asegurar que el botón se pinta cuando Google carga
+  const renderGoogleButton = () => {
+    if (window.google && window.google.accounts) {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+        auto_select: false,
+        cancel_on_tap_outside: false
+      });
+
+      window.google.accounts.id.renderButton(
+        document.getElementById('google-signin-button'),
+        { theme: 'outline', size: 'large', width: 320, locale: idioma.value }
+      );
+    } else {
+      // Si el script aun no ha bajado, reintentamos en 200ms
+      setTimeout(renderGoogleButton, 200);
+    }
+  };
+
+  renderGoogleButton();
+});
 </script>
 
 <template>
-  <!-- Contenido principal de la página login -->
-
   <div class="glass-bg">
     <div class="login-card">
       <div class="card-header">
@@ -87,24 +114,15 @@ const handleLogin = async () => {
 
       <p class="subtitle">{{ t.subtitle }}</p>
 
-      <form @submit.prevent="handleLogin">
-        <div class="input-wrap">
-          <input
-            type="email"
-            v-model="email"
-            placeholder=" "
-            required
-            id="email-input"
-          />
-          <label for="email-input">{{ t.label_email }}</label>
+      <div class="login-container">
+        <div id="google-signin-button" class="google-btn-wrapper"></div>
+        
+        <div v-if="loading" class="loading-state">
+          <p>{{ t.btn_loading }}</p>
         </div>
 
         <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
-
-        <button type="submit" class="btn-primary" :disabled="loading">
-          {{ loading ? t.btn_loading : t.btn_entrar }}
-        </button>
-      </form>
+      </div>
 
       <div class="footer-links">
         <span>{{ t.footer }}</span>
@@ -137,14 +155,12 @@ const handleLogin = async () => {
   text-align: center;
 }
 
-/* ELIMINADO EL ESTILO .logo-circle PORQUE YA NO SE USA */
-
 h1 {
-  margin: 0 0 10px 0; /* Un poco de margen abajo */
+  margin: 0 0 10px 0;
   color: #d9001d;
   font-weight: 800;
   letter-spacing: -1px;
-  font-size: 2.5rem; /* He hecho el título un pelín más grande al quitar el logo */
+  font-size: 2.5rem;
 }
 
 .subtitle {
@@ -153,76 +169,33 @@ h1 {
   font-size: 0.9rem;
 }
 
-/* Input y Labels */
-.input-wrap {
-  position: relative;
-  margin-bottom: 20px;
-  text-align: left;
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  min-height: 80px;
 }
 
-.input-wrap input {
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
   width: 100%;
-  padding: 15px;
-  border: 1px solid #cdd4dc;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #f9f9f9;
-  outline: none;
-  box-sizing: border-box;
-  transition: all 0.2s;
+  min-height: 45px; /* Evita saltos de layout */
 }
 
-.input-wrap input:focus {
-  background: white;
-  border-color: #d9001d;
-  box-shadow: 0 0 0 4px rgba(217, 0, 29, 0.1);
-}
-
-.input-wrap label {
-  position: absolute;
-  left: 15px;
-  top: 16px;
-  color: #888;
-  pointer-events: none;
-  transition: 0.2s ease all;
-}
-
-.input-wrap input:focus ~ label,
-.input-wrap input:not(:placeholder-shown) ~ label {
-  top: -10px;
-  left: 10px;
-  font-size: 0.75rem;
-  background: white;
-  padding: 0 5px;
-  color: #d9001d;
-  font-weight: bold;
-}
-
-.btn-primary {
-  width: 100%;
-  padding: 15px;
-  background: #d9001d;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(217, 0, 29, 0.3);
-  transition: background 0.2s;
-}
-
-.btn-primary:hover {
-  background: #b00018;
+.loading-state {
+  color: #666;
+  font-size: 0.9rem;
 }
 
 .error-msg {
   color: #d9001d;
   font-size: 0.85rem;
-  margin-bottom: 15px;
   background-color: #fff5f5;
-  padding: 5px;
+  padding: 10px;
   border-radius: 4px;
+  width: 100%;
 }
 
 .footer-links {

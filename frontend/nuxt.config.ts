@@ -1,13 +1,30 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: "2025-07-15",
+  compatibilityDate: "2024-11-01", // Actualizado a fecha estable
+
+  // 1. CARGA GLOBAL DEL SCRIPT DE GOOGLE
+  app: {
+    head: {
+      script: [
+        {
+          src: 'https://accounts.google.com/gsi/client',
+          async: true,
+          defer: true
+        }
+      ]
+    }
+  },
+
   components: {
     dirs: ["~/components", "~/components/comp-pi"],
   },
+  
   devtools: { enabled: true },
+  
   devServer: {
-    host: process.env.URL_FRONTEND || "http://localhost",
-    port: Number(process.env.PORT_FRONTEND) || 5173,
+    // Esto permite que Docker lo exponga bien
+    host: "0.0.0.0", 
+    port: 5173, 
   },
 
   modules: ["@nuxt/ui"],
