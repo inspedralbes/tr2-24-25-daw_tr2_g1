@@ -17,6 +17,7 @@ services:
       dockerfile: Dockerfile
     environment:
       NODE_ENV: development
+      VITE_GEMINI_KEY: AIzaSyDUacAdroTbnyW3CDPiEIiDmB2tsxDwXts
     ports:
       - "3001:5173"
     volumes:
@@ -41,6 +42,7 @@ services:
       DB_PASSWORD: password_dev
       DB_NAME: db_plapi_dev
       DB_PORT: 3306
+      VITE_GEMINI_KEY: AIzaSyDUacAdroTbnyW3CDPiEIiDmB2tsxDwXts
     ports:
       - "3000:3000"
     volumes:

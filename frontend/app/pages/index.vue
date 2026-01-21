@@ -109,7 +109,7 @@ onMounted(() => {
   <div class="glass-bg">
     <div class="login-card">
       <div class="card-header">
-        <h1>PlaPI</h1>
+        <h1>EduPI</h1>
       </div>
 
       <p class="subtitle">{{ t.subtitle }}</p>
