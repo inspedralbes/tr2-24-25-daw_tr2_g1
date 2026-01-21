@@ -52,6 +52,26 @@ async function handleSaveAndAnalyze() {
     isGlobalLoading.value = false;
   }
 }
+
+// NUEVA FUNCIÓN FINAL
+async function handleFinalSave(reviewedFormData) {
+  isGlobalLoading.value = true;
+  try {
+     const ralc = studentData.value.ralc;
+     // Llamamos al hijo para que suba el fichero + los datos revisados
+     const result = await fileUploadRef.value.uploadPdfAndSaveData(ralc, reviewedFormData);
+     
+     console.log("Upload result:", result);
+     alert("✅ PI i PDF guardats correctament!");
+     
+     await navigateTo(`/home`); 
+  } catch (err) {
+      console.error("Error saving final PI:", err);
+      alert("Error al guardar: " + err.message);
+  } finally {
+      isGlobalLoading.value = false;
+  }
+}
 </script>
 
 <template>
@@ -63,7 +83,7 @@ async function handleSaveAndAnalyze() {
 
   <hr />
 
-  <div v-if="step === 1">
+  <div v-show="step === 1">
     <RegisterStudent ref="registerStudentRef" />
 
     <br />
@@ -88,6 +108,7 @@ async function handleSaveAndAnalyze() {
       :aiData="piAnalysisData"
       :fileName="fileUploadRef?.pdfFile?.name"
       @back="step = 1"
+      @save="handleFinalSave"
     />
   </div>
 </template>
