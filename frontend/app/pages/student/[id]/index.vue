@@ -91,6 +91,17 @@ const downloadPDF = () => {
   document.body.removeChild(link);
 };
 
+// Computed property per ordenar els PIs pel més recent primer
+const sortedPis = computed(() => {
+  if (!student.value?.pis) return [];
+  
+  return [...student.value.pis].sort((a, b) => {
+    const dateA = new Date(a.data_creacio).getTime();
+    const dateB = new Date(b.data_creacio).getTime();
+    return dateB - dateA; // DESC (més recent primer)
+  });
+});
+
 // Carregar dades al muntar el component
 onMounted(() => {
   loadStudent();
@@ -167,12 +178,12 @@ onMounted(() => {
 
             <!-- Plans Individualitzats -->
             <div
-              v-if="student.pis && student.pis.length > 0"
+              v-if="sortedPis && sortedPis.length > 0"
               class="pis-section"
             >
               <h2>Plans Individualitzats</h2>
               <div class="pis-list">
-                <div v-for="pi in student.pis" :key="pi.id" class="pi-card">
+                <div v-for="pi in sortedPis" :key="pi.id" class="pi-card">
                   <div class="pi-header">
                     <span
                       class="pi-estat"
@@ -236,8 +247,8 @@ onMounted(() => {
               <div v-if="activeTab === 'ia'" class="tab-panel">
                 <div class="ia-preview">
                   <h3>Informe generat previament</h3>
-                  <div v-if="student?.pis && student.pis.length > 0" class="ia-content">
-                    <div v-for="pi in student.pis" :key="pi.id" class="pi-section">
+                  <div v-if="sortedPis && sortedPis.length > 0" class="ia-content">
+                    <div v-for="pi in sortedPis" :key="pi.id" class="pi-section">
                       <div class="pi-header">
                         <h4>Pla Individualitzat #{{ pi.id }}</h4>
                         

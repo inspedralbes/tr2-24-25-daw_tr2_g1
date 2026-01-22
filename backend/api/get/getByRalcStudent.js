@@ -46,7 +46,8 @@ export async function getByRalcStudent(req, res) {
         p.email as professorEmail
       FROM pis pi
       LEFT JOIN professors p ON pi.professor_id = p.id
-      WHERE pi.alumne_ralc = ?  
+      WHERE pi.alumne_ralc = ?
+      ORDER BY pi.data_creacio DESC
     `,
       [studentRalc],
     );
