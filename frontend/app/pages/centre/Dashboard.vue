@@ -19,6 +19,13 @@ onMounted(() => {
   }
 
   currentCentre.value = JSON.parse(session);
+  
+  // PROTECCIÓN: Si es profesor, redirigir al home (solo centros pueden gestionar docentes)
+  if (currentCentre.value?.esProfesor) {
+    router.push('/home');
+    return;
+  }
+
   fetchProfessors();
 });
 

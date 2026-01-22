@@ -82,7 +82,8 @@ onMounted(() => {
         </NuxtLink>
       </div>
 
-      <div v-if="centre && !centre.centre_id" class="admin-row">
+      <!-- MOSTRAR PANEL DE ADMIN SOLO SI ES CENTRO (NO si es profesor) -->
+      <div v-if="centre && !centre.esProfesor" class="admin-row">
         <NuxtLink to="/centre/dashboard" class="card-gencat admin-card">
           <div class="text-card">
             <h3>Gestió de Docents</h3>

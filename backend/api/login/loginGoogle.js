@@ -29,29 +29,59 @@ export const loginGoogle = async (req, res) => {
 
     console.log("Intentando login con Google para:", email);
 
-    // 2. BUSCAR EN LA BASE DE DATOS (Corregido: email_centre)
-    // Usamos 'email_centre' que es como se llama tu columna en la DB
-    const query = 'SELECT * FROM centres WHERE email_centre = ? LIMIT 1';
-    const [rows] = await pool.query(query, [email]);
+    // 2. BUSCAR PRIMERO EN LA TABLA CENTRES (para centros educativos)
+    const queryCentre = 'SELECT * FROM centres WHERE email_centre = ? LIMIT 1';
+    const [rowsCentre] = await pool.query(queryCentre, [email]);
 
-    // 3. Si no existe, error 404
-    if (!rows || rows.length === 0) {
-      return res.status(404).json({ error: 'Aquest correu no pertany a cap centre registrat' });
+    // Si encontramos el email en CENTRES, login como centro
+    if (rowsCentre && rowsCentre.length > 0) {
+      const centre = rowsCentre[0];
+      console.log("✅ Login como CENTRO:", centre.denominacio_completa);
+      
+      return res.json({ 
+        success: true,
+        message: "Login correcte com a centre",
+        centre: {
+          id: centre.id,
+          nom: centre.denominacio_completa,
+          codi: centre.codi_centre,
+          email: centre.email_centre,
+        }
+      });
     }
 
-    const centre = rows[0];
+    // 3. SI NO ESTÁ EN CENTRES, BUSCAR EN LA TABLA PROFESSORS (para profesores autorizados)
+    const queryProf = `
+      SELECT p.id, p.nom, p.email, p.centre_id, c.denominacio_completa as centre_nom, c.codi_centre
+      FROM professors p 
+      INNER JOIN centres c ON p.centre_id = c.id 
+      WHERE p.email = ? 
+      LIMIT 1
+    `;
+    const [rowsProf] = await pool.query(queryProf, [email]);
 
-    // 4. Login exitoso
-    return res.json({ 
-      success: true,
-      message: "Login correcte",
-      centre: {
-        id: centre.id,
-        nom: centre.denominacio_completa,
-        codi: centre.codi_centre,
-        email: centre.email_centre,
-        // Puedes añadir la foto de google si quieres: picture: payload.picture
-      }
+    // Si encontramos el email en PROFESSORS, login como profesor
+    if (rowsProf && rowsProf.length > 0) {
+      const profesor = rowsProf[0];
+      console.log("✅ Login como PROFESOR del centre:", profesor.centre_nom);
+      
+      return res.json({ 
+        success: true,
+        message: "Login correcte com a professor",
+        centre: {
+          id: profesor.centre_id,           // IMPORTANTE: Devolvemos el ID del centro del profesor
+          nom: profesor.centre_nom,         // Nombre del centro al que pertenece
+          codi: profesor.codi_centre,       // Código del centro
+          email: profesor.email,            // Email del profesor
+          esProfesor: true,                 // Flag para saber que es profesor, no centro
+          profesorNom: profesor.nom         // Nombre del profesor
+        }
+      });
+    }
+
+    // 4. Si no existe ni en centres ni en professors, error 404
+    return res.status(404).json({ 
+      error: 'Aquest correu no està autoritzat. Contacta amb el teu centre per obtenir accés.' 
     });
 
   } catch (err) {
