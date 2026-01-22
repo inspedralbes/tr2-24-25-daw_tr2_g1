@@ -4,14 +4,12 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
-// --- ESTADO ---
 const currentCentre = ref(null);
 const professors = ref([]);
 const newEmail = ref('');
 const loading = ref(false);
 const message = ref({ text: '', type: '' });
 
-// --- CARGA INICIAL ---
 onMounted(() => {
   const session = localStorage.getItem('user_centre');
   
@@ -38,7 +36,6 @@ const fetchProfessors = async () => {
   }
 };
 
-// --- AÑADIR PROFESOR ---
 const addProfessor = async () => {
   if (!newEmail.value) return;
   
@@ -73,7 +70,6 @@ const addProfessor = async () => {
   }
 };
 
-// --- BORRAR PROFESOR ---
 const deleteProfessor = async (id) => {
   if (!confirm("Segur que vols eliminar l'accés a aquest correu?")) return;
   
@@ -83,8 +79,6 @@ const deleteProfessor = async (id) => {
   } catch (e) { console.error(e); }
 };
 
-// NOTA: La función 'logout' ya no se necesita aquí porque 
-// usarás el botón de la barra superior global.
 </script>
 
 <template>
@@ -150,16 +144,14 @@ const deleteProfessor = async (id) => {
 </template>
 
 <style scoped>
-/* ESTILOS ACTUALIZADOS */
 .dashboard-container { 
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: #f4f6f9; 
-  min-height: calc(100vh - 60px); /* Ajuste para que no sobre espacio si hay header global */
+  min-height: calc(100vh - 60px); 
   padding-top: 40px;
   color: #333; 
 }
 
-/* Título Centrado estilo Gencat */
 .header-title {
   text-align: center;
   margin-bottom: 40px;
@@ -174,11 +166,10 @@ const deleteProfessor = async (id) => {
 }
 
 .header-title .centre-name {
-  color: #D9001D; /* Rojo Gencat */
+  color: #D9001D;
   font-weight: bold;
 }
 
-/* Contenido Principal */
 .content { 
   max-width: 900px; 
   margin: 0 auto; 
@@ -188,7 +179,6 @@ const deleteProfessor = async (id) => {
   gap: 30px; 
 }
 
-/* Tarjetas */
 .card { 
   background: white; 
   padding: 35px; 
@@ -212,7 +202,6 @@ h3 {
   line-height: 1.5;
 }
 
-/* Formulario */
 .add-form { display: flex; gap: 15px; }
 .add-form input { 
   flex: 1; 
@@ -235,12 +224,10 @@ h3 {
 .add-form button:hover { background: #b00018; }
 .add-form button:disabled { opacity: 0.6; cursor: wait; }
 
-/* Mensajes */
 .msg { margin-top: 20px; padding: 15px; border-radius: 4px; font-size: 0.95rem; }
 .msg.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
 .msg.error { background: #fff5f5; color: #b91c1c; border: 1px solid #fecaca; }
 
-/* Tabla */
 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 th { 
   text-align: left; 

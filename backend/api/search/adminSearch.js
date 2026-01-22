@@ -1,8 +1,7 @@
 import { pool } from "../db.js";
 
-// 1. Obtener profesores de un centro ESPECÍFICO
 export async function getUsersByCentreId(req, res) {
-  const centerId = req.params.id; // Recibimos el ID por la URL
+  const centerId = req.params.id; 
 
   try {
     const query = `
@@ -19,7 +18,6 @@ export async function getUsersByCentreId(req, res) {
   }
 }
 
-// 2. Borrar profesor
 export async function deleteUser(req, res) {
   try {
     await pool.query("DELETE FROM professors WHERE id = ?", [req.params.id]);
@@ -30,7 +28,6 @@ export async function deleteUser(req, res) {
   }
 }
 
-// (Opcional) Si quieres mantener las funciones antiguas del admin global:
 export async function getAllCentres(req, res) {
     try {
         const [rows] = await pool.query("SELECT id, denominacio_completa as nom FROM centres");

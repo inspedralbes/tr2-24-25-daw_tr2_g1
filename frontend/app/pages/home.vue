@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from "vue-router";
+import { ref, computed, onMounted } from 'vue';
 
 const idioma = useIdioma();
 const router = useRouter();
@@ -51,13 +52,13 @@ onMounted(() => {
 <template>
   <div class="main-content">
     <div class="container">
+      
       <section class="intro" v-if="centre">
         <div class="header-row">
           <h1>
-            {{ t.bienvenida }}, <span class="highlight">{{ centre.nom }}</span>
+            {{ t.bienvenida }}, <span class="highlight">{{ centre.nom || centre.denominacio_completa }}</span>
           </h1>
         </div>
-
         <p class="subtitle">{{ t.intro }}</p>
       </section>
 
@@ -72,14 +73,25 @@ onMounted(() => {
           <div class="arrow">→</div>
         </NuxtLink>
 
-        <NuxtLink to="/centre/dashboard" class="card-gencat">
+        <NuxtLink to="/pi/search" class="card-gencat"> 
           <div class="text-card">
-            <h3>Crear professors</h3>
-            <p>Introdueix el correu (XTEC/Gmail) del docent per donar-li accés als PIs d'aquest centre.</p>
+            <h3>{{ t.opcion_form }}</h3>
+            <p>{{ t.desc_form }}</p>
           </div>
           <div class="arrow">→</div>
         </NuxtLink>
       </div>
+
+      <div v-if="centre && !centre.centre_id" class="admin-row">
+        <NuxtLink to="/centre/dashboard" class="card-gencat admin-card">
+          <div class="text-card">
+            <h3>Gestió de Docents</h3>
+            <p>Autoritzar correus (XTEC/Gmail) per donar accés als PIs.</p>
+          </div>
+          <div class="arrow">→</div>
+        </NuxtLink>
+      </div>
+
     </div>
   </div>
 </template>
@@ -173,4 +185,16 @@ onMounted(() => {
   margin-left: 20px;
   font-weight: bold;
 }
+
+.admin-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.admin-card {
+  width: 100%;
+  max-width: 600px; 
+}
+
 </style>
