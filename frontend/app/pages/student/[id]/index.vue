@@ -95,7 +95,7 @@ const downloadPDF = () => {
   document.body.removeChild(link);
 };
 
-// Computed property per ordenar els PIs: primer els actius, després per data més recent
+// Computed property per ordenar els PIs: primer l'actiu, després per data més recent
 const sortedPis = computed(() => {
   if (!student.value?.pis) return [];
   
@@ -113,6 +113,12 @@ const sortedPis = computed(() => {
     const dateB = new Date(b.data_creacio).getTime();
     return dateB - dateA; // DESC (més recent primer)
   });
+});
+
+// Computed property per obtenir només el PI actiu
+const activePi = computed(() => {
+  if (!student.value?.pis) return null;
+  return student.value.pis.find((pi: { estado: string; }) => pi.estado === 'actiu') || null;
 });
 
 // Carregar dades al muntar el component
@@ -256,16 +262,12 @@ onMounted(() => {
                 <div class="ia-preview">
                   <h3>Informe generat previament</h3>
                   <div
-                    v-if="sortedPis && sortedPis.length > 0"
+                    v-if="activePi"
                     class="ia-content"
                   >
-                    <div
-                      v-for="pi in sortedPis"
-                      :key="pi.id"
-                      class="pi-section"
-                    >
+                    <div class="pi-section">
                       <div class="pi-header">
-                        <h4>Pla Individualitzat #{{ pi.id }}</h4>
+                        <h4>Pla Individualitzat Actiu</h4>
                       </div>
 
                       <div class="pi-info-row">
@@ -273,7 +275,7 @@ onMounted(() => {
                           <label class="info-label">Data de creació:</label>
                           <p class="info-value">
                             {{
-                              new Date(pi.data_creacio).toLocaleDateString(
+                              new Date(activePi.data_creacio).toLocaleDateString(
                                 "ca-ES",
                               )
                             }}
@@ -284,7 +286,7 @@ onMounted(() => {
                             >Professor responsable:</label
                           >
                           <p class="info-value">
-                            {{ pi.professorNom }} ({{ pi.professorEmail }})
+                            {{ activePi.professorNom }} ({{ activePi.professorEmail }})
                           </p>
                         </div>
                       </div>
@@ -296,18 +298,18 @@ onMounted(() => {
                             <label class="field-label">Dificultat:</label>
                             <div
                               class="field-input"
-                              :class="{ 'empty-state': !pi.dificultat }"
+                              :class="{ 'empty-state': !activePi.dificultat }"
                             >
-                              {{ pi.dificultat || "" }}
+                              {{ activePi.dificultat || "" }}
                             </div>
                           </div>
                           <div class="form-field half-width">
                             <label class="field-label">Gravetat:</label>
                             <div
                               class="field-input"
-                              :class="{ 'empty-state': !pi.gravetat }"
+                              :class="{ 'empty-state': !activePi.gravetat }"
                             >
-                              {{ pi.gravetat || "" }}
+                              {{ activePi.gravetat || "" }}
                             </div>
                           </div>
                         </div>
@@ -316,9 +318,9 @@ onMounted(() => {
                           <label class="field-label">Justificació:</label>
                           <div
                             class="field-textarea"
-                            :class="{ 'empty-state': !pi.justificacio }"
+                            :class="{ 'empty-state': !activePi.justificacio }"
                           >
-                            {{ pi.justificacio || "" }}
+                            {{ activePi.justificacio || "" }}
                           </div>
                         </div>
 
@@ -326,9 +328,9 @@ onMounted(() => {
                           <label class="field-label">Proposta educativa:</label>
                           <div
                             class="field-textarea"
-                            :class="{ 'empty-state': !pi.proposta_educativa }"
+                            :class="{ 'empty-state': !activePi.proposta_educativa }"
                           >
-                            {{ pi.proposta_educativa || "" }}
+                            {{ activePi.proposta_educativa || "" }}
                           </div>
                         </div>
 
@@ -336,9 +338,9 @@ onMounted(() => {
                           <label class="field-label">Observacions:</label>
                           <div
                             class="field-textarea"
-                            :class="{ 'empty-state': !pi.observacio }"
+                            :class="{ 'empty-state': !activePi.observacio }"
                           >
-                            {{ pi.observacio || "" }}
+                            {{ activePi.observacio || "" }}
                           </div>
                         </div>
                       </div>
