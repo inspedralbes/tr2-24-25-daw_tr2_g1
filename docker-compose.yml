@@ -8,27 +8,20 @@
 
 services:
   # ----------------------------------------
-  # 1. Servicio del frontend (PlaPI Vue/Vite)
+  # 1. Servicio del frontend (PlaPI Nuxt)
   # ----------------------------------------
   frontend:
     container_name: plapi_frontend
     build:
-      # Contexto: La carpeta 'front' donde está el código
-      context: ./nuxt-project-piapp
+      context: ./frontend
       dockerfile: Dockerfile
     environment:
-      # Configuración específica de desarrollo
-      VITE_NODE_ENV: development
-      # Conexión al backend usando el nombre del servicio 'backend'
-      VITE_SOCKET_URL: http://backend:3000
+      NODE_ENV: development
     ports:
-      - "5173:3000" # Puerto de desarrollo de nuxt
+      - "3001:5173"
     volumes:
-      # Monta el código fuente de 'front' para hot-reloading
-      - ./nuxt-project-piapp:/app
-      # Volumen anónimo para preservar node_modules del contenedor
-      - /app/node_modules
-    # Asegúrate de que tu package.json en 'front' tenga un script 'dev'
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
     command: sh -c "npm install && npm run dev"
     networks:
       - plapi-network
@@ -39,30 +32,22 @@ services:
   backend:
     container_name: plapi_backend
     build:
-      # Contexto: La carpeta 'back' donde está el código
-      context: ./back
+      context: ./backend
       dockerfile: Dockerfile
     environment:
-      # Configuración de desarrollo
       NODE_ENV: development
-      # El host de la DB es el nombre del servicio: 'mysql'
       DB_HOST: mysql
-      # Otras variables que necesite tu backend
       DB_USER: user_dev
       DB_PASSWORD: password_dev
+      DB_NAME: db_plapi_dev
+      DB_PORT: 3306
     ports:
-      # Puerto del backend
       - "3000:3000"
     volumes:
-      # Monta el código fuente de 'back' para hot-reloading (nodemon)
-      - ./back:/usr/src/app
-      # Evita sobreescribir node_modules del contenedor
+      - ./backend:/usr/src/app
       - /usr/src/app/node_modules
-    # Comando para iniciar el servidor de desarrollo (nodemon o similar)
-    # Asegúrate de que tu package.json en 'back' tenga un script 'dev'
     command: sh -c "npm install && npm run dev"
     depends_on:
-      # Espera a que MySQL esté saludable antes de iniciar el backend
       mysql:
         condition: service_healthy
     networks:
@@ -78,15 +63,17 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_ROOT_HOST: "%"
       MYSQL_DATABASE: db_plapi_dev
       MYSQL_USER: user_dev
       MYSQL_PASSWORD: password_dev
     volumes:
       # Persistencia de los datos
       - plapi-mysql-data:/var/lib/mysql
-      - ./db:/docker-entrypoint-initdb.d
+      - ./backend/db:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD" ]
+      test:
+        ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -proot_password"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -123,7 +110,6 @@ services:
       - mysql
     networks:
       - plapi-network
-
 # ----------------------------------------
 # Definición de la red y volúmenes
 # ----------------------------------------
