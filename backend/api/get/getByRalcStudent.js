@@ -41,12 +41,16 @@ export async function getByRalcStudent(req, res) {
         pi.gravetat,
         pi.justificacio,
         pi.proposta_educativa,
-        pi.observacio,         
+        pi.observacio,
+        pi.estado,         
         p.nom as professorNom,
         p.email as professorEmail
       FROM pis pi
       LEFT JOIN professors p ON pi.professor_id = p.id
-      WHERE pi.alumne_ralc = ?  
+      WHERE pi.alumne_ralc = ?
+      ORDER BY 
+        CASE WHEN pi.estado = 'actiu' THEN 0 ELSE 1 END,
+        pi.data_creacio DESC
     `,
       [studentRalc],
     );

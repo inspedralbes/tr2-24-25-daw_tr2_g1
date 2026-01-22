@@ -2,7 +2,16 @@
 import { ref, computed, onMounted, toRaw, watch } from 'vue'
 
 const searchQuery = ref('')
-const isSearching = ref(false)
+
+// Obtenir el centre de l'usuari logat des de localStorage
+const userCentre = ref<any>(null)
+
+if (import.meta.client) {
+  const stored = localStorage.getItem('user_centre')
+  if (stored) {
+    userCentre.value = JSON.parse(stored)
+  }
+}
 
 const { students, columns, isLoading, error, loadStudents } = useTable()
 
@@ -10,20 +19,25 @@ onMounted(() => {
   loadStudents()
 })
 
-watch(searchQuery, (newVal) => {
-  if (newVal) {
-    isSearching.value = true
-    setTimeout(() => { isSearching.value = false }, 600)
-  } else {
-    isSearching.value = false
-  }
-})
-
+// --- Lògica de Filtratge ---
+// Cercar per RALC exacte i verificar que el centre de l'alumne coincideix amb el del usuari logat
 const filteredStudents = computed(() => {
   if (!searchQuery.value) return []
-  return toRaw(students.value).filter((s: any) => 
-    String(s.ralc) === String(searchQuery.value)
-  )
+  
+  const result = toRaw(students.value).filter((s: any) => {
+    // Coincidència exacta del RALC
+    const ralcMatch = s.ralc === searchQuery.value
+    
+    // Si no hi ha usuari logat, no filtrem per centre (per desenvolupament)
+    if (!userCentre.value) return ralcMatch
+    
+    // Verificar que el centre de l'alumne coincideix amb el del usuari logat
+    const centreMatch = s.centre_procedencia_id === userCentre.value.id
+    
+    return ralcMatch && centreMatch
+  })
+  
+  return result
 })
 </script>
 
@@ -47,7 +61,6 @@ const filteredStudents = computed(() => {
               placeholder="Introdueix el RALC de l'alumne..."
               class="search-input"
             />
-            <div v-if="isSearching" class="input-spinner"></div>
           </div>
 
           <NuxtLink to="/ajuda/com-fer-cerca" class="help-link">
@@ -57,7 +70,7 @@ const filteredStudents = computed(() => {
         
         <div class="hero-right">
           
-          <div v-if="filteredStudents.length > 0 && !isSearching" class="results-container fade-in">
+          <div v-if="filteredStudents.length > 0" class="results-container fade-in">
             <div v-for="student in filteredStudents" :key="student.ralc" class="gencat-card">
               <div class="card-header">
                 <h2>Informació de l'alumne</h2>
@@ -94,14 +107,17 @@ const filteredStudents = computed(() => {
             </div>
           </div>
 
-          <div v-else-if="searchQuery && filteredStudents.length === 0 && !isSearching" class="info-card not-found fade-in">
+          <div v-else-if="searchQuery && filteredStudents.length === 0" class="info-card not-found fade-in">
             <div class="msg-content">
                <svg class="icon-svg dark" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="11" cy="11" r="8" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M21 21L16.65 16.65" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-              <p>No s'ha trobat cap alumne amb el RALC: <strong>{{ searchQuery }}</strong></p>
-            </div>
+              <p v-if="!userCentre">No s'ha trobat cap alumne amb el RALC: <strong>{{ searchQuery }}</strong></p>
+              <p v-else>
+                No s'ha trobat cap alumne amb el RALC <strong>{{ searchQuery }}</strong> al teu centre.
+              </p>
+              </div>
           </div>
 
           <div v-else class="info-card placeholder fade-in">

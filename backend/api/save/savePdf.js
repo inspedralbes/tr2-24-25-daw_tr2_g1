@@ -82,11 +82,14 @@ export const savePdfController = async (req, res) => {
       });
     }
 
-    // INSERTAR EN LA BASE DE DATOS
+    // 4. ACTUALIZAR ESTADO DE PIS ANTERIORES (IMPORTANTE PARA HISTÓRICO)
+    await pool.query("UPDATE pis SET estado = 'inactiu' WHERE alumne_ralc = ?", [ralc]);
+
+    // 5. INSERTAR EN LA BASE DE DATOS
     const query = `
       INSERT INTO pis 
-      (alumne_ralc, ruta_pdf, dificultat, gravetat, justificacio, proposta_educativa, observacio, data_creacio) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+      (alumne_ralc, ruta_pdf, dificultat, gravetat, justificacio, proposta_educativa, observacio, data_creacio, estado) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 'actiu')
     `;
 
     const [result] = await pool.execute(query, [

@@ -1,5 +1,8 @@
 <script setup>
 import { ref } from "vue";
+import RegisterStudent from "../../components/comp-pi/RegisterStudent.vue";
+import FileUpload from "../../components/comp-pi/FileUpload.vue";
+import ReviewFileResponse from "../../components/comp-pi/ReviewFileResponse.vue";
 
 // REFERENCIAS A LOS COMPONENTES HIJOS
 const registerStudentRef = ref(null);
@@ -62,7 +65,6 @@ async function handleFinalSave(reviewedFormData) {
      const result = await fileUploadRef.value.uploadPdfAndSaveData(ralc, reviewedFormData);
      
      console.log("Upload result:", result);
-     alert("✅ PI i PDF guardats correctament!");
      
      await navigateTo(`/home`); 
   } catch (err) {

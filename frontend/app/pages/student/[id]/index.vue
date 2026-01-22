@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 
 // --- ESTADO ANIMACIÓN INTRO ---
 const showIntroAnimation = ref(true); // Controla la intro de carga
 
 interface ApiResponse {
-  success: boolean
-  data?: any
-  error?: string
+  success: boolean;
+  data?: any;
+  error?: string;
 }
 
 const route = useRoute();
@@ -20,9 +20,9 @@ const error = ref<string | null>(null);
 const student = ref<any>(null);
 
 // Estat per les pestanyes de previsualització
-const activeTab = ref<'ia' | 'pdf'>('ia');
+const activeTab = ref<"ia" | "pdf">("ia");
 
-const changeTab = (tab: 'ia' | 'pdf') => {
+const changeTab = (tab: "ia" | "pdf") => {
   activeTab.value = tab;
 };
 
@@ -33,8 +33,12 @@ const loadStudent = async () => {
     error.value = null;
 
     // Detectar si estem al servidor o al client per usar la URL correcta
-    const baseURL = import.meta.server ? 'http://backend:3000' : 'http://localhost:3000'
-    const response = await $fetch<ApiResponse>(`${baseURL}/api/alumne/${studentRalc}`);
+    const baseURL = import.meta.server
+      ? "http://backend:3000"
+      : "http://localhost:3000";
+    const response = await $fetch<ApiResponse>(
+      `${baseURL}/api/alumne/${studentRalc}`,
+    );
 
     console.log("Response completa:", response);
 
@@ -56,15 +60,19 @@ const loadStudent = async () => {
 // Funció per parsejar les dades de la IA
 const getParsedData = (dadesIa: any) => {
   if (!dadesIa) return null;
-  
+
   try {
-    if (typeof dadesIa === 'object') return dadesIa;
-    if (typeof dadesIa === 'string') {
+    // Si ja és un objecte, retornar-lo directament
+    if (typeof dadesIa === "object") return dadesIa;
+
+    // Si és un string, intentar parsejar-lo com JSON
+    if (typeof dadesIa === "string") {
       return JSON.parse(dadesIa);
     }
+
     return null;
   } catch (error) {
-    console.error('Error parsejant dades IA:', error);
+    console.error("Error parsejant dades IA:", error);
     return null;
   }
 };
@@ -72,7 +80,10 @@ const getParsedData = (dadesIa: any) => {
 // Funció per obtenir l'URL del PDF identificat pel RALC
 const getPdfUrl = () => {
   if (!student.value?.ralc) return null;
-  const baseURL = 'http://localhost:3000';
+
+  const baseURL = "http://localhost:3000";
+
+  // Utilitzar el RALC de l'alumne per obtenir el seu PDF
   return `${baseURL}/api/pdf/${student.value.ralc}`;
 };
 
@@ -80,15 +91,41 @@ const getPdfUrl = () => {
 const downloadPDF = () => {
   const pdfUrl = getPdfUrl();
   if (!pdfUrl) return;
-  
-  const link = document.createElement('a');
+
+  const link = document.createElement("a");
   link.href = pdfUrl;
   link.download = `${student.value?.ralc}.pdf`;
-  link.target = '_blank';
+  link.target = "_blank";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 };
+
+// Computed property per ordenar els PIs: primer l'actiu, després per data més recent
+const sortedPis = computed(() => {
+  if (!student.value?.pis) return [];
+  
+  return [...student.value.pis].sort((a, b) => {
+    // 1. Primer ordenar per estat (actiu primer)
+    const aActiu = a.estado === 'actiu' ? 1 : 0;
+    const bActiu = b.estado === 'actiu' ? 1 : 0;
+    
+    if (aActiu !== bActiu) {
+      return bActiu - aActiu; // Els actius primer
+    }
+    
+    // 2. Si tenen el mateix estat, ordenar per data (més recent primer)
+    const dateA = new Date(a.data_creacio).getTime();
+    const dateB = new Date(b.data_creacio).getTime();
+    return dateB - dateA; // DESC (més recent primer)
+  });
+});
+
+// Computed property per obtenir només el PI actiu
+const activePi = computed(() => {
+  if (!student.value?.pis) return null;
+  return student.value.pis.find((pi: { estado: string; }) => pi.estado === 'actiu') || null;
+});
 
 // Carregar dades al muntar el component
 onMounted(() => {
@@ -112,7 +149,9 @@ onMounted(() => {
     <div v-else class="student-detail-page fade-in">
       
       <div class="nav-back">
-        <NuxtLink to="/pi/search" class="btn-back"> ← Tornar a la cerca </NuxtLink>
+        <NuxtLink to="/pi/search" class="btn-back">
+        ← Tornar a la cerca
+      </NuxtLink>
       </div>
 
       <div v-if="isLoading" class="loading-state">
@@ -163,27 +202,38 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div v-if="student.pis && student.pis.length > 0" class="pis-section">
+            <!-- Plans Individualitzats -->
+            <div
+              v-if="sortedPis && sortedPis.length > 0"
+              class="pis-section"
+            >
+              <div class="pis-section-header">
                 <h2>Plans Individualitzats</h2>
-                <div class="pis-list">
-                  <div v-for="pi in student.pis" :key="pi.id" class="pi-card">
-                    <div class="pi-header">
-                      <span class="pi-estat" :class="pi.estat ? 'estat-' + pi.estat.toLowerCase() : ''">
-                        {{ pi.estat || "Sense estat" }}
-                      </span>
-                      <span class="pi-date" v-if="pi.data_creacio">
-                        {{ new Date(pi.data_creacio).toLocaleDateString("ca-ES") }}
-                      </span>
-                    </div>
-                    <p class="pi-professor" v-if="pi.professorNom || pi.professorCognom">
-                      Professor: {{ pi.professorNom || "" }} {{ pi.professorCognom || "" }}
-                    </p>
-                    <p class="pi-ia" v-if="pi.dades_ia">
-                      {{ pi.dades_ia.length > 150 ? pi.dades_ia.substring(0, 150) + "..." : pi.dades_ia }}
-                    </p>
+
+                <NuxtLink :to="`/saveNew/saveNewPi?ralc=${studentRalc}`" class="btn-upload-red">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                      <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                    Afegir Nou PI
+                </NuxtLink>
+              </div>
+
+              <div class="pis-list">
+                <div v-for="pi in sortedPis" :key="pi.id" class="pi-card" :class="{ 'active-pi': pi.estado === 'actiu' }">
+                  <div class="pi-header">
+                     <span class="pi-date">{{ new Date(pi.data_creacio).toLocaleDateString('ca-ES') }}</span>
+                     <span class="pi-status" :class="pi.estado === 'actiu' ? 'status-actiu' : 'status-inactiu'">
+                        {{ pi.estado === 'actiu' ? 'Actiu' : 'Històric' }}
+                     </span>
+                  </div>
+                  <div class="pi-summary">
+                        {{ pi.dificultat || 'Sense dificultat especificada' }}
                   </div>
                 </div>
+                </div>
               </div>
+              
               <div v-else class="empty-state">
                 <p>Aquest alumne encara no té plans individualitzats assignats.</p>
               </div>
@@ -193,13 +243,13 @@ onMounted(() => {
           <div class="detail-right">
             <div class="preview-container">
               <div class="tabs-header">
-                <button 
+                <button
                   :class="['tab-button', { active: activeTab === 'ia' }]"
                   @click="changeTab('ia')"
                 >
                   Dades generades previament
                 </button>
-                <button 
+                <button
                   :class="['tab-button', { active: activeTab === 'pdf' }]"
                   @click="changeTab('pdf')"
                 >
@@ -207,91 +257,123 @@ onMounted(() => {
                 </button>
               </div>
 
-              <div class="tabs-content">
-                <div v-if="activeTab === 'ia'" class="tab-panel">
-                  <div class="ia-preview">
-                    <h3>Informe generat previament</h3>
-                    <div v-if="student?.pis && student.pis.length > 0" class="ia-content">
-                      <div v-for="pi in student.pis" :key="pi.id" class="pi-section">
-                        <div class="pi-header">
-                          <h4>Pla Individualitzat #{{ pi.id }}</h4>
+            <!-- Contingut de les pestanyes -->
+            <div class="tabs-content">
+              <!-- Pestanya: Dades generades per IA -->
+              <div v-if="activeTab === 'ia'" class="tab-panel">
+                <div class="ia-preview">
+                  <h3>Informe generat previament</h3>
+                  <div
+                    v-if="activePi"
+                    class="ia-content"
+                  >
+                    <div class="pi-section">
+                      <div class="pi-header">
+                        <h4>Pla Individualitzat Actiu</h4>
+                      </div>
+
+                      <div class="pi-info-row">
+                        <div class="pi-info-field">
+                          <label class="info-label">Data de creació:</label>
+                          <p class="info-value">
+                            {{
+                              new Date(activePi.data_creacio).toLocaleDateString(
+                                "ca-ES",
+                              )
+                            }}
+                          </p>
                         </div>
-                        
-                        <div class="pi-info-row">
-                          <div class="pi-info-field">
-                            <label class="info-label">Data de creació:</label>
-                            <p class="info-value">{{ new Date(pi.data_creacio).toLocaleDateString('ca-ES') }}</p>
+                        <div class="pi-info-field">
+                          <label class="info-label"
+                            >Professor responsable:</label
+                          >
+                          <p class="info-value">
+                            {{ activePi.professorNom }} ({{ activePi.professorEmail }})
+                          </p>
+                        </div>
+                      </div>
+
+                      <!-- Camps del pla individualitzat -->
+                      <div class="pi-form-fields">
+                        <div class="form-row">
+                          <div class="form-field half-width">
+                            <label class="field-label">Dificultat:</label>
+                            <div
+                              class="field-input"
+                              :class="{ 'empty-state': !activePi.dificultat }"
+                            >
+                              {{ activePi.dificultat || "" }}
+                            </div>
                           </div>
-                          <div class="pi-info-field">
-                            <label class="info-label">Professor responsable:</label>
-                            <p class="info-value">{{ pi.professorNom }} ({{ pi.professorEmail }})</p>
+                          <div class="form-field half-width">
+                            <label class="field-label">Gravetat:</label>
+                            <div
+                              class="field-input"
+                              :class="{ 'empty-state': !activePi.gravetat }"
+                            >
+                              {{ activePi.gravetat || "" }}
+                            </div>
                           </div>
                         </div>
 
-                        <div class="pi-form-fields">
-                          <div class="form-row">
-                            <div class="form-field half-width">
-                              <label class="field-label">Dificultat:</label>
-                              <div class="field-input" :class="{ 'empty-state': !pi.dificultat }">
-                                {{ pi.dificultat || '' }}
-                              </div>
-                            </div>
-                            <div class="form-field half-width">
-                              <label class="field-label">Gravetat:</label>
-                              <div class="field-input" :class="{ 'empty-state': !pi.gravetat }">
-                                {{ pi.gravetat || '' }}
-                              </div>
-                            </div>
+                        <div class="form-field">
+                          <label class="field-label">Justificació:</label>
+                          <div
+                            class="field-textarea"
+                            :class="{ 'empty-state': !activePi.justificacio }"
+                          >
+                            {{ activePi.justificacio || "" }}
                           </div>
+                        </div>
 
-                          <div class="form-field">
-                            <label class="field-label">Justificació:</label>
-                            <div class="field-textarea" :class="{ 'empty-state': !pi.justificacio }">
-                              {{ pi.justificacio || '' }}
-                            </div>
+                        <div class="form-field">
+                          <label class="field-label">Proposta educativa:</label>
+                          <div
+                            class="field-textarea"
+                            :class="{ 'empty-state': !activePi.proposta_educativa }"
+                          >
+                            {{ activePi.proposta_educativa || "" }}
                           </div>
+                        </div>
 
-                          <div class="form-field">
-                            <label class="field-label">Proposta educativa:</label>
-                            <div class="field-textarea" :class="{ 'empty-state': !pi.proposta_educativa }">
-                              {{ pi.proposta_educativa || '' }}
-                            </div>
-                          </div>
-
-                          <div class="form-field">
-                            <label class="field-label">Observacions:</label>
-                            <div class="field-textarea" :class="{ 'empty-state': !pi.observacio }">
-                              {{ pi.observacio || '' }}
-                            </div>
+                        <div class="form-field">
+                          <label class="field-label">Observacions:</label>
+                          <div
+                            class="field-textarea"
+                            :class="{ 'empty-state': !activePi.observacio }"
+                          >
+                            {{ activePi.observacio || "" }}
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div v-else class="ia-content empty-content">
-                      <p class="placeholder-text">
-                        Aquest alumne encara no té cap pla individualitzat generat.
-                      </p>
                     </div>
                   </div>
+                  <div v-else class="ia-content empty-content">
+                    <p class="placeholder-text">
+                      Aquest alumne encara no té cap pla individualitzat
+                      generat.
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                <div v-if="activeTab === 'pdf'" class="tab-panel">
-                  <div class="pdf-preview">
-                    <div class="pdf-header">
-                      <h3>Document PDF original</h3>
-                    </div>
-                    <div class="pdf-viewer-container">
-                      <iframe 
-                        v-if="getPdfUrl()" 
-                        :src="getPdfUrl() ?? undefined" 
-                        class="pdf-iframe"
-                        frameborder="0"
-                      ></iframe>
-                      <div v-else class="pdf-viewer-placeholder">
-                        <p class="placeholder-text">
-                          Aquest alumne encara no té cap document PDF carregat.
-                        </p>
-                      </div>
+              <!-- Pestanya: PDF Original -->
+              <div v-if="activeTab === 'pdf'" class="tab-panel">
+                <div class="pdf-preview">
+                  <div class="pdf-header">
+                    <h3>Document PDF original</h3>
+                  </div>
+                  <div class="pdf-viewer-container">
+                    <iframe
+                      v-if="getPdfUrl()"
+                      :src="getPdfUrl() ?? undefined"
+                      class="pdf-iframe"
+                      frameborder="0"
+                    ></iframe>
+                    <div v-else class="pdf-viewer-placeholder">
+                      <p class="placeholder-text">
+                        Aquest alumne encara no té cap document PDF carregat.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -302,6 +384,8 @@ onMounted(() => {
       </div>
     </div>
   </div>
+  </div>
+  
 </template>
 
 <style scoped>
@@ -353,6 +437,67 @@ onMounted(() => {
 }
 
 /* --- ESTILOS GENERALES Y ALINEACIÓN --- */
+/* Nuevo contenedor para alinear Título y Botón */
+.pis-section-header {
+  display: flex;
+  justify-content: space-between; /* Título izquierda, botón derecha */
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Ajustamos el h2 para quitarle márgenes que estorben la alineación */
+.pis-section h2 {
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  color: #333;
+  margin: 0; /* Quitamos márgenes para centrarlo con el botón */
+}
+
+/* El contenedor del input (sin margen extra) */
+.newPdfupload {
+  margin: 0;
+}
+
+.hidden-input {
+  display: none;
+}
+
+/* BOTÓN ROJO GENCAT */
+.btn-upload-red {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px; /* Un poco más compacto */
+  background-color: #c8102e; /* ROJO GENCAT */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn-upload-red:hover:not(:disabled) {
+  background-color: #a00d25; /* Rojo más oscuro al pasar el ratón */
+}
+
+.btn-upload-red:disabled {
+  background-color: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.upload-error-msg {
+  color: #c8102e;
+  font-size: 13px;
+  margin-top: -10px;
+  margin-bottom: 15px;
+  text-align: right; /* Error alineado a la derecha, bajo el botón */
+}
 .student-detail-page {
   background-color: #e8e8e8;
   min-height: calc(100vh - 140px);
@@ -553,7 +698,9 @@ onMounted(() => {
 }
 
 .pdf-header h3 { font-family: "Open Sans", sans-serif; font-size: 20px; font-weight: 600; color: #333; margin: 0; }
-.btn-download { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background-color: #c8102e; color: white; border: none; border-radius: 4px; font-family: "Open Sans", sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.2s, opacity 0.2s; }
+.btn-download { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background-color: #c8102e; color: white; border: none; border-radius: 4px; font-family: "Open Sans", sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition:
+    background-color 0.2s,
+    opacity 0.2s; }
 .btn-download:hover:not(:disabled) { background-color: #a00d25; }
 .btn-download:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -571,6 +718,22 @@ onMounted(() => {
 .pdf-iframe { width: 100%; height: 100%; border: none; background-color: white; flex: 1; }
 .pdf-viewer-placeholder { background-color: #f5f5f5; padding: 60px 40px; border-radius: 6px; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .placeholder-text { font-family: "Open Sans", sans-serif; font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 15px; }
+
+
+.status-actiu {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-inactiu {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.active-pi {
+  border-left: 4px solid #c8102e;
+  background-color: #fff;
+}
 
 @media (max-width: 1024px) {
   .detail-grid { grid-template-columns: 1fr; gap: 30px; }
