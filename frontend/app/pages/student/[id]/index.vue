@@ -95,11 +95,20 @@ const downloadPDF = () => {
   document.body.removeChild(link);
 };
 
-// Computed property per ordenar els PIs pel més recent primer
+// Computed property per ordenar els PIs: primer els actius, després per data més recent
 const sortedPis = computed(() => {
   if (!student.value?.pis) return [];
   
   return [...student.value.pis].sort((a, b) => {
+    // 1. Primer ordenar per estat (actiu primer)
+    const aActiu = a.estado === 'actiu' ? 1 : 0;
+    const bActiu = b.estado === 'actiu' ? 1 : 0;
+    
+    if (aActiu !== bActiu) {
+      return bActiu - aActiu; // Els actius primer
+    }
+    
+    // 2. Si tenen el mateix estat, ordenar per data (més recent primer)
     const dateA = new Date(a.data_creacio).getTime();
     const dateB = new Date(b.data_creacio).getTime();
     return dateB - dateA; // DESC (més recent primer)
