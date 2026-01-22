@@ -29,8 +29,6 @@ export default defineNuxtConfig({
 
   modules: ["@nuxt/ui"],
 
-  css: ['~/assets/css/shared-styles.css'],
-
   runtimeConfig: {
     public: {
       GEMINI_KEY: process.env.GEMINI_KEY || "",
