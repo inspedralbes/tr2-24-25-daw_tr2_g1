@@ -1,6 +1,16 @@
 <script setup lang="ts">
 const searchQuery = ref('')
 
+// Obtenir el centre de l'usuari logat des de localStorage
+const userCentre = ref<any>(null)
+
+if (import.meta.client) {
+  const stored = localStorage.getItem('user_centre')
+  if (stored) {
+    userCentre.value = JSON.parse(stored)
+  }
+}
+
 // Utilitzar el composable useTable
 const { students, columns, isLoading, error, loadStudents } = useTable()
 
@@ -10,13 +20,24 @@ onMounted(() => {
 })
 
 // --- Lògica de Filtratge ---
-// Només cercar per RALC exacte - la taula només apareix quan hi ha coincidència completa
+// Cercar per RALC exacte i verificar que el centre de l'alumne coincideix amb el del usuari logat
 const filteredStudents = computed(() => {
   if (!searchQuery.value) return []
   
-  return toRaw(students.value).filter((s: any) => 
-    s.ralc === searchQuery.value
-  )
+  const result = toRaw(students.value).filter((s: any) => {
+    // Coincidència exacta del RALC
+    const ralcMatch = s.ralc === searchQuery.value
+    
+    // Si no hi ha usuari logat, no filtrem per centre (per desenvolupament)
+    if (!userCentre.value) return ralcMatch
+    
+    // Verificar que el centre de l'alumne coincideix amb el del usuari logat
+    const centreMatch = s.centre_procedencia_id === userCentre.value.id
+    
+    return ralcMatch && centreMatch
+  })
+  
+  return result
 })
 </script>
 
@@ -79,7 +100,10 @@ const filteredStudents = computed(() => {
 
           <!-- Missatge quan no hi ha resultats -->
           <div v-else-if="searchQuery && filteredStudents.length === 0" class="info-card">
-            <p>No s'ha trobat cap alumne amb el RALC: <strong>{{ searchQuery }}</strong></p>
+            <p v-if="!userCentre">No s'ha trobat cap alumne amb el RALC: <strong>{{ searchQuery }}</strong></p>
+            <p v-else>
+              No s'ha trobat cap alumne amb el RALC <strong>{{ searchQuery }}</strong> al teu centre.
+            </p>
           </div>
 
           <!-- Placeholder inicial -->
