@@ -52,6 +52,26 @@ async function handleSaveAndAnalyze() {
     isGlobalLoading.value = false;
   }
 }
+
+// NUEVA FUNCIÓN FINAL
+async function handleFinalSave(reviewedFormData) {
+  isGlobalLoading.value = true;
+  try {
+     const ralc = studentData.value.ralc;
+     // Llamamos al hijo para que suba el fichero + los datos revisados
+     const result = await fileUploadRef.value.uploadPdfAndSaveData(ralc, reviewedFormData);
+     
+     console.log("Upload result:", result);
+     alert("✅ PI i PDF guardats correctament!");
+     
+     await navigateTo(`/home`); 
+  } catch (err) {
+      console.error("Error saving final PI:", err);
+      alert("Error al guardar: " + err.message);
+  } finally {
+      isGlobalLoading.value = false;
+  }
+}
 </script>
 
 <template>
@@ -68,17 +88,11 @@ async function handleSaveAndAnalyze() {
       </div>
     </div>
 
-    <div class="content-card fade-in">
-      
-      <div v-if="step === 1">
-        <div class="section-block">
-          <h2 class="section-title">Informació de l'Alumne</h2>
-          <p class="section-desc">Introdueix les dades manualment o cerca pel RALC.</p>
-          <RegisterStudent ref="registerStudentRef" />
-        </div>
-
+  <hr />
+    <div class="content-card fade-in"></div>
+  <div v-if="step === 1">
+    <RegisterStudent ref="registerStudentRef" />
         <div class="divider"></div>
-
         <div class="section-block">
           <h2 class="section-title">Documentació PDF</h2>
           <p class="section-desc">Puja el PI o informes previs per analitzar amb IA.</p>
@@ -98,16 +112,14 @@ async function handleSaveAndAnalyze() {
         </div>
       </div>
 
-      <div v-if="step === 2">
-        <ReviewFileResponse
-          :student="studentData"
-          :aiData="piAnalysisData"
-          :fileName="fileUploadRef?.pdfFile?.name"
-          @back="step = 1"
-        />
-      </div>
-
-    </div>
+  <div v-if="step === 2">
+    <ReviewFileResponse
+      :student="studentData"
+      :aiData="piAnalysisData"
+      :fileName="fileUploadRef?.pdfFile?.name"
+      @back="step = 1"
+      @save="handleFinalSave"
+    />
   </div>
 </template>
 

@@ -52,41 +52,95 @@ function removeFile() {
 // ------------------------------------------------------
 // 2. LÓGICA DE ANÁLISIS (Llamada desde el Padre)
 // ------------------------------------------------------
-async function triggerAnalysis(studentName) {
+async function triggerAnalysis(studentNameForContext) {
   if (!pdfFile.value) {
-    alert("Has de seleccionar un PDF primer.");
+    // Alert user visually
+    alert("Atenció: No has seleccionat cap fitxer PDF per analitzar.");
+    errorMsg.value = "Si us plau, selecciona un arxiu PDF abans de continuar.";
     return null;
   }
 
-  // AQUÍ VA TU LÓGICA DE CONEXIÓN CON EL BACKEND
-  // (He puesto una implementación estándar, ajústala si tu ruta es diferente)
-  const formData = new FormData();
-  formData.append("pdf", pdfFile.value);
-  formData.append("studentName", studentName);
+  isProcessing.value = true;
+  statusMessage.value = "Llegint document...";
+  errorMsg.value = "";
 
   try {
-    // ⚠️ AJUSTA ESTA URL SI TU ENDPOINT ES DIFERENTE
-    // Por ejemplo: /api/analyze-pdf o lo que uses en tu backend
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseURL}/api/analyze-pdf`, {
-      method: "POST",
-      body: formData,
-    });
+    const text = await extractTextFromPdf(pdfFile.value);
 
-    if (!response.ok) throw new Error("Error en l'anàlisi del PDF");
-    
-    const data = await response.json();
-    return data; // Devolvemos los datos al padre
-  } catch (error) {
-    console.error(error);
-    throw error;
+    if (!text || text.trim().length < 10) {
+      throw new Error("El PDF sembla buit.");
+    }
+
+    statusMessage.value = `Analitzant dades per a: ${studentNameForContext}...`;
+
+    await analyzePdfContent(text, studentNameForContext);
+
+    if (aiError.value) throw new Error(aiError.value);
+
+    statusMessage.value = "Anàlisi completada.";
+    return aiResponse.value;
+  } catch (err) {
+    console.error(err);
+    errorMsg.value = err.message;
+    return null;
+  } finally {
+    isProcessing.value = false;
   }
 }
 
-// Exponemos las variables y funciones al padre (crear-pi.vue)
+
+// ---------------------------------------------------------
+// --- NUEVA FUNCION: ENVIAR AL BACKEND (Express/Multer) ---
+// ---------------------------------------------------------
+const uploadPdfAndSaveData = async (studentRalc, aiData) => {
+  if (!pdfFile.value) {
+    throw new Error("No s'ha trobat l'arxiu PDF per pujar.");
+  }
+
+  // 1. Creamos un FormData para enviar archivo binario + texto
+  const formData = new FormData();
+
+  // Datos obligatorios - IMPORTANTE: Añadir antes del archivo para que Multer pueda leerlo en el filename
+  formData.append("ralc", studentRalc);
+
+  // 'pdfFile' debe coincidir con upload.single('pdfFile') en tu backend
+  formData.append("pdfFile", pdfFile.value);
+
+  // Datos de la IA (Verificamos que existan)
+  if (aiData) {
+    formData.append("dificultat", aiData.dificultat || "");
+    formData.append("gravetat", aiData.gravetat || "");
+    formData.append("justificacio", aiData.justificacio || "");
+    formData.append("proposta", aiData.proposta_educativa || ""); // Ojo: en BD es proposta_educativa
+    formData.append("observacio", aiData.observacio || "");
+  }
+
+  try {
+    // Ajusta la URL a tu backend (http://localhost:3000/api/save-pi)
+    // Si tienes configurado un proxy en nuxt.config, usa solo "/api/save-pi"
+    const response = await fetch("http://localhost:3000/api/save-pi", {
+      method: "POST",
+      body: formData,
+      // IMPORTANTE: NO añadir headers de Content-Type manuales.
+      // El navegador lo gestiona automáticamente para multipart/form-data
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Error al guardar al servidor");
+    }
+
+    return await response.json(); // Devuelve { success: true, id: ..., path: ... }
+  } catch (error) {
+    console.error("Error upload:", error);
+    throw error;
+  }
+};
+
 defineExpose({
-  pdfFile,
-  triggerAnalysis
+  triggerAnalysis,
+  uploadPdfAndSaveData,
+  pdfFile: ref(null),
 });
 </script>
 
