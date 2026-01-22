@@ -8,7 +8,7 @@ export async function loginCenter(req, res) {
     [email]
   );
 
-  // Comprovamos si exite el centro con ese email
+ 
   if (rows.length === 0) {
     res
       .status(404)
