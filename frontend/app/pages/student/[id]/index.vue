@@ -231,12 +231,10 @@ onMounted(() => {
                         {{ pi.dificultat || 'Sense dificultat especificada' }}
                   </div>
                 </div>
-                </div>
               </div>
-              
-              <div v-else class="empty-state">
-                <p>Aquest alumne encara no té plans individualitzats assignats.</p>
-              </div>
+            </div>
+            <div v-else class="empty-state">
+              <p>Aquest alumne encara no té plans individualitzats assignats.</p>
             </div>
           </div>
 
@@ -256,124 +254,125 @@ onMounted(() => {
                   PDF Original
                 </button>
               </div>
-
-            <!-- Contingut de les pestanyes -->
-            <div class="tabs-content">
-              <!-- Pestanya: Dades generades per IA -->
-              <div v-if="activeTab === 'ia'" class="tab-panel">
-                <div class="ia-preview">
-                  <h3>Informe generat previament</h3>
-                  <div
-                    v-if="activePi"
-                    class="ia-content"
-                  >
-                    <div class="pi-section">
-                      <div class="pi-header">
-                        <h4>Pla Individualitzat Actiu</h4>
-                      </div>
-
-                      <div class="pi-info-row">
-                        <div class="pi-info-field">
-                          <label class="info-label">Data de creació:</label>
-                          <p class="info-value">
-                            {{
-                              new Date(activePi.data_creacio).toLocaleDateString(
-                                "ca-ES",
-                              )
-                            }}
-                          </p>
+            
+              <!-- Contingut de les pestanyes -->
+              <div class="tabs-content">
+                <!-- Pestanya: Dades generades per IA -->
+                <div v-if="activeTab === 'ia'" class="tab-panel">
+                  <div class="ia-preview">
+                    <h3>Informe generat previament</h3>
+                    <div
+                      v-if="activePi"
+                      class="ia-content"
+                    >
+                      <div class="pi-section">
+                        <div class="pi-header">
+                          <h4>Pla Individualitzat Actiu</h4>
                         </div>
-                        <div class="pi-info-field">
-                          <label class="info-label"
-                            >Professor responsable:</label
-                          >
-                          <p class="info-value">
-                            {{ activePi.professorNom }} ({{ activePi.professorEmail }})
-                          </p>
-                        </div>
-                      </div>
 
-                      <!-- Camps del pla individualitzat -->
-                      <div class="pi-form-fields">
-                        <div class="form-row">
-                          <div class="form-field half-width">
-                            <label class="field-label">Dificultat:</label>
-                            <div
+                        <div class="pi-info-row">
+                          <div class="pi-info-field">
+                            <label class="info-label">Data de creació:</label>
+                            <p class="info-value">
+                              {{
+                                new Date(activePi.data_creacio).toLocaleDateString(
+                                  "ca-ES",
+                                )
+                              }}
+                            </p>
+                          </div>
+                          <div class="pi-info-field">
+                            <label class="info-label"
+                              >Professor responsable:</label
+                            >
+                            <p class="info-value">
+                              {{ activePi.professorNom }} ({{ activePi.professorEmail }})
+                            </p>
+                          </div>
+                        </div>
+
+                        <!-- Camps del pla individualitzat -->
+                        <div class="pi-form-fields">
+                          <div class="form-row">
+                            <div class="form-field half-width">
+                              <label class="field-label">Dificultat:</label>
+                              <div
                               class="field-input"
                               :class="{ 'empty-state': !activePi.dificultat }"
-                            >
-                              {{ activePi.dificultat || "" }}
+                              >
+                                {{ activePi.dificultat || "" }}
+                              </div>
+                            </div>
+                            <div class="form-field half-width">
+                              <label class="field-label">Gravetat:</label>
+                              <div
+                                class="field-input"
+                                :class="{ 'empty-state': !activePi.gravetat }"
+                              >
+                               {{ activePi.gravetat || "" }}
+                              </div>
                             </div>
                           </div>
-                          <div class="form-field half-width">
-                            <label class="field-label">Gravetat:</label>
+
+                          <div class="form-field">
+                            <label class="field-label">Justificació:</label>
                             <div
-                              class="field-input"
-                              :class="{ 'empty-state': !activePi.gravetat }"
+                              class="field-textarea"
+                              :class="{ 'empty-state': !activePi.justificacio }"
                             >
-                              {{ activePi.gravetat || "" }}
+                              {{ activePi.justificacio || "" }}
                             </div>
                           </div>
-                        </div>
 
-                        <div class="form-field">
-                          <label class="field-label">Justificació:</label>
-                          <div
-                            class="field-textarea"
-                            :class="{ 'empty-state': !activePi.justificacio }"
-                          >
-                            {{ activePi.justificacio || "" }}
+                          <div class="form-field">
+                            <label class="field-label">Proposta educativa:</label>
+                            <div
+                              class="field-textarea"
+                              :class="{ 'empty-state': !activePi.proposta_educativa }"
+                            >
+                              {{ activePi.proposta_educativa || "" }}
+                            </div>
                           </div>
-                        </div>
 
-                        <div class="form-field">
-                          <label class="field-label">Proposta educativa:</label>
-                          <div
-                            class="field-textarea"
-                            :class="{ 'empty-state': !activePi.proposta_educativa }"
-                          >
-                            {{ activePi.proposta_educativa || "" }}
-                          </div>
-                        </div>
-
-                        <div class="form-field">
-                          <label class="field-label">Observacions:</label>
-                          <div
-                            class="field-textarea"
-                            :class="{ 'empty-state': !activePi.observacio }"
-                          >
-                            {{ activePi.observacio || "" }}
+                          <div class="form-field">
+                            <label class="field-label">Observacions:</label>
+                            <div
+                              class="field-textarea"
+                              :class="{ 'empty-state': !activePi.observacio }"
+                            >
+                              {{ activePi.observacio || "" }}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div v-else class="ia-content empty-content">
-                    <p class="placeholder-text">
-                      Aquest alumne encara no té cap pla individualitzat
-                      generat.
-                    </p>
+                    <div v-else class="ia-content empty-content">
+                      <p class="placeholder-text">
+                        Aquest alumne encara no té cap pla individualitzat
+                        generat.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Pestanya: PDF Original -->
-              <div v-if="activeTab === 'pdf'" class="tab-panel">
-                <div class="pdf-preview">
-                  <div class="pdf-header">
-                    <h3>Document PDF original</h3>
-                  </div>
-                  <div class="pdf-viewer-container">
-                    <iframe
-                      v-if="getPdfUrl()"
-                      :src="getPdfUrl() ?? undefined"
-                      class="pdf-iframe"
-                      frameborder="0"
-                    ></iframe>
-                    <div v-else class="pdf-viewer-placeholder">
-                      <p class="placeholder-text">
-                        Aquest alumne encara no té cap document PDF carregat.
-                      </p>
+                <!-- Pestanya: PDF Original -->
+                <div v-if="activeTab === 'pdf'" class="tab-panel">
+                  <div class="pdf-preview">
+                    <div class="pdf-header">
+                      <h3>Document PDF original</h3>
+                    </div>
+                    <div class="pdf-viewer-container">
+                      <iframe
+                        v-if="getPdfUrl()"
+                        :src="getPdfUrl() ?? undefined"
+                        class="pdf-iframe"
+                        frameborder="0"
+                      ></iframe>
+                      <div v-else class="pdf-viewer-placeholder">
+                        <p class="placeholder-text">
+                          Aquest alumne encara no té cap document PDF carregat.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

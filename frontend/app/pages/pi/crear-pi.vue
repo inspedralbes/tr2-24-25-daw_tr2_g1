@@ -90,10 +90,11 @@ async function handleFinalSave(reviewedFormData) {
       </div>
     </div>
 
-  <hr />
-    <div class="content-card fade-in"></div>
-  <div v-if="step === 1">
-    <RegisterStudent ref="registerStudentRef" />
+    <hr />
+    
+    <div class="content-card fade-in">
+      <div v-if="step === 1">
+        <RegisterStudent ref="registerStudentRef" />
         <div class="divider"></div>
         <div class="section-block">
           <h2 class="section-title">Documentació PDF</h2>
@@ -114,15 +115,17 @@ async function handleFinalSave(reviewedFormData) {
         </div>
       </div>
 
-  <div v-if="step === 2">
-    <ReviewFileResponse
-      :student="studentData"
-      :aiData="piAnalysisData"
-      :fileName="fileUploadRef?.pdfFile?.name"
-      @back="step = 1"
-      @save="handleFinalSave"
-    />
-  </div>
+      <div v-if="step === 2">
+        <ReviewFileResponse
+          :student="studentData"
+          :aiData="piAnalysisData"
+          :fileName="fileUploadRef?.pdfFile?.name"
+          @back="step = 1"
+          @save="handleFinalSave"
+        />
+      </div>
+    </div> <!-- Tanca content-card -->
+  </div> <!-- Tanca page-container -->
 </template>
 
 <style scoped>
