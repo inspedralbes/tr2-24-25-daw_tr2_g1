@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, toRaw, watch } from 'vue'
 
 const searchQuery = ref('')
+const isSearching = ref(false)
 
 // Obtenir el centre de l'usuari logat des de localStorage
 const userCentre = ref<any>(null)
@@ -17,6 +18,15 @@ const { students, columns, isLoading, error, loadStudents } = useTable()
 
 onMounted(() => {
   loadStudents()
+})
+
+watch(searchQuery, (newVal) => {
+  if (newVal) {
+    isSearching.value = true
+    setTimeout(() => { isSearching.value = false }, 600)
+  } else {
+    isSearching.value = false
+  }
 })
 
 // --- Lògica de Filtratge ---
@@ -61,6 +71,7 @@ const filteredStudents = computed(() => {
               placeholder="Introdueix el RALC de l'alumne..."
               class="search-input"
             />
+            <div v-if="isSearching" class="input-spinner"></div>
           </div>
 
           <NuxtLink to="/ajuda/com-fer-cerca" class="help-link">
@@ -70,7 +81,7 @@ const filteredStudents = computed(() => {
         
         <div class="hero-right">
           
-          <div v-if="filteredStudents.length > 0" class="results-container fade-in">
+          <div v-if="filteredStudents.length > 0 && !isSearching" class="results-container fade-in">
             <div v-for="student in filteredStudents" :key="student.ralc" class="gencat-card">
               <div class="card-header">
                 <h2>Informació de l'alumne</h2>
@@ -107,7 +118,7 @@ const filteredStudents = computed(() => {
             </div>
           </div>
 
-          <div v-else-if="searchQuery && filteredStudents.length === 0" class="info-card not-found fade-in">
+          <div v-else-if="searchQuery && filteredStudents.length === 0 && !isSearching" class="info-card not-found fade-in">
             <div class="msg-content">
                <svg class="icon-svg dark" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="11" cy="11" r="8" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
