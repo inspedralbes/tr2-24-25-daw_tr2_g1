@@ -41,7 +41,8 @@ export async function getByRalcStudent(req, res) {
         pi.gravetat,
         pi.justificacio,
         pi.proposta_educativa,
-        pi.observacio,         
+        pi.observacio,
+        pi.estado,         
         p.nom as professorNom,
         p.email as professorEmail
       FROM pis pi

@@ -24,12 +24,19 @@ export async function createStudentPI(req, res) {
   }
 
   try {
-    // 2. Ejecutamos la inserción
-    // Usamos NULL si algún campo de texto viene vacío
+    // 2. Ejecutamos la lógica de actualización e inserción
+
+    // a) Marcar PIs anteriores como 'inactiu'
+    await pool.query(
+      "UPDATE pis SET estado = 'inactiu' WHERE alumne_ralc = ?",
+      [ralc]
+    );
+
+    // b) Insertar el nuevo PI activo
     const query = `
       INSERT INTO pis 
-      (alumne_ralc, professor_id, dificultat, gravetat, justificacio, proposta_educativa, observacio, ruta_pdf, data_creacio) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      (alumne_ralc, professor_id, dificultat, gravetat, justificacio, proposta_educativa, observacio, ruta_pdf, data_creacio, estado) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'actiu')
     `;
 
     const values = [
@@ -49,7 +56,7 @@ export async function createStudentPI(req, res) {
 
     res.status(201).json({
       success: true,
-      message: "Plan Individualizado creado correctamente",
+      message: "Plan Individualizado creado correctamente y marcado como activo",
       id: result.insertId,
     });
   } catch (error) {
