@@ -66,6 +66,7 @@ CREATE TABLE `pis` (
   `justificacio` text COLLATE utf8mb4_general_ci,
   `proposta_educativa` text COLLATE utf8mb4_general_ci,
   `observacio` text COLLATE utf8mb4_general_ci,
+  `estado` varchar(20) DEFAULT 'actiu',
   
   -- Campos originales
   `ruta_pdf` varchar(255) COLLATE utf8mb4_general_ci, -- NOT NULL,
