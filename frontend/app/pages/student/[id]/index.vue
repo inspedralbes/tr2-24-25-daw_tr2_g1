@@ -201,12 +201,12 @@ onMounted(() => {
                   <span class="info-value">{{ student.centreProcedencia || "-" }}</span>
                 </div>
               </div>
+            </div>
 
             <!-- Plans Individualitzats -->
             <div
               v-if="sortedPis && sortedPis.length > 0"
-              class="pis-section"
-            >
+              class="pis-section">
               <div class="pis-section-header">
                 <h2>Plans Individualitzats</h2>
 
@@ -382,10 +382,8 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </div>
-  </div>
-  </div>
-  
+    </div> <!-- Tanca student-detail-page fade-in -->
+  </div> <!-- Tanca page-container -->
 </template>
 
 <style scoped>
