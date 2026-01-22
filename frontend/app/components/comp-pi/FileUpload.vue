@@ -1,308 +1,251 @@
 <script setup>
-import * as pdfjsLib from "pdfjs-dist";
+import { ref } from "vue";
 
-// -- PROPS & EMITS --
-const props = defineProps({
-  studentName: {
-    type: String,
-    default: "Alumne Desconegut",
-  },
-});
-
-// -- STATE --
+// ESTADO
 const pdfFile = ref(null);
-const isProcessing = ref(false);
-const errorMsg = ref("");
-const statusMessage = ref("");
-const { analyzePdfContent, aiResponse, error: aiError } = useGemini();
+const isDragging = ref(false);
+const fileInput = ref(null);
 
-// -- WORKER SETUP --
-const getPdfWorker = async () => {
-  if (import.meta.env.SSR) return null;
-  const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
-  return worker.default;
-};
+// ------------------------------------------------------
+// 1. MANEJO DE ARCHIVOS (Click y Drag & Drop)
+// ------------------------------------------------------
 
-// -- LOGICA PDF --
-const extractTextFromPdf = async (file) => {
-  try {
-    const workerUrl = await getPdfWorker();
-    if (workerUrl) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-    }
+// Click en el botón -> Abre el selector nativo
+function triggerFileInput() {
+  fileInput.value.click();
+}
 
-    const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
+// Cambio en el input nativo
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  processFile(file);
+}
 
-    let fullText = "";
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item) => item.str || "")
-        .join(" ");
-      fullText += pageText + "\n";
-    }
+// Eventos Drag & Drop
+function onDragOver() {
+  isDragging.value = true;
+}
+function onDragLeave() {
+  isDragging.value = false;
+}
+function onDrop(event) {
+  isDragging.value = false;
+  const file = event.dataTransfer.files[0];
+  processFile(file);
+}
 
-    return fullText || "";
-  } catch (e) {
-    console.error("Error PDF:", e);
-    throw new Error(
-      "No s'ha pogut llegir el PDF. Verifica que no estigui corrupte.",
-    );
+// Validación y asignación común
+function processFile(file) {
+  if (!file) return;
+  if (file.type !== "application/pdf") {
+    alert("Si us plau, puja només arxius PDF.");
+    return;
   }
-};
+  pdfFile.value = file;
+}
 
-// -- HANDLER (THIS WAS MISSING) --
-const handleFileChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    pdfFile.value = file;
-    errorMsg.value = "";
-  }
-};
+function removeFile() {
+  pdfFile.value = null;
+  if (fileInput.value) fileInput.value.value = ""; // Limpiar input
+}
 
-// -- EXPOSED FUNCTION --
-async function triggerAnalysis(studentNameForContext) {
+// ------------------------------------------------------
+// 2. LÓGICA DE ANÁLISIS (Llamada desde el Padre)
+// ------------------------------------------------------
+async function triggerAnalysis(studentName) {
   if (!pdfFile.value) {
-    // Alert user visually
-    alert("Atenció: No has seleccionat cap fitxer PDF per analitzar.");
-    errorMsg.value = "Si us plau, selecciona un arxiu PDF abans de continuar.";
+    alert("Has de seleccionar un PDF primer.");
     return null;
   }
 
-  isProcessing.value = true;
-  statusMessage.value = "Llegint document...";
-  errorMsg.value = "";
+  // AQUÍ VA TU LÓGICA DE CONEXIÓN CON EL BACKEND
+  // (He puesto una implementación estándar, ajústala si tu ruta es diferente)
+  const formData = new FormData();
+  formData.append("pdf", pdfFile.value);
+  formData.append("studentName", studentName);
 
   try {
-    const text = await extractTextFromPdf(pdfFile.value);
+    // ⚠️ AJUSTA ESTA URL SI TU ENDPOINT ES DIFERENTE
+    // Por ejemplo: /api/analyze-pdf o lo que uses en tu backend
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseURL}/api/analyze-pdf`, {
+      method: "POST",
+      body: formData,
+    });
 
-    if (!text || text.trim().length < 10) {
-      throw new Error("El PDF sembla buit.");
-    }
-
-    statusMessage.value = `Analitzant dades per a: ${studentNameForContext}...`;
-
-    await analyzePdfContent(text, studentNameForContext);
-
-    if (aiError.value) throw new Error(aiError.value);
-
-    statusMessage.value = "Anàlisi completada.";
-    return aiResponse.value;
-  } catch (err) {
-    console.error(err);
-    errorMsg.value = err.message;
-    return null;
-  } finally {
-    isProcessing.value = false;
+    if (!response.ok) throw new Error("Error en l'anàlisi del PDF");
+    
+    const data = await response.json();
+    return data; // Devolvemos los datos al padre
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
 }
 
+// Exponemos las variables y funciones al padre (crear-pi.vue)
 defineExpose({
-  triggerAnalysis,
-  pdfFile: ref(null),
+  pdfFile,
+  triggerAnalysis
 });
 </script>
 
 <template>
-  <div class="file-upload-container">
-    <h3>Informes Previs</h3>
+  <div class="upload-wrapper">
+    <input
+      type="file"
+      ref="fileInput"
+      accept="application/pdf"
+      class="hidden-input"
+      @change="handleFileSelect"
+    />
 
     <div
-      class="upload-wrapper"
-      :class="{ 'has-file': pdfFile, 'is-loading': isProcessing }"
+      v-if="!pdfFile"
+      class="drop-zone"
+      :class="{ 'active-drag': isDragging }"
+      @dragover.prevent="onDragOver"
+      @dragleave.prevent="onDragLeave"
+      @drop.prevent="onDrop"
+      @click="triggerFileInput"
     >
-      <div class="icon-area">
-        <div v-if="isProcessing" class="spinner"></div>
-        <svg
-          v-else
-          class="upload-icon"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-          ></path>
+      <div class="icon-cloud">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
         </svg>
       </div>
-
-      <div class="content-area">
-        <p v-if="isProcessing" class="status-text">{{ statusMessage }}</p>
-
-        <div v-else-if="pdfFile">
-          <p class="file-name">{{ pdfFile.name }}</p>
-          <button @click="pdfFile = null" class="btn-text">
-            Canviar arxiu
-          </button>
-        </div>
-
-        <div v-else>
-          <label for="file-upload" class="upload-label"
-            >Selecciona un PDF</label
-          >
-          <input
-            id="file-upload"
-            type="file"
-            accept="application/pdf"
-            @change="handleFileChange"
-            class="hidden-input"
-          />
-        </div>
-      </div>
+      <p class="drop-text">
+        <span class="highlight">Fes clic per pujar</span> o arrossega el PDF aquí
+      </p>
+      <p class="drop-subtext">Màxim 10MB (PDF)</p>
     </div>
 
-    <div v-if="errorMsg" class="error-box">{{ errorMsg }}</div>
+    <div v-else class="file-preview">
+      <div class="file-info">
+        <div class="file-icon">📄</div>
+        <div class="file-details">
+          <p class="file-name">{{ pdfFile.name }}</p>
+          <p class="file-size">{{ (pdfFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+        </div>
+      </div>
+      <button @click="removeFile" class="btn-remove" title="Eliminar arxiu">
+        ✕
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.file-upload-container {
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-h3 {
-  margin-bottom: 5px;
-  font-size: 1.1em;
-  color: #333;
-}
-
-.helper-text {
-  font-size: 0.9em;
-  color: #666;
-  margin-bottom: 15px;
-}
-
 .upload-wrapper {
-  border: 2px dashed #ddd;
-  border-radius: 6px;
-  padding: 30px;
-  text-align: center;
-  background-color: #fafafa;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-}
-
-.upload-wrapper:hover {
-  border-color: #999;
-  background-color: #f0f0f0;
-}
-
-.upload-wrapper.has-file {
-  background-color: #e6f7e6;
-  border-color: #28a745;
-  border-style: solid;
-}
-
-.upload-wrapper.is-loading {
-  background-color: #fff9e6;
-  border-color: #ffc107;
-  border-style: solid;
-  pointer-events: none; /* Bloquear clicks mientras carga */
-}
-
-.upload-icon {
-  width: 48px;
-  height: 48px;
-  color: #999;
-}
-
-/* Spinner Styles */
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #d00000;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.upload-label {
-  background-color: #d00000;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  display: inline-block;
-  transition: background 0.2s;
-}
-
-.upload-label:hover {
-  background-color: #b00000;
+  width: 100%;
 }
 
 .hidden-input {
   display: none;
 }
 
-.file-name {
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.status-text {
-  color: #d00000;
-  font-weight: 500;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  align-items: center;
-}
-
-.btn-primary-small {
-  background-color: #28a745; /* Verde para acción positiva */
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+/* --- ZONA DROP --- */
+.drop-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-zone:hover {
+  border-color: #d9001d; /* Rojo GenCat */
+  background-color: #fff5f5;
+}
+
+.drop-zone.active-drag {
+  border-color: #d9001d;
+  background-color: #ffe4e6;
+  transform: scale(1.01);
+}
+
+.icon-cloud {
+  color: #94a3b8;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 15px;
+}
+
+.drop-zone:hover .icon-cloud {
+  color: #d9001d;
+}
+
+.drop-text {
+  font-size: 1rem;
+  color: #334155;
+  margin-bottom: 5px;
+}
+
+.highlight {
+  color: #d9001d;
   font-weight: 600;
+  text-decoration: underline;
 }
 
-.btn-primary-small:hover {
-  background-color: #218838;
+.drop-subtext {
+  font-size: 0.85rem;
+  color: #94a3b8;
 }
 
-.btn-text {
+/* --- PREVISUALIZACIÓN ARCHIVO --- */
+.file-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.file-icon {
+  font-size: 2rem;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.file-size {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.btn-remove {
   background: none;
   border: none;
-  text-decoration: underline;
-  color: #666;
+  color: #94a3b8;
+  font-size: 1.2rem;
   cursor: pointer;
-  font-size: 0.9em;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.2s;
 }
 
-.error-box {
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #ffe6e6;
-  color: #d00000;
-  border: 1px solid #ffcccc;
-  border-radius: 4px;
-  font-size: 0.9em;
-  text-align: center;
+.btn-remove:hover {
+  background-color: #f1f5f9;
+  color: #ef4444;
 }
 </style>

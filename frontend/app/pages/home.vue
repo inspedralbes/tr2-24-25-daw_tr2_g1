@@ -12,9 +12,9 @@ const t = computed(() => {
       intro:
         "Aquesta eina permet agilitzar la creació i gestió dels PIs mitjançant intel·ligència artificial. Selecciona una de les opcions següents per començar:",
       opcion_pi: "Crear Nou PI",
-      desc_pi: "Iniciar un nou tràmit d'alumne (Opció A).",
+      desc_pi: "Iniciar un nou tràmit d'alumne",
       opcion_form: "Cercar Alumne",
-      desc_form: "Accés al formulari temporal (Form Page).",
+      desc_form: "Accés al formulari temporal",
     },
     es: {
       bienvenida: "Bienvenido/a",
