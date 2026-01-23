@@ -1,31 +1,40 @@
 import { pool } from "../db.js";
 
+// Login de centro
 export async function loginCenter(req, res) {
   const { email } = req.body;
 
-  const [rows] = await pool.query(
-    "SELECT * FROM centres WHERE email_centre = ?",
-    [email]
-  );
+  try {
+    // Consultar centro
+    const [rows] = await pool.query(
+      "SELECT * FROM centres WHERE email_centre = ?",
+      [email]
+    );
 
- 
-  if (rows.length === 0) {
-    res
-      .status(404)
-      .json({ error: "Aquest correu no pertany a cap centre registrat" });
-    return;
+    // Validar existencia
+    if (rows.length === 0) {
+      return res.status(404).json({ 
+        error: "Aquest correu no pertany a cap centre registrat" 
+      });
+    }
+
+    const centre = rows[0];
+
+    // Respuesta exitosa
+    res.json({
+      success: true,
+      message: "Login correcte",
+      centre: {
+        id: centre.id,
+        nom: centre.denominacio_completa,
+        codi: centre.codi_centre,
+        email: centre.email_centre,
+      },
+    });
+
+  } catch (error) {
+    // Error servidor
+    console.error(error);
+    res.status(500).json({ error: "Error del servidor" });
   }
-
-  const centre = rows[0];
-
-  res.json({
-    success: true,
-    message: "Login correcte",
-    centre: {
-      id: centre.id,
-      nom: centre.denominacio_completa,
-      codi: centre.codi_centre,
-      email: centre.email_centre,
-    },
-  });
 }

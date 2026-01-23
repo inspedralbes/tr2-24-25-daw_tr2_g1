@@ -4,88 +4,60 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { pool } from "../db.js";
 
-// 1. CONFIGURACIÓN DE MULTER
-// Aseguramos que la carpeta existe usando RUTA ABSOLUTA
-// Asumimos que server.js está en backend/ y uploads/ también en backend/uploads
+// Configuración directorios
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadDir = path.resolve(__dirname, "../../uploads");
 
+// Crear carpeta si falta
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Configuración almacenamiento
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
-    // 1. Recuperamos el RALC del body
-    // Nota: Es vital que en el FormData del frontend, el campo 'ralc' 
-    // se añada ANTES que el campo del archivo ('file').
+  filename: (req, file, cb) => {
+    // Nombrar archivo (RALC)
     const ralc = req.body.ralc ? req.body.ralc.trim() : "unknown";
-
-    // 2. Definimos el nombre final directamente
-    // Estructura: [RALC].pdf
     cb(null, `${ralc}.pdf`);
   },
 });
 
-// Inicializamos el middleware de subida
-export const uploadMiddleware = multer({ storage: storage });
+export const uploadMiddleware = multer({ storage });
 
-// 2. CONTROLADOR (Lógica de Base de Datos)
+// Controlador guardar PI
 export const savePdfController = async (req, res) => {
-  console.log("--- SAVE PDF REQUEST ---");
-  console.log("Body:", req.body);
-  console.log("File:", req.file);
-
   try {
-    // req.file contiene el archivo subido
+    // Validar archivo
     if (!req.file) {
-      console.error("Error: No se recibió ningún archivo PDF");
-      return res.status(400).json({
-        success: false,
-        message: "No se ha subido ningún archivo PDF",
-      });
+      return res.status(400).json({ success: false, message: "No se ha subido archivo" });
     }
 
-    // req.body contiene los campos de texto enviados por FormData
-    const { ralc, dificultat, gravetat, justificacio, proposta, observacio } =
-      req.body;
+    const { ralc, dificultat, gravetat, justificacio, proposta, observacio } = req.body;
 
-    // VALIDACIÓN BÁSICA
+    // Validar datos
     if (!ralc) {
-      console.error("Error: Falta el RALC del alumno");
-      // Opcional: Borrar el archivo si no hay RALC, para no dejar basura.
-      if (req.file.path) fs.unlinkSync(req.file.path);
-
-      return res
-        .status(400)
-        .json({ success: false, message: "Falta el RALC del alumno" });
+      if (req.file.path) fs.unlinkSync(req.file.path); // Borrar huérfano
+      return res.status(400).json({ success: false, message: "Falta el RALC" });
     }
 
-    // Normalizar la ruta del PDF (Windows usa backslashes, mejor usar forward slashes para DB/Web)
+    // Normalizar ruta
     const rutaPdf = req.file.path.replace(/\\/g, "/");
-    console.log("Ruta PDF normalizada:", rutaPdf);
 
-    // VERIFICAR QUE EL ALUMNO EXISTE
+    // Verificar alumno
     const [rows] = await pool.query("SELECT ralc FROM alumnes WHERE ralc = ?", [ralc]);
+    
     if (rows.length === 0) {
-      console.error(`Error: El alumno con RALC ${ralc} no existe en la BD.`);
-      // Borrar archivo huerfano - DESACTIVADO PARA DEBUG
-      //if (req.file.path) fs.unlinkSync(req.file.path);
-
-      return res.status(404).json({
-        success: false,
-        message: `El alumno con RALC ${ralc} no existe. No se puede guardar el PI.`
-      });
+      return res.status(404).json({ success: false, message: "Alumno no existe" });
     }
 
-    // 4. ACTUALIZAR ESTADO DE PIS ANTERIORES (IMPORTANTE PARA HISTÓRICO)
+    // Desactivar anteriores
     await pool.query("UPDATE pis SET estado = 'inactiu' WHERE alumne_ralc = ?", [ralc]);
 
-    // 5. INSERTAR EN LA BASE DE DATOS
+    // Insertar nuevo PI
     const query = `
       INSERT INTO pis 
       (alumne_ralc, ruta_pdf, dificultat, gravetat, justificacio, proposta_educativa, observacio, data_creacio, estado) 
@@ -98,24 +70,25 @@ export const savePdfController = async (req, res) => {
       dificultat || null,
       gravetat || null,
       justificacio || null,
-      proposta || null, // Mapping correcto con el frontend 'proposta' -> 'proposta_educativa'
+      proposta || null,
       observacio || null,
     ]);
 
-    console.log("Insert exitoso, ID:", result.insertId);
-
+    // Respuesta exitosa
     res.status(200).json({
       success: true,
       message: "PI guardado correctamente",
       id: result.insertId,
       path: rutaPdf,
     });
+
   } catch (error) {
-    console.error("Error al guardar PDF/PI:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error interno del servidor al guardar el PI",
-      error: error.message,
+    // Error servidor
+    console.error("Error savePdfController:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error interno del servidor",
+      error: error.message 
     });
   }
 };

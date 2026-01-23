@@ -3,9 +3,11 @@ import { getByRalcStudent, createStudent } from "../../services/apiStudent.js";
 
 const router = useRouter();
 
+// --- ESTADO ---
 const inputRalc = ref("");
 const blockedInput = ref(true);
 const dniError = ref(false);
+
 const formData = ref({
   name: "",
   surname: "",
@@ -15,19 +17,18 @@ const formData = ref({
   group: "",
 });
 
-// Función para comprobar si el estudiante existe.
-async function fetchStudentByRalc() {
-  console.log("--- INICIO BÚSQUEDA ---");
-  // ... logs ...
+// --- LÓGICA DE BÚSQUEDA ---
 
+// Buscar por RALC
+async function fetchStudentByRalc() {
   if (!inputRalc.value) return;
 
   try {
     const response = await getByRalcStudent(inputRalc.value);
-    console.log("2. Datos recibidos:", response); 
-
+    
     let existStudent = false;
 
+    // Verificar respuesta
     if (Array.isArray(response)) {
         existStudent = response.length > 0;
     } 
@@ -38,26 +39,29 @@ async function fetchStudentByRalc() {
         existStudent = true;
     }
 
+    // Redirigir o desbloquear
     if (existStudent) {      
       await navigateTo(`/student/${inputRalc.value}`); 
     } else {
       blockedInput.value = false;
     }
+
   } catch (e) {
-    console.error("ERROR EN BÚSQUEDA:", e);
+    console.error("ERROR BÚSQUEDA:", e);
     blockedInput.value = false;
   }
 }
 
-// Función para validar el DNI
+// --- VALIDACIONES ---
+
+// Formato DNI
 function isValidDNIFormat(dni) {
   if (!dni) return false;
-
   const regex = /^\d{8}[A-Za-z]$/;
-  
-
   return regex.test(dni);
 }
+
+// Verificar Input
 function checkDni() {
   if (formData.value.dni && !isValidDNIFormat(formData.value.dni)) {
     dniError.value = true;
@@ -65,6 +69,8 @@ function checkDni() {
     dniError.value = false;
   }
 }
+
+// Limpiar error
 function handleDniInput() {
   dniError.value = false;
   if(formData.value.dni) {
@@ -72,15 +78,17 @@ function handleDniInput() {
   }
 }
 
-// Función para enviar datos al padre.
+// --- ENVÍO DE FORMULARIO ---
+
+// Crear estudiante
 async function submitStudentForm() {
-  // 1. Basic validation
+  // 1. Validar RALC
   if (!inputRalc.value) {
     alert("Has d'introduir un RALC vàlid.");
     return { success: false };
   }
 
-  // 2. Creation Logic (Only if form is unblocked)
+  // 2. Crear si está desbloqueado
   if (!blockedInput.value) {
     if (!formData.value.name) {
       alert("El nom és obligatori.");
@@ -100,14 +108,13 @@ async function submitStudentForm() {
     try {
       const respuesta = await createStudent(paqueteAEnviar);
       
-      if (respuesta && (respuesta.success || respuesta.id)) { // Adjusted check based on typical API
+      if (respuesta && (respuesta.success || respuesta.id)) { 
         return { success: true, data: paqueteAEnviar };
       } else {
         return { success: false };
       }
     } catch (e) {
       console.error(e);
-      // Ideally, don't throw inside a function called by parent, return false or error obj
       return { success: false, error: e.message }; 
     }
   }
@@ -148,7 +155,7 @@ defineExpose({
           placeholder="Nombre del alumno"
           :disabled="blockedInput"
         />
-      </div class="child-form">
+      </div>
 
       <div class="child-form">
         <label for="student-surname">Apellidos: </label>
@@ -180,31 +187,38 @@ defineExpose({
 
       <div class="child-form">
         <label for="student-date">Data Naixement</label>
-        <input v-model="formData.date" type="date" :disabled="blockedInput" />
+        <input 
+          v-model="formData.date" 
+          type="date" 
+          :disabled="blockedInput" 
+        />
       </div>
 
-    <div class="child-form">
-      <label for="student-course">Curs</label>
-      <select 
-        id="student-course" 
-        v-model="formData.course" 
-        :disabled="blockedInput"
-        class="form-select"
-      >
-        <option disabled value="">Selecciona un curs</option>
-        
-        <option value="1r d'ESO">1r d'ESO</option>
-        <option value="2n d'ESO">2n d'ESO</option>
-        <option value="3r d'ESO">3r d'ESO</option>
-        <option value="4t d'ESO">4t d'ESO</option>
-        <option value="1r Batxillerat">1r Batxillerat</option>
-        <option value="2n Batxillerat">2n Batxillerat</option>
-      </select>
-    </div>
+      <div class="child-form">
+        <label for="student-course">Curs</label>
+        <select 
+          id="student-course" 
+          v-model="formData.course" 
+          :disabled="blockedInput"
+          class="form-select"
+        >
+          <option disabled value="">Selecciona un curs</option>
+          <option value="1r d'ESO">1r d'ESO</option>
+          <option value="2n d'ESO">2n d'ESO</option>
+          <option value="3r d'ESO">3r d'ESO</option>
+          <option value="4t d'ESO">4t d'ESO</option>
+          <option value="1r Batxillerat">1r Batxillerat</option>
+          <option value="2n Batxillerat">2n Batxillerat</option>
+        </select>
+      </div>
 
       <div class="child-form">
         <label for="student-group">Grup</label>
-        <input v-model="formData.group" type="text" :disabled="blockedInput" />
+        <input 
+          v-model="formData.group" 
+          type="text" 
+          :disabled="blockedInput" 
+        />
       </div>
 
     </div>
@@ -212,15 +226,15 @@ defineExpose({
 </template>
 
 <style scoped>
-
-  .child-form {
-    margin-bottom: 10px;
-    display: flex;
-    flex-direction: column;
+/* Contenedor input */
+.child-form {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
- /* dni style  */
-  .input-error {
+/* Errores DNI */
+.input-error {
   border: 1px solid red;
   background-color: #ffe6e6;
 }
@@ -232,7 +246,7 @@ defineExpose({
   margin-top: 4px;
 }
 
-/* estilo para el formulario deshabilitado */
+/* Estado deshabilitado */
 .form-disabled {
   opacity: 0.5;
   pointer-events: none;

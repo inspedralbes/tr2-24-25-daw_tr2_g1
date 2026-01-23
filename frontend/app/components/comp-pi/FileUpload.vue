@@ -1,14 +1,15 @@
 <script setup>
-import * as pdfjsLib from 'pdfjs-dist';
-// Configurar el worker de PDF.js (versión coincidente con package.json)
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-
+import { ref } from "vue";
+import * as pdfjsLib from "pdfjs-dist";
 import { useGemini } from "../../composables/useGemini";
 
-// COMPOSABLES
+// Configurar Worker PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
+// Composables
 const { analyzePdfContent, error: aiError, aiResponse } = useGemini();
 
-// ESTADO
+// Estado
 const statusMessage = ref("");
 const errorMsg = ref("");
 const isProcessing = ref(false);
@@ -16,53 +17,48 @@ const pdfFile = ref(null);
 const isDragging = ref(false);
 const fileInput = ref(null);
 
-// ------------------------------------------------------
-// 1. MANEJO DE ARCHIVOS (Click y Drag & Drop)
-// ------------------------------------------------------
+// --- 1. GESTIÓN DE ARCHIVOS ---
 
-// Click en el botón -> Abre el selector nativo
+// Abrir selector
 function triggerFileInput() {
   fileInput.value.click();
 }
 
-// Cambio en el input nativo
+// Seleccionar archivo
 function handleFileSelect(event) {
   const file = event.target.files[0];
   processFile(file);
 }
 
 // Eventos Drag & Drop
-function onDragOver() {
-  isDragging.value = true;
-}
-function onDragLeave() {
-  isDragging.value = false;
-}
+function onDragOver() { isDragging.value = true; }
+function onDragLeave() { isDragging.value = false; }
+
 function onDrop(event) {
   isDragging.value = false;
-  const file = event.dataTransfer.files[0];
-  processFile(file);
+  processFile(event.dataTransfer.files[0]);
 }
 
-// Validación y asignación común
+// Validar PDF
 function processFile(file) {
   if (!file) return;
   if (file.type !== "application/pdf") {
-    alert("Si us plau, puja només arxius PDF.");
+    alert("Només arxius PDF.");
     return;
   }
   pdfFile.value = file;
+  errorMsg.value = "";
 }
 
+// Eliminar archivo
 function removeFile() {
   pdfFile.value = null;
-  if (fileInput.value) fileInput.value.value = ""; // Limpiar input
+  if (fileInput.value) fileInput.value.value = "";
 }
 
-// ------------------------------------------------------
-// 2. LÓGICA DE ANÁLISIS (Llamada desde el Padre)
-// ------------------------------------------------------
+// --- 2. EXTRACCIÓN Y ANÁLISIS ---
 
+// Extraer texto PDF
 async function extractTextFromPdf(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -78,16 +74,15 @@ async function extractTextFromPdf(file) {
     }
     return fullText;
   } catch (error) {
-    console.error("Error extracting text from PDF:", error);
-    throw new Error("No s'ha pogut llegir el text del PDF.");
+    console.error("Error PDF:", error);
+    throw new Error("No es pot llegir el PDF.");
   }
 }
 
-async function triggerAnalysis(studentNameForContext) {
+// Iniciar análisis IA
+async function triggerAnalysis(studentName) {
   if (!pdfFile.value) {
-    // Alert user visually
-    alert("Atenció: No has seleccionat cap fitxer PDF per analitzar.");
-    errorMsg.value = "Si us plau, selecciona un arxiu PDF abans de continuar.";
+    errorMsg.value = "Selecciona un PDF primer.";
     return null;
   }
 
@@ -98,18 +93,16 @@ async function triggerAnalysis(studentNameForContext) {
   try {
     const text = await extractTextFromPdf(pdfFile.value);
 
-    if (!text || text.trim().length < 10) {
-      throw new Error("El PDF sembla buit.");
-    }
+    if (!text || text.trim().length < 10) throw new Error("PDF buit o il·legible.");
 
-    statusMessage.value = `Analitzant dades per a: ${studentNameForContext}...`;
-
-    await analyzePdfContent(text, studentNameForContext);
+    statusMessage.value = `Analitzant per a: ${studentName}...`;
+    await analyzePdfContent(text, studentName);
 
     if (aiError.value) throw new Error(aiError.value);
 
     statusMessage.value = "Anàlisi completada.";
     return aiResponse.value;
+
   } catch (err) {
     console.error(err);
     errorMsg.value = err.message;
@@ -119,58 +112,52 @@ async function triggerAnalysis(studentNameForContext) {
   }
 }
 
-// ---------------------------------------------------------
-// --- NUEVA FUNCION: ENVIAR AL BACKEND (Express/Multer) ---
-// ---------------------------------------------------------
+// --- 3. GUARDAR EN BACKEND ---
+
+// Subir PDF y Datos
 const uploadPdfAndSaveData = async (studentRalc, aiData) => {
-  if (!pdfFile.value) {
-    throw new Error("No s'ha trobat l'arxiu PDF per pujar.");
-  }
+  if (!pdfFile.value) throw new Error("Falta arxiu PDF.");
 
-  // 1. Creamos un FormData para enviar archivo binario + texto
   const formData = new FormData();
-
-  // Datos obligatorios - IMPORTANTE: Añadir antes del archivo para que Multer pueda leerlo en el filename
+  
+  // Datos obligatorios (Orden importante para Multer)
   formData.append("ralc", studentRalc);
-
-  // 'pdfFile' debe coincidir con upload.single('pdfFile') en tu backend
   formData.append("pdfFile", pdfFile.value);
 
-  // Datos de la IA (Verificamos que existan)
+  // Datos IA (si existen)
   if (aiData) {
     formData.append("dificultat", aiData.dificultat || "");
     formData.append("gravetat", aiData.gravetat || "");
     formData.append("justificacio", aiData.justificacio || "");
-    formData.append("proposta", aiData.proposta_educativa || ""); // Ojo: en BD es proposta_educativa
+    formData.append("proposta", aiData.proposta_educativa || "");
     formData.append("observacio", aiData.observacio || "");
   }
 
   try {
-    // Ajusta la URL a tu backend (http://localhost:3000/api/save-pi)
-    // Si tienes configurado un proxy en nuxt.config, usa solo "/api/save-pi"
+    // Petición al Backend
     const response = await fetch("http://localhost:3000/api/save-pi", {
       method: "POST",
       body: formData,
-      // IMPORTANTE: NO añadir headers de Content-Type manuales.
-      // El navegador lo gestiona automáticamente para multipart/form-data
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Error al guardar al servidor");
+      throw new Error(errorData.message || "Error al servidor");
     }
 
-    return await response.json(); // Devuelve { success: true, id: ..., path: ... }
+    return await response.json();
+
   } catch (error) {
     console.error("Error upload:", error);
     throw error;
   }
 };
 
+// Exponer funciones
 defineExpose({
   triggerAnalysis,
   uploadPdfAndSaveData,
-  pdfFile: ref(null),
+  pdfFile
 });
 </script>
 
@@ -194,25 +181,14 @@ defineExpose({
       @click="triggerFileInput"
     >
       <div class="icon-cloud">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
-          />
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
         </svg>
       </div>
       <p class="drop-text">
         <span class="highlight">Fes clic per pujar</span> o arrossega el PDF
-        aquí
       </p>
-      <p class="drop-subtext">Màxim 10MB (PDF)</p>
+      <p class="drop-subtext">Max 10MB (PDF)</p>
     </div>
 
     <div v-else class="file-preview">
@@ -220,21 +196,17 @@ defineExpose({
         <div class="file-icon">📄</div>
         <div class="file-details">
           <p class="file-name">{{ pdfFile.name }}</p>
-          <p class="file-size">
-            {{ (pdfFile.size / 1024 / 1024).toFixed(2) }} MB
-          </p>
+          <p class="file-size">{{ (pdfFile.size / 1024 / 1024).toFixed(2) }} MB</p>
         </div>
       </div>
-      <button @click="removeFile" class="btn-remove" title="Eliminar arxiu">
-        ✕
-      </button>
+      <button @click="removeFile" class="btn-remove" title="Eliminar">✕</button>
     </div>
 
-    <!-- Feedback messages -->
     <div v-if="statusMessage" class="status-msg">
       <span v-if="isProcessing" class="spinner"></span>
       {{ statusMessage }}
     </div>
+    
     <div v-if="errorMsg" class="error-msg">
       ⚠️ {{ errorMsg }}
     </div>
@@ -242,15 +214,10 @@ defineExpose({
 </template>
 
 <style scoped>
-.upload-wrapper {
-  width: 100%;
-}
+.upload-wrapper { width: 100%; }
+.hidden-input { display: none; }
 
-.hidden-input {
-  display: none;
-}
-
-/* --- ZONA DROP --- */
+/* Drag Zone */
 .drop-zone {
   border: 2px dashed #cbd5e1;
   border-radius: 12px;
@@ -262,11 +229,10 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 }
 
 .drop-zone:hover {
-  border-color: #d9001d; /* Rojo GenCat */
+  border-color: #d9001d;
   background-color: #fff5f5;
 }
 
@@ -283,9 +249,7 @@ defineExpose({
   margin-bottom: 15px;
 }
 
-.drop-zone:hover .icon-cloud {
-  color: #d9001d;
-}
+.drop-zone:hover .icon-cloud { color: #d9001d; }
 
 .drop-text {
   font-size: 1rem;
@@ -304,7 +268,7 @@ defineExpose({
   color: #94a3b8;
 }
 
-/* --- PREVISUALIZACIÓN ARCHIVO --- */
+/* Preview */
 .file-preview {
   display: flex;
   align-items: center;
@@ -313,7 +277,7 @@ defineExpose({
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
 
 .file-info {
@@ -322,9 +286,7 @@ defineExpose({
   gap: 15px;
 }
 
-.file-icon {
-  font-size: 2rem;
-}
+.file-icon { font-size: 2rem; }
 
 .file-name {
   font-weight: 600;
@@ -355,6 +317,7 @@ defineExpose({
   color: #ef4444;
 }
 
+/* Mensajes */
 .status-msg {
   margin-top: 15px;
   padding: 10px;
@@ -385,5 +348,10 @@ defineExpose({
   border-radius: 50%;
   display: inline-block;
   animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>

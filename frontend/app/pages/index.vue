@@ -2,16 +2,18 @@
 import { useRouter } from "vue-router";
 import { onMounted, ref, computed } from "vue";
 
-// ID DE CLIENTE
+// Configuración Google
 const GOOGLE_CLIENT_ID = "182669171058-e7grkc62veee2a4t7k00dfqb450vo6j3.apps.googleusercontent.com";
 
-const idioma = useIdioma(); // Asumo que tienes este composable
+// Hooks
+const idioma = useIdioma();
 const router = useRouter();
 
+// Estado
 const errorMessage = ref("");
 const loading = ref(false);
 
-// Traducciones
+// Textos dinámicos
 const t = computed(() => {
   const textos = {
     ca: {
@@ -42,16 +44,15 @@ const t = computed(() => {
   return textos[idioma.value] || textos.ca;
 });
 
-// Respuesta de Google
+// Login con Google
 const handleGoogleResponse = async (response) => {
   loading.value = true;
   errorMessage.value = "";
 
   try {
-    // Usamos el puerto 3000 porque el Backend está ahí
     const baseURL = 'http://localhost:3000'; 
     
-    // Enviamos el token al backend para que verifique contra la DB
+    // Petición al Backend
     const res = await fetch(`${baseURL}/api/login-google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -61,11 +62,11 @@ const handleGoogleResponse = async (response) => {
     const data = await res.json();
 
     if (res.ok && data.success) {
-      // Login correcto: Guardamos datos y redirigimos
+      // Login correcto
       localStorage.setItem('user_centre', JSON.stringify(data.centre));
       router.push('/home');
     } else {
-      // Errores controlados (404, etc)
+      // Errores controlados
       if (res.status === 404) {
         errorMessage.value = t.value.error_no_centre;
       } else {
@@ -80,8 +81,8 @@ const handleGoogleResponse = async (response) => {
   }
 };
 
+// Inicializar botón Google
 onMounted(() => {
-  // Función recursiva para asegurar que el botón se pinta cuando Google carga
   const renderGoogleButton = () => {
     if (window.google && window.google.accounts) {
       window.google.accounts.id.initialize({
@@ -96,7 +97,7 @@ onMounted(() => {
         { theme: 'outline', size: 'large', width: 320, locale: idioma.value }
       );
     } else {
-      // Si el script aun no ha bajado, reintentamos en 200ms
+      // Reintentar si el script no ha cargado
       setTimeout(renderGoogleButton, 200);
     }
   };
@@ -108,6 +109,7 @@ onMounted(() => {
 <template>
   <div class="glass-bg">
     <div class="login-card">
+      
       <div class="card-header">
         <h1>EduPI</h1>
       </div>
@@ -127,6 +129,7 @@ onMounted(() => {
       <div class="footer-links">
         <span>{{ t.footer }}</span>
       </div>
+
     </div>
   </div>
 </template>
@@ -181,7 +184,7 @@ h1 {
   display: flex;
   justify-content: center;
   width: 100%;
-  min-height: 45px; /* Evita saltos de layout */
+  min-height: 45px; 
 }
 
 .loading-state {

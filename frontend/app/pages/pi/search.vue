@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, toRaw, watch } from 'vue'
 
+// Estado
 const searchQuery = ref('')
 const isSearching = ref(false)
-
-// Obtenir el centre de l'usuari logat des de localStorage
 const userCentre = ref<any>(null)
 
+// Composable de datos
+const { students, loadStudents } = useTable()
+
+// Cargar centro usuario
 if (import.meta.client) {
   const stored = localStorage.getItem('user_centre')
   if (stored) {
@@ -14,12 +17,12 @@ if (import.meta.client) {
   }
 }
 
-const { students, columns, isLoading, error, loadStudents } = useTable()
-
+// Cargar alumnos al montar
 onMounted(() => {
   loadStudents()
 })
 
+// Simular carga búsqueda
 watch(searchQuery, (newVal) => {
   if (newVal) {
     isSearching.value = true
@@ -29,19 +32,18 @@ watch(searchQuery, (newVal) => {
   }
 })
 
-// --- Lògica de Filtratge ---
-// Cercar per RALC exacte i verificar que el centre de l'alumne coincideix amb el del usuari logat
+// --- Lógica de Filtratge ---
 const filteredStudents = computed(() => {
   if (!searchQuery.value) return []
   
   const result = toRaw(students.value).filter((s: any) => {
-    // Coincidència exacta del RALC
+    // Coincidència exacta RALC
     const ralcMatch = s.ralc === searchQuery.value
     
-    // Si no hi ha usuari logat, no filtrem per centre (per desenvolupament)
+    // Si no hi ha usuari logat, no filtrem centre (dev)
     if (!userCentre.value) return ralcMatch
     
-    // Verificar que el centre de l'alumne coincideix amb el del usuari logat
+    // Verificar centre
     const centreMatch = s.centre_procedencia_id === userCentre.value.id
     
     return ralcMatch && centreMatch
@@ -128,7 +130,7 @@ const filteredStudents = computed(() => {
               <p v-else>
                 No s'ha trobat cap alumne amb el RALC <strong>{{ searchQuery }}</strong> al teu centre.
               </p>
-              </div>
+            </div>
           </div>
 
           <div v-else class="info-card placeholder fade-in">
@@ -150,7 +152,7 @@ const filteredStudents = computed(() => {
 <style scoped>
 /* --- FONDO MÁS CLARO --- */
 .search-page {
-  background-color: #f4f4f4; /* ANTES ERA #e8e8e8 (MÁS OSCURO) */
+  background-color: #f4f4f4; /* Gris muy suave, mejor contraste */
   min-height: calc(100vh - 100px);
   font-family: "Open Sans", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   color: #333;
@@ -162,11 +164,12 @@ const filteredStudents = computed(() => {
   margin: 0 auto;
 }
 
+/* Grid Layout */
 .hero-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
-  align-items: start; /* Alineación superior estricta */
+  align-items: start; /* Alineación superior estricta para ambas columnas */
 }
 
 /* --- IZQUIERDA --- */
@@ -246,9 +249,9 @@ const filteredStudents = computed(() => {
 }
 .help-link:hover { color: #d9001d; }
 
-/* --- DERECHA (CORREGIDA ALINEACIÓN) --- */
+/* --- DERECHA --- */
 .hero-right {
-  margin-top: 0; /* ELIMINADO EL MARGEN SUPERIOR PARA QUE SUBA */
+  margin-top: 0; /* Asegura que no tenga margen superior extra */
   width: 100%;
 }
 
@@ -300,6 +303,7 @@ const filteredStudents = computed(() => {
 }
 .btn-gencat:hover { background-color: #a80016; }
 
+/* Tarjetas Info (Placeholder / Not Found) */
 .info-card {
   width: 100%;
   min-height: 250px;
@@ -310,25 +314,38 @@ const filteredStudents = computed(() => {
   padding: 40px;
   text-align: center;
 }
+
+/* Placeholder oscuro */
 .info-card.placeholder {
   background-color: #3a3a3a;
   color: white;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
-.placeholder-content { display: flex; flex-direction: column; align-items: center; gap: 15px; }
-.icon-svg { width: 48px; height: 48px; opacity: 0.8; }
-.icon-svg.dark path, .icon-svg.dark circle { stroke: #d9001d; }
-.info-card p { font-size: 16px; font-weight: 400; margin: 0; line-height: 1.5; }
+
+/* Not Found blanco */
 .info-card.not-found {
   background-color: #fff;
   border-left: 5px solid #d9001d;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   color: #333;
 }
-.msg-content { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+.placeholder-content, .msg-content { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 15px; 
+}
+
+.icon-svg { width: 48px; height: 48px; opacity: 0.8; }
+.icon-svg.dark path, .icon-svg.dark circle { stroke: #d9001d; }
+.info-card p { font-size: 16px; font-weight: 400; margin: 0; line-height: 1.5; }
+
+/* Animaciones */
 .fade-in { animation: fadeIn 0.4s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+/* Responsive */
 @media (max-width: 900px) {
   .hero-content { grid-template-columns: 1fr; gap: 40px; }
 }

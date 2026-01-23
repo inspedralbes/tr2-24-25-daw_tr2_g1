@@ -1,17 +1,19 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 
+// Estado
 const idioma = useIdioma();
 const haySesion = ref(false);
 
+// Comprobar sesión
 onMounted(() => {
   if (localStorage.getItem('user_centre')) {
     haySesion.value = true;
   }
 });
 
+// Textos dinámicos
 const t = computed(() => {
-  // Traducciones básicas
   const textos = {
     ca: {
       breadcrumbs: 'Inici',
@@ -90,22 +92,34 @@ const t = computed(() => {
 <style scoped>
 .contact-container { background-color: white; min-height: 100vh; padding: 20px; font-family: 'Open Sans', sans-serif; color: #333; }
 .content-wrapper { max-width: 1000px; margin: 0 auto; padding-top: 20px; }
+
+/* Breadcrumbs */
 .breadcrumbs { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
 .breadcrumbs a { color: #333; text-decoration: underline; }
 .separator { margin: 0 8px; }
 .current { color: #666; }
+
+/* Títulos */
 .page-title { font-size: 2.2rem; font-weight: 400; margin: 0 0 15px 0; color: #333; }
 .red-line { width: 50px; height: 4px; background-color: #D9001D; margin-bottom: 30px; }
 .section-title { font-size: 1.8rem; font-weight: 300; color: #333; margin-bottom: 40px; }
+
+/* Iconos */
 .icons-grid { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; margin-bottom: 50px; }
 .icon-circle { width: 160px; height: 160px; background-color: #00899C; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
 .icon-circle:hover { transform: scale(1.05); background-color: #007a8a; }
 .icon-circle svg { width: 80px; height: 80px; stroke: white; stroke-width: 1.5; }
+
+/* Texto */
 .info-text { font-size: 1rem; line-height: 1.6; color: #444; }
 .info-text ul { list-style-type: disc; padding-left: 20px; margin-top: 20px; }
 .info-text li { margin-bottom: 12px; }
 .link-gencat { color: #D9001D; text-decoration: underline; cursor: pointer; }
 .link-gencat:hover { text-decoration: none; }
 .update-date { text-align: right; font-size: 0.85rem; color: #888; margin-top: 50px; border-top: 1px solid #eee; padding-top: 10px; }
-@media (max-width: 768px) { .icon-circle { width: 100px; height: 100px; } .icon-circle svg { width: 50px; height: 50px; } }
+
+@media (max-width: 768px) { 
+  .icon-circle { width: 100px; height: 100px; } 
+  .icon-circle svg { width: 50px; height: 50px; } 
+}
 </style>

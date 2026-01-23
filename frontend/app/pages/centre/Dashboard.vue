@@ -2,17 +2,21 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
+// Hooks
 const router = useRouter();
 
+// Estado
 const currentCentre = ref(null);
 const professors = ref([]);
 const newEmail = ref('');
 const loading = ref(false);
 const message = ref({ text: '', type: '' });
 
+// --- CICLO DE VIDA ---
 onMounted(() => {
   const session = localStorage.getItem('user_centre');
   
+  // Validar sesión
   if (!session) {
     router.push('/');
     return;
@@ -20,7 +24,7 @@ onMounted(() => {
 
   currentCentre.value = JSON.parse(session);
   
-  // PROTECCIÓN: Si es profesor, redirigir al home (solo centros pueden gestionar docentes)
+  // Seguridad: Solo los centros pueden gestionar docentes
   if (currentCentre.value?.esProfesor) {
     router.push('/home');
     return;
@@ -29,6 +33,9 @@ onMounted(() => {
   fetchProfessors();
 });
 
+// --- API ---
+
+// Obtener profesores
 const fetchProfessors = async () => {
   if (!currentCentre.value?.id) return;
 
@@ -43,6 +50,7 @@ const fetchProfessors = async () => {
   }
 };
 
+// Añadir profesor
 const addProfessor = async () => {
   if (!newEmail.value) return;
   
@@ -77,6 +85,7 @@ const addProfessor = async () => {
   }
 };
 
+// Eliminar profesor
 const deleteProfessor = async (id) => {
   if (!confirm("Segur que vols eliminar l'accés a aquest correu?")) return;
   
@@ -85,7 +94,6 @@ const deleteProfessor = async (id) => {
     professors.value = professors.value.filter(p => p.id !== id);
   } catch (e) { console.error(e); }
 };
-
 </script>
 
 <template>
@@ -151,6 +159,7 @@ const deleteProfessor = async (id) => {
 </template>
 
 <style scoped>
+/* Contenedor principal */
 .dashboard-container { 
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: #f4f6f9; 
@@ -159,6 +168,7 @@ const deleteProfessor = async (id) => {
   color: #333; 
 }
 
+/* Cabecera */
 .header-title {
   text-align: center;
   margin-bottom: 40px;
@@ -177,6 +187,7 @@ const deleteProfessor = async (id) => {
   font-weight: bold;
 }
 
+/* Layout */
 .content { 
   max-width: 900px; 
   margin: 0 auto; 
@@ -209,6 +220,7 @@ h3 {
   line-height: 1.5;
 }
 
+/* Formulario */
 .add-form { display: flex; gap: 15px; }
 .add-form input { 
   flex: 1; 
@@ -231,10 +243,12 @@ h3 {
 .add-form button:hover { background: #b00018; }
 .add-form button:disabled { opacity: 0.6; cursor: wait; }
 
+/* Mensajes */
 .msg { margin-top: 20px; padding: 15px; border-radius: 4px; font-size: 0.95rem; }
 .msg.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
 .msg.error { background: #fff5f5; color: #b91c1c; border: 1px solid #fecaca; }
 
+/* Tabla */
 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 th { 
   text-align: left; 
@@ -246,6 +260,9 @@ th {
 }
 td { padding: 15px 0; border-bottom: 1px solid #eee; vertical-align: middle; }
 .email { font-family: monospace; font-size: 1.05rem; color: #0056b3; }
+.empty { text-align: center; color: #999; padding: 40px; font-style: italic; font-size: 1.1rem;}
+
+/* Botón eliminar */
 .btn-delete { 
   background: #fee2e2; 
   color: #b91c1c; 
@@ -257,5 +274,4 @@ td { padding: 15px 0; border-bottom: 1px solid #eee; vertical-align: middle; }
   transition: all 0.2s;
 }
 .btn-delete:hover { background: #b91c1c; color: white; border-color: #b91c1c; }
-.empty { text-align: center; color: #999; padding: 40px; font-style: italic; font-size: 1.1rem;}
 </style>

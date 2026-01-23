@@ -125,8 +125,8 @@ async function handleFinalSave(reviewedFormData) {
           @save="handleFinalSave"
         />
       </div>
-    </div> <!-- Tanca content-card -->
-  </div> <!-- Tanca page-container -->
+    </div> 
+  </div> 
 </template>
 
 <style scoped>

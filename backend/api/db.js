@@ -1,8 +1,10 @@
-import mysql from "mysql2/promise"; // Añadimos /promise
+import mysql from "mysql2/promise"; 
 import dotenv from "dotenv";
 
+// Cargar entorno
 dotenv.config();
 
+// Configuración conexión
 const localdbConfig = {
   host: process.env.DB_HOST || process.env.DB_HOST_LOCAL,
   user: process.env.DB_USER || process.env.DB_USER_LOCAL,
@@ -13,9 +15,10 @@ const localdbConfig = {
   queueLimit: 0,
 };
 
+// Crear pool
 export const pool = mysql.createPool(localdbConfig);
 
-// Prueba de conexión
+// Probar conexión
 async function testConnection() {
   try {
     const connection = await pool.getConnection();

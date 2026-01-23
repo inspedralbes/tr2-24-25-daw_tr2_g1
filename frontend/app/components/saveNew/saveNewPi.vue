@@ -1,13 +1,15 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
+// Imports originales (respetando tus rutas y nombres)
 import FileUpload from "../comp-pi/FileUpload.vue";
 import ReviewFileResponse from "../comp-pi/ReviewFileResponse.vue";
 
 const route = useRoute();
 const router = useRouter();
 
-// Estado
+// --- ESTADO ---
 const ralc = route.query.ralc;
 const student = ref(null);
 const isLoadingStudent = ref(true);
@@ -15,10 +17,12 @@ const step = ref(1); // 1: Upload, 2: Review
 const isGlobalLoading = ref(false);
 const piAnalysisData = ref(null);
 
-// Refs
+// Referencia al componente hijo (FileUpload)
 const fileUploadRef = ref(null);
 
-// Cargar datos del estudiante (para tener el nombre para la IA)
+// --- CARGA DE DATOS ---
+
+// Cargar alumno
 const loadStudent = async () => {
   if (!ralc) {
     alert("Falta el RALC del alumne");
@@ -27,8 +31,6 @@ const loadStudent = async () => {
   }
   
   try {
-    // Usamos el endpoint existente.
-    // Nota: Ajusta la URL base segun entorno o usa useFetch/useNuxtApp si disponible
     const response = await fetch(`http://localhost:3000/api/alumne/${ralc}`);
     const data = await response.json();
     
@@ -46,6 +48,8 @@ const loadStudent = async () => {
   }
 };
 
+// --- FLUJO ---
+
 // Paso 1: Analizar PDF
 const handleAnalyze = async () => {
     if (isGlobalLoading.value) return;
@@ -53,6 +57,8 @@ const handleAnalyze = async () => {
     
     try {
         const studentFullName = student.value ? `${student.value.nom} ${student.value.cognoms}` : "Alumne";
+        
+        // Llamada al método expuesto en FileUpload
         const analysisResult = await fileUploadRef.value.triggerAnalysis(studentFullName);
         
         if (analysisResult) {
@@ -71,10 +77,11 @@ const handleAnalyze = async () => {
 const handleFinalSave = async (reviewedFormData) => {
     isGlobalLoading.value = true;
     try {
+        // Llamada al método de subida en FileUpload
         const result = await fileUploadRef.value.uploadPdfAndSaveData(ralc, reviewedFormData);
         console.log("PI Guardado:", result);
         
-        // Redirigir al perfil del alumno
+        // Redirigir al perfil
         router.push(`/student/${ralc}`);
     } catch (error) {
         console.error("Error guardando PI:", error);
@@ -91,13 +98,15 @@ onMounted(() => {
 
 <template>
   <div class="page-container">
+    
     <div class="header">
         <h1>Afegir Nou PI</h1>
-        <p v-if="student" class="subtitle">Per a l'alumne: <strong>{{ student.nom }} {{ student.cognoms }}</strong> ({{ ralc }})</p>
+        <p v-if="student" class="subtitle">
+            Per a l'alumne: <strong>{{ student.nom }} {{ student.cognoms }}</strong> ({{ ralc }})
+        </p>
     </div>
 
-    <!-- Indicador de pasos -->
-     <div class="steps-indicator">
+    <div class="steps-indicator">
         <span :class="{ active: step === 1 }">1. Pujar i Analitzar PDF</span>
         <span class="separator">/</span>
         <span :class="{ active: step === 2 }">2. Revisió i Guardat</span>
@@ -108,20 +117,26 @@ onMounted(() => {
     </div>
 
     <div v-else class="content-wrapper">
-        <!-- PASO 1: UPLOAD -->
+        
         <div v-show="step === 1" class="step-content">
-            <FileUpload ref="fileUploadRef" :studentName="student ? `${student.nom} ${student.cognoms}` : ''" />
+            <FileUpload 
+                ref="fileUploadRef" 
+                :studentName="student ? `${student.nom} ${student.cognoms}` : ''" 
+            />
             
             <div class="actions">
                 <button @click="router.go(-1)" class="btn-cancel">Cancel·lar</button>
-                <button @click="handleAnalyze" class="btn-primary" :disabled="isGlobalLoading">
+                <button 
+                    @click="handleAnalyze" 
+                    class="btn-primary" 
+                    :disabled="isGlobalLoading"
+                >
                     <span v-if="isGlobalLoading">Analitzant...</span>
                     <span v-else>Analitzar Document</span>
                 </button>
             </div>
         </div>
 
-        <!-- PASO 2: REVISIÓN -->
         <div v-if="step === 2" class="step-content">
             <ReviewFileResponse 
                 :student="student"
@@ -160,6 +175,7 @@ onMounted(() => {
     font-size: 1.1em;
 }
 
+/* Indicador Pasos */
 .steps-indicator {
     text-align: center;
     margin-bottom: 30px;
@@ -172,10 +188,9 @@ onMounted(() => {
     font-weight: bold;
 }
 
-.steps-indicator .separator {
-    margin: 0 10px;
-}
+.steps-indicator .separator { margin: 0 10px; }
 
+/* Botones */
 .actions {
     display: flex;
     justify-content: center;
@@ -199,9 +214,7 @@ onMounted(() => {
     cursor: not-allowed;
 }
 
-.btn-primary:hover:not(:disabled) {
-    background-color: #b00000;
-}
+.btn-primary:hover:not(:disabled) { background-color: #b00000; }
 
 .btn-cancel {
     background: none;
@@ -213,9 +226,7 @@ onMounted(() => {
     transition: background 0.3s;
 }
 
-.btn-cancel:hover {
-    background-color: #e0e0e0;
-}
+.btn-cancel:hover { background-color: #e0e0e0; }
 
 .loading {
     text-align: center;

@@ -27,9 +27,9 @@ CREATE TABLE `centres` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- 2. Tabla ALUMNES (Corregida: RALC es la Primary Key)
+-- 2. Tabla ALUMNES 
 CREATE TABLE `alumnes` (
-  `ralc` varchar(20) NOT NULL, -- Clave primaria tipo texto
+  `ralc` varchar(20) NOT NULL, 
   `nom` varchar(50) NOT NULL,
   `cognom` varchar(100) NOT NULL,
   `dni` varchar(15) NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE `alumnes` (
   `curs` varchar(20) NOT NULL,
   `grup` varchar(10) DEFAULT NULL,
   `centre_procedencia_id` int(11) NOT NULL DEFAULT '835',
-  PRIMARY KEY (`ralc`), -- Definimos RALC como PK
+  PRIMARY KEY (`ralc`), 
   KEY `centre_procedencia_id` (`centre_procedencia_id`),
   CONSTRAINT `alumnes_ibfk_1` FOREIGN KEY (`centre_procedencia_id`) REFERENCES `centres` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -57,10 +57,8 @@ CREATE TABLE `professors` (
 -- 4. Tabla PIS
 CREATE TABLE `pis` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `alumne_ralc` varchar(20) NOT NULL, -- CAMBIO IMPORTANTE: Ahora es varchar para coincidir con alumnes.ralc
-  `professor_id` int(11), -- NOT NULL,
-  
-  -- Nuevos campos
+  `alumne_ralc` varchar(20) NOT NULL, 
+  `professor_id` int(11), 
   `dificultat` text COLLATE utf8mb4_general_ci,
   `gravetat` text COLLATE utf8mb4_general_ci,
   `justificacio` text COLLATE utf8mb4_general_ci,
@@ -68,15 +66,14 @@ CREATE TABLE `pis` (
   `observacio` text COLLATE utf8mb4_general_ci,
   `estado` varchar(20) DEFAULT 'actiu',
   
-  -- Campos originales
-  `ruta_pdf` varchar(255) COLLATE utf8mb4_general_ci, -- NOT NULL,
+  `ruta_pdf` varchar(255) COLLATE utf8mb4_general_ci, 
   `data_creacio` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   PRIMARY KEY (`id`),
   KEY `alumne_ralc` (`alumne_ralc`),
   KEY `professor_id` (`professor_id`),
   
-  -- Relaciones corregidas
+ 
   CONSTRAINT `pis_ibfk_1` FOREIGN KEY (`alumne_ralc`) REFERENCES `alumnes` (`ralc`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `pis_ibfk_2` FOREIGN KEY (`professor_id`) REFERENCES `professors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

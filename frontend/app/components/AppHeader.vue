@@ -2,14 +2,17 @@
 import { computed, ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+// Imports y Hooks
 const idioma = useIdioma();
 const route = useRoute();
 const router = useRouter();
+
+// Estado componente
 const estaLogueado = ref(false);
 const cercadorObert = ref(false); 
 const textBusqueda = ref(''); 
 
-// --- LÓGICA DE SESIÓN ---
+// Gestión sesión
 const checkLogin = () => {
   if (typeof window !== 'undefined') {
     estaLogueado.value = !!localStorage.getItem('user_centre');
@@ -18,7 +21,7 @@ const checkLogin = () => {
 watch(() => route.path, checkLogin);
 onMounted(checkLogin);
 
-// --- LÓGICA DEL BUSCADOR ---
+// Lógica buscador
 const toggleCercador = () => {
   cercadorObert.value = !cercadorObert.value;
   if (!cercadorObert.value) textBusqueda.value = '';
@@ -28,14 +31,14 @@ const realizarBusqueda = () => {
   console.log("Buscando:", textBusqueda.value);
 };
 
-// --- IDIOMAS ---
+// Control idiomas
 const cambiarIdioma = (nuevoIdioma) => {
   idioma.value = nuevoIdioma;
   const checkbox = document.getElementById('check-idioma');
   if (checkbox) checkbox.checked = false;
 };
 
-// Acciones del botón derecho (Login/Logout)
+// Acción autenticación
 const accionBoton = () => {
   if (estaLogueado.value) {
     localStorage.removeItem('user_centre');
@@ -43,7 +46,7 @@ const accionBoton = () => {
   router.push('/');
 };
 
-// --- TRADUCCIONES Y DATOS ---
+// Traducciones dinámicas
 const t = computed(() => {
   const i = idioma.value;
   return {
@@ -52,7 +55,7 @@ const t = computed(() => {
     cercador_titulo: { ca: 'Cercador', es: 'Buscador', en: 'Search' }[i],
     placeholder: { ca: 'Pots cercar tràmits, departaments, serveis...', es: 'Puedes buscar trámites, departamentos, servicios...', en: 'Search procedures, departments, services...' }[i],
     
-    // AQUÍ ESTÁN TODOS LOS ENLACES Y TEXTOS ACTUALIZADOS
+    // Enlaces rápidos
     chips: [
       { 
         label: { ca: 'Novetats de GECO+', es: 'Novedades de GECO+', en: 'GECO+ News' },
@@ -67,7 +70,6 @@ const t = computed(() => {
         url: 'https://guiaweb.gencat.cat/ca/estructura/plantilles/plantilla-base/' 
       },
       { 
-        // CAMBIO: AÑADIDO "de GECO+"
         label: { ca: 'Manuals i tutorials de GECO+', es: 'Manuales y tutoriales de GECO+', en: 'GECO+ Manuals and tutorials' },
         url: 'https://guiaweb.gencat.cat/ca/suport-als-usuaris-gecoplus/manuals/' 
       },
@@ -83,9 +85,11 @@ const t = computed(() => {
   };
 });
 
+// Título dinámico
 const tituloDinamico = computed(() => {
   const ruta = route.path;
   const textoBase = { ca: 'Traspàs Plans Individualitzats', es: 'Traspaso Planes Individualizados', en: 'Individual Plans Transfer' };
+  
   const titulos = {
     '/': textoBase,
     '/home': textoBase,
@@ -93,9 +97,11 @@ const tituloDinamico = computed(() => {
     '/temporal/formPage': { ca: 'Registrar Nou PI', es: 'Registrar Nuevo PI', en: 'Register New IP' },
     '/pi/new': { ca: 'Crear PI', es: 'Crear PI', en: 'Create IP' },
   };
+  
   return titulos[ruta] ? titulos[ruta][idioma.value] : 'PlaPI - Generalitat de Catalunya';
 });
 
+// Configuración menú
 const menuItems = [{ nombre: 'Inici', path: '/home' }];
 const esLogin = computed(() => route.path === '/');
 const ocultarMenu = computed(() => route.path === '/' || route.path === '/contacte' || route.path === '/home');
@@ -106,6 +112,7 @@ const ocultarMenu = computed(() => route.path === '/' || route.path === '/contac
   <header>
     <div class="top-bar">
       <div class="container">
+        
         <NuxtLink to="/" class="logo-link">
           <img src="/gencat_logo.svg" alt="Generalitat de Catalunya" class="logo-img">
         </NuxtLink>
@@ -113,6 +120,7 @@ const ocultarMenu = computed(() => route.path === '/' || route.path === '/contac
         <nav class="top-nav">
           <NuxtLink to="/contacte" class="menu-link">Contacte</NuxtLink>
           <span>|</span>
+          
           <div class="selector-idioma">
             <input type="checkbox" id="check-idioma" />
             <label for="check-idioma" class="boton-ca">{{ idioma.toUpperCase() }} ▾</label>
@@ -122,7 +130,9 @@ const ocultarMenu = computed(() => route.path === '/' || route.path === '/contac
               <button @click="cambiarIdioma('en')">English (EN)</button>
             </div>
           </div>
+          
           <span>|</span>
+          
           <button @click="toggleCercador" class="search-btn-toggle">
             <span v-if="cercadorObert" class="icon-close">✕</span>
             <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -171,6 +181,7 @@ const ocultarMenu = computed(() => route.path === '/' || route.path === '/contac
       <div class="main-nav-bar">
         <div class="container container-header-gris">
           <h1 class="site-title">{{ tituloDinamico }}</h1>
+          
           <button v-if="!esLogin" @click="accionBoton" class="btn-logout-header">
             {{ estaLogueado ? t.tancar_sessio : t.iniciar_sessio }}
             <span v-if="estaLogueado" class="icon-x">✕</span>
@@ -195,13 +206,13 @@ const ocultarMenu = computed(() => route.path === '/' || route.path === '/contac
 </template>
 
 <style scoped>
+/* Estructura base */
 header { width: 100%; display: block; position: relative; }
 .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 30px; display: flex; align-items: center; box-sizing: border-box; }
 
-/* CAMBIO: AUMENTADO EL ANCHO MÁXIMO PARA QUE QUEPAN LOS BOTONES EN UNA LÍNEA */
 .container-column { 
   width: 100%; 
-  max-width: 1200px; /* Antes era 900px */
+  max-width: 1200px; 
   margin: 0 auto; 
   display: flex; 
   flex-direction: column; 
@@ -209,7 +220,7 @@ header { width: 100%; display: block; position: relative; }
   padding: 0 20px; 
 }
 
-/* TOP BAR */
+/* Barra superior */
 .top-bar { background-color: #333333; color: white; font-size: 14px; padding: 12px 0; width: 100%; }
 .top-bar .container { justify-content: space-between; }
 .logo-img { height: 35px; width: auto; }
@@ -218,7 +229,7 @@ header { width: 100%; display: block; position: relative; }
 .menu-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 .top-nav span { margin: 0 10px; color: #666; }
 
-/* IDIOMA */
+/* Selector Idioma */
 .selector-idioma { position: relative; }
 #check-idioma { display: none; }
 .boton-ca { cursor: pointer; user-select: none; color: white; font-weight: bold; }
@@ -227,11 +238,11 @@ header { width: 100%; display: block; position: relative; }
 .desplegable button { background: none; border: none; width: 100%; text-align: left; color: #333; display: block; padding: 10px 15px; cursor: pointer; }
 .desplegable button:hover { background-color: #f0f0f0; color: #d00000; }
 
-/* BOTÓN LUPA */
+/* Botones header */
 .search-btn-toggle { background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; }
 .icon-close { font-size: 20px; font-weight: bold; }
 
-/* SEARCH PANEL */
+/* Panel búsqueda */
 .search-panel {
   background-color: #f7f7f7;
   padding: 40px 0 60px 0;
@@ -278,10 +289,10 @@ header { width: 100%; display: block; position: relative; }
 }
 .btn-search-action:hover { background-color: #a00000; }
 
-/* CHIPS */
+/* Chips enlaces */
 .chips-container {
   display: flex;
-  flex-wrap: wrap; /* Mantenemos wrap por si la pantalla es muy pequeña (móvil), pero en PC se verán en línea */
+  flex-wrap: wrap; 
   gap: 10px;
   justify-content: center;
 }
@@ -297,7 +308,7 @@ header { width: 100%; display: block; position: relative; }
   transition: all 0.2s;
   text-decoration: none; 
   display: inline-block;
-  white-space: nowrap; /* Evita que el texto dentro del botón se rompa */
+  white-space: nowrap; 
 }
 
 .chip:hover {
@@ -305,7 +316,7 @@ header { width: 100%; display: block; position: relative; }
   color: white;
 }
 
-/* OTROS ESTILOS */
+/* Barra principal */
 .main-nav-bar { background-color: #444444; color: white; padding: 15px 0; width: 100%; }
 .site-title { margin: 0; font-size: 20px; font-weight: normal; }
 .container-header-gris { justify-content: space-between; }
@@ -318,6 +329,7 @@ header { width: 100%; display: block; position: relative; }
 .btn-logout-header:hover { background-color: rgba(255, 255, 255, 0.1); border-color: white; }
 .icon-x { font-size: 12px; font-weight: bold; }
 
+/* Menú inferior */
 .bottom-nav-bar { background-color: white; border-bottom: 1px solid #e0e0e0; font-size: 14px; width: 100%; }
 .main-nav { display: flex; align-items: center; width: 100%; }
 .nav-item { text-decoration: none; color: #333; padding: 15px 0; border-bottom: 3px solid transparent; transition: all 0.2s ease; }

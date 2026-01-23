@@ -3,24 +3,20 @@ import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { createStudentPI } from "../../services/apiStudent.js";
 
-// NOTA NUXT:
-// Si tu archivo está en la carpeta 'utils/apiStudent.js', NO necesitas importar nada.
-// Si prefieres mantenerlo en 'services/', descomenta la siguiente línea:
-// import { createStudentPI } from "~/services/apiStudent.js";
-
-// --- PROPS ---
+// Propiedades
 const props = defineProps({
   student: { type: Object, required: true },
   aiData: { type: Object, default: () => ({}) },
   fileName: { type: String, default: "" },
 });
 
+// Eventos
 const emit = defineEmits(["back", "save"]);
 
 const router = useRouter();
 const isSaving = ref(false);
 
-// --- FORM STATE ---
+// Estado formulario
 const formData = ref({
   dificultat: "",
   gravetat: "",
@@ -29,7 +25,9 @@ const formData = ref({
   observacio: "",
 });
 
-// --- FUNCIÓN PARA RELLENAR DATOS ---
+// --- LÓGICA ---
+
+// Rellenar formulario
 const populateForm = () => {
   if (props.aiData && Object.keys(props.aiData).length > 0) {
     formData.value.dificultat = props.aiData.dificultat || "";
@@ -46,14 +44,11 @@ const populateForm = () => {
   }
 };
 
-// --- REACTIVIDAD ---
+// Observar cambios
 watch(() => props.aiData, populateForm, { immediate: true });
 
-// --- GUARDADO REAL (CORREGIDO) ---
-// --- REEMPLAZADO POR EMIT para que el padre gestione la subida de archivo ---
+// Emitir guardado
 function handleSavePI() {
-  // Emitimos los datos limpios al padre (crear-pi.vue)
-  // El padre llamará a fileUpload.uploadPdfAndSaveData con estos datos
   const dataToSave = {
     dificultat: formData.value.dificultat,
     gravetat: formData.value.gravetat,
@@ -68,6 +63,7 @@ function handleSavePI() {
 
 <template>
   <div class="review-container">
+    
     <div class="header-review">
       <h2>📝 Revisió i Guardat</h2>
       <p class="subtitle">
@@ -77,6 +73,7 @@ function handleSavePI() {
     </div>
 
     <div class="form-grid">
+      
       <div class="form-group">
         <label>Dificultat detectada</label>
         <input
@@ -132,11 +129,11 @@ function handleSavePI() {
         <span v-else>✅ Confirmar i Guardar PI</span>
       </button>
     </div>
+
   </div>
 </template>
 
 <style scoped>
-/* Tus estilos (Sin cambios) */
 .review-container {
   max-width: 800px;
   margin: 0 auto;
@@ -145,15 +142,16 @@ function handleSavePI() {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
+
 .form-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 20px;
   margin-top: 20px;
 }
-.full-width {
-  grid-column: span 2;
-}
+
+.full-width { grid-column: span 2; }
+
 label {
   display: block;
   font-weight: 600;
@@ -163,9 +161,8 @@ label {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-input,
-textarea,
-select {
+
+input, textarea, select {
   width: 100%;
   padding: 12px;
   border: 1px solid #e0e0e0;
@@ -175,24 +172,26 @@ select {
   transition: all 0.2s;
   background-color: #fafafa;
 }
-input:focus,
-textarea:focus,
-select:focus {
+
+input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: #d00000;
   background-color: #fff;
   box-shadow: 0 0 0 3px rgba(208, 0, 0, 0.1);
 }
+
 .highlight-manual textarea {
   border-color: #ccc;
   background-color: #fff;
 }
+
 .actions {
   margin-top: 30px;
   display: flex;
   justify-content: flex-end;
   gap: 15px;
 }
+
 .btn-save {
   background-color: #d00000;
   color: white;
@@ -203,9 +202,9 @@ select:focus {
   cursor: pointer;
   transition: background 0.2s;
 }
-.btn-save:hover {
-  background-color: #b00000;
-}
+
+.btn-save:hover { background-color: #b00000; }
+
 .btn-cancel {
   background: none;
   border: none;

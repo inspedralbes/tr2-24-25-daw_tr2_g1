@@ -1,739 +1,274 @@
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { GoogleLogin } from 'vue3-google-login';
 
-// --- ESTADO ANIMACIÓN INTRO ---
-const showIntroAnimation = ref(true); // Controla la intro de carga
+const router = useRouter();
 
-interface ApiResponse {
-  success: boolean;
-  data?: any;
-  error?: string;
-}
+// --- ESTADO ---
+const email = ref('');
+const password = ref(''); // (Opcional si decides usar password en el futuro)
+const errorMsg = ref('');
+const isLoading = ref(false);
 
-const route = useRoute();
-const studentRalc = route.params.id;
+// --- CICLO DE VIDA ---
+onMounted(() => {
+  // Si ya hay sesión, redirigir
+  const session = localStorage.getItem('user_centre');
+  if (session) {
+    router.push('/home');
+  }
+});
 
-// Estat de càrrega de dades
-const isLoading = ref(true);
-const error = ref<string | null>(null);
-const student = ref<any>(null);
+// --- LÓGICA DE LOGIN ---
 
-// Estat per les pestanyes de previsualització
-const activeTab = ref<"ia" | "pdf">("ia");
+// 1. Login con Google
+const handleGoogleLogin = async (response) => {
+  try {
+    const res = await fetch('http://localhost:3000/api/login-google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: response.credential })
+    });
 
-const changeTab = (tab: "ia" | "pdf") => {
-  activeTab.value = tab;
+    const data = await res.json();
+
+    if (data.success) {
+      // Guardar sesión (sirve tanto para centros como para profes)
+      localStorage.setItem('user_centre', JSON.stringify(data.centre));
+      router.push('/home');
+    } else {
+      errorMsg.value = data.error || "Error d'autenticació amb Google";
+    }
+  } catch (e) {
+    console.error(e);
+    errorMsg.value = "Error de connexió amb el servidor";
+  }
 };
 
-// Carregar dades de l'alumne des de l'API
-const loadStudent = async () => {
+// 2. Login con Email (Centros)
+const handleCenterLogin = async () => {
+  if (!email.value) return;
+  
+  isLoading.value = true;
+  errorMsg.value = '';
+
   try {
-    isLoading.value = true;
-    error.value = null;
+    const res = await fetch('http://localhost:3000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.value })
+    });
 
-    // Detectar si estem al servidor o al client per usar la URL correcta
-    const baseURL = import.meta.server
-      ? "http://backend:3000"
-      : "http://localhost:3000";
-    const response = await $fetch<ApiResponse>(
-      `${baseURL}/api/alumne/${studentRalc}`,
-    );
+    const data = await res.json();
 
-    console.log("Response completa:", response);
-
-    if (response?.success && response.data) {
-      student.value = response.data;
-      console.log("Alumne trobat:", response.data);
+    if (data.success) {
+      localStorage.setItem('user_centre', JSON.stringify(data.centre));
+      router.push('/home');
     } else {
-      error.value = response.error || "Error al carregar les dades";
-      console.error("Format de resposta incorrecte:", response);
+      errorMsg.value = data.error || "Aquest correu no pertany a cap centre registrat";
     }
-  } catch (e: any) {
-    console.error("Error carregant alumne:", e);
-    error.value = "Error al carregar les dades de l'alumne";
+  } catch (e) {
+    console.error(e);
+    errorMsg.value = "Error de connexió amb el servidor";
   } finally {
     isLoading.value = false;
   }
 };
-
-// Funció per parsejar les dades de la IA
-const getParsedData = (dadesIa: any) => {
-  if (!dadesIa) return null;
-
-  try {
-    // Si ja és un objecte, retornar-lo directament
-    if (typeof dadesIa === "object") return dadesIa;
-
-    // Si és un string, intentar parsejar-lo com JSON
-    if (typeof dadesIa === "string") {
-      return JSON.parse(dadesIa);
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Error parsejant dades IA:", error);
-    return null;
-  }
-};
-
-// Funció per obtenir l'URL del PDF identificat pel RALC
-const getPdfUrl = () => {
-  if (!student.value?.ralc) return null;
-
-  const baseURL = "http://localhost:3000";
-
-  // Utilitzar el RALC de l'alumne per obtenir el seu PDF
-  return `${baseURL}/api/pdf/${student.value.ralc}`;
-};
-
-// Funció per descarregar el PDF
-const downloadPDF = () => {
-  const pdfUrl = getPdfUrl();
-  if (!pdfUrl) return;
-
-  const link = document.createElement("a");
-  link.href = pdfUrl;
-  link.download = `${student.value?.ralc}.pdf`;
-  link.target = "_blank";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-// Computed property per ordenar els PIs: primer l'actiu, després per data més recent
-const sortedPis = computed(() => {
-  if (!student.value?.pis) return [];
-  
-  return [...student.value.pis].sort((a, b) => {
-    // 1. Primer ordenar per estat (actiu primer)
-    const aActiu = a.estado === 'actiu' ? 1 : 0;
-    const bActiu = b.estado === 'actiu' ? 1 : 0;
-    
-    if (aActiu !== bActiu) {
-      return bActiu - aActiu; // Els actius primer
-    }
-    
-    // 2. Si tenen el mateix estat, ordenar per data (més recent primer)
-    const dateA = new Date(a.data_creacio).getTime();
-    const dateB = new Date(b.data_creacio).getTime();
-    return dateB - dateA; // DESC (més recent primer)
-  });
-});
-
-// Computed property per obtenir només el PI actiu
-const activePi = computed(() => {
-  if (!student.value?.pis) return null;
-  return student.value.pis.find((pi: { estado: string; }) => pi.estado === 'actiu') || null;
-});
-
-// Carregar dades al muntar el component
-onMounted(() => {
-  loadStudent();
-  
-  // --- LÓGICA DE ANIMACIÓN (1.5 SEGUNDOS) ---
-  setTimeout(() => {
-    showIntroAnimation.value = false;
-  }, 1500); // <--- CAMBIADO A 1500ms
-});
 </script>
 
 <template>
-  <div class="page-container">
-    
-    <div v-if="showIntroAnimation" class="loading-intro-container">
-      <div class="spinner-large"></div>
-      <h2 class="loading-text">Generant entorn de l'alumne...</h2>
-    </div>
-
-    <div v-else class="student-detail-page fade-in">
+  <div class="login-container">
+    <div class="login-card">
       
-      <div class="nav-back">
-        <NuxtLink to="/pi/search" class="btn-back">
-        ← Tornar a la cerca
-      </NuxtLink>
+      <div class="logo-header">
+        <span class="gencat-brand">gencat.cat</span>
+        <h1 class="app-title">Traspàs de PIs</h1>
+        <p class="subtitle">Gestió de Plans Individualitzats</p>
       </div>
 
-      <div v-if="isLoading" class="loading-state">
-        <p>Carregant dades de l'alumne...</p>
+      <form @submit.prevent="handleCenterLogin" class="login-form">
+        <div class="form-group">
+          <label for="email">Correu del Centre</label>
+          <input 
+            id="email"
+            v-model="email" 
+            type="email" 
+            placeholder="codicentre@xtec.cat" 
+            required
+            :disabled="isLoading"
+          />
+        </div>
+
+        <button type="submit" class="btn-primary" :disabled="isLoading">
+          {{ isLoading ? 'Entrant...' : 'Entrar com a Centre' }}
+        </button>
+      </form>
+
+      <div class="divider">
+        <span>o</span>
       </div>
 
-      <div v-else-if="error" class="error-state">
-        <p>{{ error }}</p>
-        <button @click="loadStudent" class="btn-retry">Tornar a intentar</button>
-      </div>
-
-      <div v-else-if="student" class="detail-content">
-        <div class="detail-grid">
-          
-          <div class="detail-left">
-            <div class="student-card">
-              <div class="card-header">
-                <div class="gencat-logo">gencat.cat</div>
-                <h1>{{ student.nom }} {{ student.cognoms }}</h1>
-              </div>
-
-              <div class="info-list">
-                <div class="info-item">
-                  <span class="info-label">RALC:</span>
-                  <span class="info-value">{{ student.ralc || "No disponible" }}</span>
-                </div>
-
-                <div class="info-item">
-                  <span class="info-label">DNI / TIE:</span>
-                  <span class="info-value">{{ student.dni || "-" }}</span>
-                </div>
-
-                <div class="info-item">
-                  <span class="info-label">Data de Naixement:</span>
-                  <span class="info-value">
-                    {{ student.dataNaixement ? new Date(student.dataNaixement).toLocaleDateString("ca-ES") : "-" }}
-                  </span>
-                </div>
-
-                <div class="info-item">
-                  <span class="info-label">Curs:</span>
-                  <span class="info-value">{{ student.curs || "-" }}</span>
-                </div>
-
-                <div class="info-item">
-                  <span class="info-label">Centre de Procedència:</span>
-                  <span class="info-value">{{ student.centreProcedencia || "-" }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Plans Individualitzats -->
-            <div
-              v-if="sortedPis && sortedPis.length > 0"
-              class="pis-section">
-              <div class="pis-section-header">
-                <h2>Plans Individualitzats</h2>
-
-                <NuxtLink :to="`/saveNew/saveNewPi?ralc=${studentRalc}`" class="btn-upload-red">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                      <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-                    </svg>
-                    Afegir Nou PI
-                </NuxtLink>
-              </div>
-
-              <div class="pis-list">
-                <div v-for="pi in sortedPis" :key="pi.id" class="pi-card" :class="{ 'active-pi': pi.estado === 'actiu' }">
-                  <div class="pi-header">
-                     <span class="pi-date">{{ new Date(pi.data_creacio).toLocaleDateString('ca-ES') }}</span>
-                     <span class="pi-status" :class="pi.estado === 'actiu' ? 'status-actiu' : 'status-inactiu'">
-                        {{ pi.estado === 'actiu' ? 'Actiu' : 'Històric' }}
-                     </span>
-                  </div>
-                  <div class="pi-summary">
-                        {{ pi.dificultat || 'Sense dificultat especificada' }}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div v-else class="empty-state">
-              <p>Aquest alumne encara no té plans individualitzats assignats.</p>
-            </div>
-          </div>
-
-          <div class="detail-right">
-            <div class="preview-container">
-              <div class="tabs-header">
-                <button
-                  :class="['tab-button', { active: activeTab === 'ia' }]"
-                  @click="changeTab('ia')"
-                >
-                  Dades generades previament
-                </button>
-                <button
-                  :class="['tab-button', { active: activeTab === 'pdf' }]"
-                  @click="changeTab('pdf')"
-                >
-                  PDF Original
-                </button>
-              </div>
-            
-              <!-- Contingut de les pestanyes -->
-              <div class="tabs-content">
-                <!-- Pestanya: Dades generades per IA -->
-                <div v-if="activeTab === 'ia'" class="tab-panel">
-                  <div class="ia-preview">
-                    <h3>Informe generat previament</h3>
-                    <div
-                      v-if="activePi"
-                      class="ia-content"
-                    >
-                      <div class="pi-section">
-                        <div class="pi-header">
-                          <h4>Pla Individualitzat Actiu</h4>
-                        </div>
-
-                        <div class="pi-info-row">
-                          <div class="pi-info-field">
-                            <label class="info-label">Data de creació:</label>
-                            <p class="info-value">
-                              {{
-                                new Date(activePi.data_creacio).toLocaleDateString(
-                                  "ca-ES",
-                                )
-                              }}
-                            </p>
-                          </div>
-                          <div class="pi-info-field">
-                            <label class="info-label"
-                              >Professor responsable:</label
-                            >
-                            <p class="info-value">
-                              {{ activePi.professorNom }} ({{ activePi.professorEmail }})
-                            </p>
-                          </div>
-                        </div>
-
-                        <!-- Camps del pla individualitzat -->
-                        <div class="pi-form-fields">
-                          <div class="form-row">
-                            <div class="form-field half-width">
-                              <label class="field-label">Dificultat:</label>
-                              <div
-                              class="field-input"
-                              :class="{ 'empty-state': !activePi.dificultat }"
-                              >
-                                {{ activePi.dificultat || "" }}
-                              </div>
-                            </div>
-                            <div class="form-field half-width">
-                              <label class="field-label">Gravetat:</label>
-                              <div
-                                class="field-input"
-                                :class="{ 'empty-state': !activePi.gravetat }"
-                              >
-                               {{ activePi.gravetat || "" }}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div class="form-field">
-                            <label class="field-label">Justificació:</label>
-                            <div
-                              class="field-textarea"
-                              :class="{ 'empty-state': !activePi.justificacio }"
-                            >
-                              {{ activePi.justificacio || "" }}
-                            </div>
-                          </div>
-
-                          <div class="form-field">
-                            <label class="field-label">Proposta educativa:</label>
-                            <div
-                              class="field-textarea"
-                              :class="{ 'empty-state': !activePi.proposta_educativa }"
-                            >
-                              {{ activePi.proposta_educativa || "" }}
-                            </div>
-                          </div>
-
-                          <div class="form-field">
-                            <label class="field-label">Observacions:</label>
-                            <div
-                              class="field-textarea"
-                              :class="{ 'empty-state': !activePi.observacio }"
-                            >
-                              {{ activePi.observacio || "" }}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div v-else class="ia-content empty-content">
-                      <p class="placeholder-text">
-                        Aquest alumne encara no té cap pla individualitzat
-                        generat.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Pestanya: PDF Original -->
-                <div v-if="activeTab === 'pdf'" class="tab-panel">
-                  <div class="pdf-preview">
-                    <div class="pdf-header">
-                      <h3>Document PDF original</h3>
-                    </div>
-                    <div class="pdf-viewer-container">
-                      <iframe
-                        v-if="getPdfUrl()"
-                        :src="getPdfUrl() ?? undefined"
-                        class="pdf-iframe"
-                        frameborder="0"
-                      ></iframe>
-                      <div v-else class="pdf-viewer-placeholder">
-                        <p class="placeholder-text">
-                          Aquest alumne encara no té cap document PDF carregat.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div class="google-section">
+        <p class="google-hint">Si ets docent, entra amb Google:</p>
+        <div class="google-btn-wrapper">
+          <GoogleLogin :callback="handleGoogleLogin" />
         </div>
       </div>
-    </div> <!-- Tanca student-detail-page fade-in -->
-  </div> <!-- Tanca page-container -->
+
+      <div v-if="errorMsg" class="error-box">
+        {{ errorMsg }}
+      </div>
+
+    </div>
+  </div>
 </template>
 
 <style scoped>
-/* --- ESTILOS DE LA PANTALLA DE CARGA (SPINNER) --- */
-.loading-intro-container {
-  min-height: calc(100vh - 100px);
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f4f4f4;
+  font-family: "Open Sans", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+}
+
+.login-card {
+  background: white;
   width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border-top: 5px solid #d9001d; /* Rojo Gencat */
+}
+
+.logo-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.gencat-brand {
+  font-size: 18px;
+  font-weight: 700;
+  color: #d9001d;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+  font-weight: 600;
+}
+
+.subtitle {
+  color: #666;
+  margin: 5px 0 0 0;
+  font-size: 14px;
+}
+
+/* Formulario */
+.login-form {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: #f4f4f4; 
+  gap: 20px;
 }
 
-.spinner-large {
-  width: 60px;
-  height: 60px;
-  border: 5px solid #ddd;
-  border-top: 5px solid #d9001d; /* Rojo Gencat */
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 25px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-text {
-  font-family: "Open Sans", sans-serif;
-  color: #333;
-  font-size: 20px;
-  font-weight: 600;
-  animation: fadeInText 1s ease-in;
-}
-
-@keyframes fadeInText {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.fade-in {
-  animation: fadeInContent 0.6s ease-out;
-}
-@keyframes fadeInContent {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* --- ESTILOS GENERALES Y ALINEACIÓN --- */
-/* Nuevo contenedor para alinear Título y Botón */
-.pis-section-header {
+.form-group {
   display: flex;
-  justify-content: space-between; /* Título izquierda, botón derecha */
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-/* Ajustamos el h2 para quitarle márgenes que estorben la alineación */
-.pis-section h2 {
-  font-family: "Open Sans", sans-serif;
-  font-weight: 600;
-  font-size: 22px;
-  color: #333;
-  margin: 0; /* Quitamos márgenes para centrarlo con el botón */
-}
-
-/* El contenedor del input (sin margen extra) */
-.newPdfupload {
-  margin: 0;
-}
-
-.hidden-input {
-  display: none;
-}
-
-/* BOTÓN ROJO GENCAT */
-.btn-upload-red {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  padding: 8px 16px; /* Un poco más compacto */
-  background-color: #c8102e; /* ROJO GENCAT */
+  text-align: left;
+}
+
+label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #444;
+}
+
+input {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+input:focus {
+  outline: none;
+  border-color: #d9001d;
+}
+
+.btn-primary {
+  background-color: #d9001d;
   color: white;
   border: none;
+  padding: 14px;
   border-radius: 4px;
-  font-family: "Open Sans", sans-serif;
-  font-size: 14px;
   font-weight: 600;
+  font-size: 16px;
   cursor: pointer;
   transition: background-color 0.2s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.btn-upload-red:hover:not(:disabled) {
-  background-color: #a00d25; /* Rojo más oscuro al pasar el ratón */
+.btn-primary:hover:not(:disabled) {
+  background-color: #b00016;
 }
 
-.btn-upload-red:disabled {
+.btn-primary:disabled {
   background-color: #e0e0e0;
-  color: #999;
   cursor: not-allowed;
 }
 
-.upload-error-msg {
-  color: #c8102e;
-  font-size: 13px;
-  margin-top: -10px;
-  margin-bottom: 15px;
-  text-align: right; /* Error alineado a la derecha, bajo el botón */
-}
-.student-detail-page {
-  background-color: #e8e8e8;
-  min-height: calc(100vh - 140px);
-  padding: 40px;
-}
-
-.nav-back {
-  max-width: 1400px;
-  margin: 0 auto 30px;
-}
-
-.btn-back {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: white;
-  color: #333;
-  text-decoration: none;
-  border-radius: 4px;
-  font-family: "Open Sans", sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  transition: all 0.2s ease; /* Transición suave */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid transparent;
-}
-
-/* HOVER MÁS NOTORIO */
-.btn-back:hover {
-  background-color: #e2e2e2; /* Gris más oscuro */
-  border-color: #c8102e; /* Borde rojo sutil */
-  color: #c8102e; /* Texto rojo */
-  transform: translateY(-1px);
-}
-
-.loading-state,
-.error-state {
-  text-align: center;
-  padding: 60px 20px;
-  max-width: 600px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.loading-state p { font-family: "Open Sans", sans-serif; font-size: 18px; color: #666; margin: 0; }
-.error-state p { font-family: "Open Sans", sans-serif; font-size: 18px; color: #c8102e; margin: 0 0 20px 0; }
-
-.btn-retry { padding: 10px 24px; background-color: #007a33; color: white; border: none; border-radius: 4px; font-family: "Open Sans", sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
-.btn-retry:hover { background-color: #005a24; }
-
-/* LAYOUT DE GRID ALINEADO */
-.detail-content { max-width: 1400px; margin: 0 auto; }
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  /* ESTO ES LA CLAVE PARA QUE TERMINEN EN LÍNEA */
-  align-items: stretch; 
-}
-
-.detail-left { 
-  display: flex; 
-  flex-direction: column; 
-  height: 100%;
-}
-
-.student-card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 40px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  /* Para que ocupe todo el alto */
-  height: 100%;
+/* Separador */
+.divider {
   display: flex;
-  flex-direction: column;
-}
-
-.card-header { margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; padding-bottom: 20px; }
-.gencat-logo { font-size: 20px; font-weight: 700; color: #c8102e; font-family: "Open Sans", sans-serif; margin-bottom: 15px; }
-.card-header h1 { font-family: "Open Sans", sans-serif; font-weight: 600; font-size: 28px; color: #333; margin: 0; line-height: 1.3; }
-
-.info-list { display: flex; flex-direction: column; gap: 18px; margin-bottom: 30px; }
-.info-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #e5e7eb; }
-.info-item:last-child { border-bottom: none; }
-.info-label { font-family: "Open Sans", sans-serif; font-weight: 600; font-size: 15px; color: #555; }
-.info-value { font-family: "Open Sans", sans-serif; font-size: 15px; color: #333; font-weight: 500; text-align: right; }
-
-.pis-section { margin-top: 30px; padding-top: 30px; border-top: 2px solid #e0e0e0; flex-grow: 1; /* Empuja el contenido para llenar espacio si hace falta */ }
-.pis-section h2 { font-family: "Open Sans", sans-serif; font-weight: 600; font-size: 22px; color: #333; margin-bottom: 20px; margin-top: 0; }
-.pis-list { display: flex; flex-direction: column; gap: 16px; }
-.pi-card { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; }
-.pi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.pi-estat { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-family: "Open Sans", sans-serif; font-weight: 600; text-transform: uppercase; background-color: #e5e7eb; color: #555; }
-.pi-estat.estat-actiu { background-color: #d1fae5; color: #065f46; }
-.pi-estat.estat-pendent { background-color: #fef3c7; color: #92400e; }
-.pi-date { font-size: 13px; color: #6b7280; font-family: "Open Sans", sans-serif; }
-.pi-professor { font-size: 14px; color: #374151; font-family: "Open Sans", sans-serif; margin: 8px 0; font-weight: 500; }
-.pi-ia { font-size: 14px; color: #6b7280; font-family: "Open Sans", sans-serif; line-height: 1.5; margin: 8px 0 0 0; }
-.empty-state { padding: 30px 20px; text-align: center; background-color: #f9fafb; border-radius: 6px; margin-top: 30px; }
-.empty-state p { font-family: "Open Sans", sans-serif; font-size: 15px; color: #6b7280; margin: 0; }
-
-.detail-right { 
-  display: flex; 
-  align-items: flex-start; 
-  justify-content: center;
-  height: 100%; /* Llenar columna */
-}
-
-/* Contenidor de pestanyes */
-.preview-container {
-  width: 100%;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  height: 100%; /* Llenar altura para igualar izquierda */
-  display: flex;
-  flex-direction: column;
-}
-
-/* Header de les pestanyes */
-.tabs-header {
-  display: flex;
-  border-bottom: 2px solid #e0e0e0;
-  background-color: #f8f8f8;
-}
-
-.tab-button {
-  flex: 1;
-  padding: 16px 24px;
-  background: none;
-  border: none;
-  font-family: "Open Sans", sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-bottom: 3px solid transparent;
-}
-
-.tab-button:hover { background-color: #f0f0f0; color: #333; }
-.tab-button.active { color: #c8102e; background-color: white; border-bottom-color: #c8102e; }
-
-/* Contingut de les pestanyes */
-.tabs-content {
-  flex: 1; /* Ocupar el resto del espacio */
-  display: flex;
-  flex-direction: column;
-  min-height: 600px; /* Altura mínima para asegurar buena vista */
-}
-
-.tab-panel {
-  padding: 30px;
-  animation: fadeIn 0.3s ease-in;
-  flex: 1; /* Estirar */
-  display: flex;
-  flex-direction: column;
-}
-
-/* Pestanya IA */
-.ia-preview {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-.ia-preview h3 { font-family: "Open Sans", sans-serif; font-size: 20px; font-weight: 600; color: #333; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0; }
-.ia-content { background-color: #f8f9fa; padding: 25px; border-radius: 6px; border-left: 4px solid #c8102e; flex: 1; }
-.pi-section { background-color: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-.pi-section:last-child { margin-bottom: 0; }
-.pi-header h4 { font-family: "Open Sans", sans-serif; font-size: 18px; font-weight: 600; color: #333; margin: 0; }
-.pi-info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0; }
-.pi-info-field, .form-field { display: flex; flex-direction: column; }
-.info-label, .field-label { font-family: "Open Sans", sans-serif; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
-.info-value { font-family: "Open Sans", sans-serif; font-size: 15px; color: #333; margin: 0; }
-.pi-form-fields { display: flex; flex-direction: column; gap: 20px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.form-field.half-width { flex: 1; }
-.field-input, .field-textarea { font-family: "Open Sans", sans-serif; font-size: 14px; color: #333; padding: 12px; background-color: #f8f9fa; border: 1px solid #d1d5db; border-radius: 4px; min-height: 44px; display: flex; align-items: center; }
-.field-textarea { min-height: 100px; align-items: flex-start; white-space: pre-wrap; }
-
-/* Pestanya PDF */
-.pdf-preview {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.pdf-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e0e0e0;
+  text-align: center;
+  margin: 25px 0;
+  color: #999;
 }
 
-.pdf-header h3 { font-family: "Open Sans", sans-serif; font-size: 20px; font-weight: 600; color: #333; margin: 0; }
-.btn-download { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background-color: #c8102e; color: white; border: none; border-radius: 4px; font-family: "Open Sans", sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition:
-    background-color 0.2s,
-    opacity 0.2s; }
-.btn-download:hover:not(:disabled) { background-color: #a00d25; }
-.btn-download:disabled { opacity: 0.5; cursor: not-allowed; }
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #eee;
+}
 
-.pdf-viewer-container {
-  width: 100%;
-  flex: 1; /* Que ocupe el resto */
-  min-height: 600px; /* Asegura un mínimo si la tarjeta izquierda es pequeña */
-  border-top: 2px solid #e0e0e0;
-  padding-top: 0;
-  background-color: #f5f5f5;
+.divider span {
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+/* Google */
+.google-section {
+  text-align: center;
+}
+
+.google-hint {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.google-btn-wrapper {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
 }
 
-.pdf-iframe { width: 100%; height: 100%; border: none; background-color: white; flex: 1; }
-.pdf-viewer-placeholder { background-color: #f5f5f5; padding: 60px 40px; border-radius: 6px; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.placeholder-text { font-family: "Open Sans", sans-serif; font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 15px; }
-
-
-.status-actiu {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.status-inactiu {
-  background-color: #f3f4f6;
-  color: #6b7280;
-}
-
-.active-pi {
-  border-left: 4px solid #c8102e;
-  background-color: #fff;
-}
-
-@media (max-width: 1024px) {
-  .detail-grid { grid-template-columns: 1fr; gap: 30px; }
-  .pdf-preview { height: 500px; }
+/* Error */
+.error-box {
+  margin-top: 25px;
+  padding: 12px;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid #fecaca;
 }
 </style>

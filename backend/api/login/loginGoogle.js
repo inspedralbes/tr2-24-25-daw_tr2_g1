@@ -2,19 +2,20 @@ import { OAuth2Client } from 'google-auth-library';
 import { pool } from '../../api/db.js';
 import 'dotenv/config';
 
-// Asegúrate de que este ID coincide con el del frontend
+// Configuración cliente Google
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '182669171058-e7grkc62veee2a4t7k00dfqb450vo6j3.apps.googleusercontent.com';
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const loginGoogle = async (req, res) => {
   const { id_token } = req.body;
   
+  // Validar token
   if (!id_token) {
     return res.status(400).json({ error: 'Falta el token de Google' });
   }
 
   try {
-    // 1. Verificar el token con Google
+    // Verificar identidad
     const ticket = await client.verifyIdToken({ 
       idToken: id_token, 
       audience: GOOGLE_CLIENT_ID 
@@ -23,17 +24,17 @@ export const loginGoogle = async (req, res) => {
     const payload = ticket.getPayload();
     const email = payload?.email;
 
+    // Validar email
     if (!email) {
       return res.status(400).json({ error: 'No se pudo obtener el email del token' });
     }
 
     console.log("Intentando login con Google para:", email);
 
-    // 2. BUSCAR PRIMERO EN LA TABLA CENTRES (para centros educativos)
+    // 1. Buscar Centro
     const queryCentre = 'SELECT * FROM centres WHERE email_centre = ? LIMIT 1';
     const [rowsCentre] = await pool.query(queryCentre, [email]);
 
-    // Si encontramos el email en CENTRES, login como centro
     if (rowsCentre && rowsCentre.length > 0) {
       const centre = rowsCentre[0];
       console.log("✅ Login como CENTRO:", centre.denominacio_completa);
@@ -50,7 +51,7 @@ export const loginGoogle = async (req, res) => {
       });
     }
 
-    // 3. SI NO ESTÁ EN CENTRES, BUSCAR EN LA TABLA PROFESSORS (para profesores autorizados)
+    // 2. Buscar Profesor
     const queryProf = `
       SELECT p.id, p.nom, p.email, p.centre_id, c.denominacio_completa as centre_nom, c.codi_centre
       FROM professors p 
@@ -60,7 +61,6 @@ export const loginGoogle = async (req, res) => {
     `;
     const [rowsProf] = await pool.query(queryProf, [email]);
 
-    // Si encontramos el email en PROFESSORS, login como profesor
     if (rowsProf && rowsProf.length > 0) {
       const profesor = rowsProf[0];
       console.log("✅ Login como PROFESOR del centre:", profesor.centre_nom);
@@ -69,22 +69,23 @@ export const loginGoogle = async (req, res) => {
         success: true,
         message: "Login correcte com a professor",
         centre: {
-          id: profesor.centre_id,           // IMPORTANTE: Devolvemos el ID del centro del profesor
-          nom: profesor.centre_nom,         // Nombre del centro al que pertenece
-          codi: profesor.codi_centre,       // Código del centro
-          email: profesor.email,            // Email del profesor
-          esProfesor: true,                 // Flag para saber que es profesor, no centro
-          profesorNom: profesor.nom         // Nombre del profesor
+          id: profesor.centre_id,
+          nom: profesor.centre_nom,
+          codi: profesor.codi_centre,
+          email: profesor.email,
+          esProfesor: true,
+          profesorNom: profesor.nom
         }
       });
     }
 
-    // 4. Si no existe ni en centres ni en professors, error 404
+    // No encontrado
     return res.status(404).json({ 
       error: 'Aquest correu no està autoritzat. Contacta amb el teu centre per obtenir accés.' 
     });
 
   } catch (err) {
+    // Error servidor
     console.error('Error en loginGoogle:', err);
     return res.status(500).json({ error: 'Error verificando la identidad con Google' });
   }

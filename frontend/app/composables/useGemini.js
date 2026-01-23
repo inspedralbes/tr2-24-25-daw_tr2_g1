@@ -1,33 +1,35 @@
-// composables/useGemini.js
 import { ref } from "vue";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const useGemini = () => {
+  // Estado
   const aiResponse = ref(null);
   const isGenerating = ref(false);
   const error = ref(null);
 
+  // Analizar contenido
   const analyzePdfContent = async (pdfText, studentName) => {
     isGenerating.value = true;
     error.value = null;
     aiResponse.value = null;
 
     try {
+      // Validar Key
       const apiKey = import.meta.env.VITE_GEMINI_KEY;
       if (!apiKey) throw new Error("Falta la API Key");
 
       const genAI = new GoogleGenerativeAI(apiKey);
 
-      // CAMBIO 1: Usamos un modelo estable y rápido
+      // Configurar modelo
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-flash", // Asegúrate de que este modelo esté disponible en tu región
         generationConfig: {
           responseMimeType: "application/json",
-          temperature: 0.2, // Baja temperatura para ser más preciso y menos "creativo"
+          temperature: 0.2, 
         },
       });
 
-      // CAMBIO 2: Prompt optimizado para respuestas concisas y separadas
+      // Definir prompt
       const prompt = `
         Actúa como un psicopedagogo experto. Analiza el siguiente informe de ${studentName}.
         
@@ -51,14 +53,18 @@ export const useGemini = () => {
         "${pdfText.substring(0, 30000)}"
       `;
 
+      // Generar respuesta
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
 
+      // Parsear JSON
       aiResponse.value = JSON.parse(text);
+
     } catch (e) {
       console.error("Gemini Error:", e);
-      // Fallback por si falla el parseo o la API
+      
+      // Datos fallback
       aiResponse.value = {
         dificultat: "Error analitzant",
         gravetat: "",
@@ -67,6 +73,7 @@ export const useGemini = () => {
         observacio: "",
       };
       error.value = e.message;
+
     } finally {
       isGenerating.value = false;
     }
