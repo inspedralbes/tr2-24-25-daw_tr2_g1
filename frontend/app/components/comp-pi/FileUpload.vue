@@ -127,11 +127,23 @@ const uploadPdfAndSaveData = async (studentRalc, aiData) => {
     throw new Error("No s'ha trobat l'arxiu PDF per pujar.");
   }
 
+  // OBTENER DATOS DEL USUARIO LOGUEADO (profesor o centro)
+  let professorId = null;
+  let professorEmail = null;
+  const userCentre = localStorage.getItem('user_centre');
+  if (userCentre) {
+    const centreData = JSON.parse(userCentre);
+    professorEmail = centreData.email; // Email del profesor/centro
+    // Si es profesor, podemos buscar su ID en el backend o enviarlo si lo tenemos
+    // Por ahora enviamos el email que es único
+  }
+
   // 1. Creamos un FormData para enviar archivo binario + texto
   const formData = new FormData();
 
   // Datos obligatorios - IMPORTANTE: Añadir antes del archivo para que Multer pueda leerlo en el filename
   formData.append("ralc", studentRalc);
+  formData.append("professor_email", professorEmail || ""); // AGREGAMOS EL EMAIL DEL PROFESOR
 
   // 'pdfFile' debe coincidir con upload.single('pdfFile') en tu backend
   formData.append("pdfFile", pdfFile.value);

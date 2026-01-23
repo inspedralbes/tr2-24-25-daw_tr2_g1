@@ -22,12 +22,15 @@ export const loginGoogle = async (req, res) => {
     
     const payload = ticket.getPayload();
     const email = payload?.email;
+    const googleName = payload?.name; // OBTENER NOMBRE DE GOOGLE
+    const googlePicture = payload?.picture; // OBTENER FOTO DE PERFIL
 
     if (!email) {
       return res.status(400).json({ error: 'No se pudo obtener el email del token' });
     }
 
     console.log("Intentando login con Google para:", email);
+    console.log("Nombre de Google:", googleName);
 
     // 2. BUSCAR PRIMERO EN LA TABLA CENTRES (para centros educativos)
     const queryCentre = 'SELECT * FROM centres WHERE email_centre = ? LIMIT 1';
@@ -65,6 +68,17 @@ export const loginGoogle = async (req, res) => {
       const profesor = rowsProf[0];
       console.log("✅ Login como PROFESOR del centre:", profesor.centre_nom);
       
+      // ACTUALIZAR NOMBRE SI TODAVÍA ES "Pendent de registre"
+      if (profesor.nom === "Pendent de registre" && googleName) {
+        console.log("Actualizando nombre del profesor a:", googleName);
+        await pool.query(
+          "UPDATE professors SET nom = ? WHERE id = ?",
+          [googleName, profesor.id]
+        );
+        // Actualizar el objeto para devolverlo con el nombre correcto
+        profesor.nom = googleName;
+      }
+      
       return res.json({ 
         success: true,
         message: "Login correcte com a professor",
@@ -74,7 +88,8 @@ export const loginGoogle = async (req, res) => {
           codi: profesor.codi_centre,       // Código del centro
           email: profesor.email,            // Email del profesor
           esProfesor: true,                 // Flag para saber que es profesor, no centro
-          profesorNom: profesor.nom         // Nombre del profesor
+          profesorNom: profesor.nom,        // Nombre del profesor (ya actualizado si era necesario)
+          picture: googlePicture            // Foto de perfil de Google
         }
       });
     }

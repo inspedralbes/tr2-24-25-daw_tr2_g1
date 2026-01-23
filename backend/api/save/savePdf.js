@@ -51,7 +51,7 @@ export const savePdfController = async (req, res) => {
     }
 
     // req.body contiene los campos de texto enviados por FormData
-    const { ralc, dificultat, gravetat, justificacio, proposta, observacio } =
+    const { ralc, dificultat, gravetat, justificacio, proposta, observacio, professor_email } =
       req.body;
 
     // VALIDACIÓN BÁSICA
@@ -82,18 +82,34 @@ export const savePdfController = async (req, res) => {
       });
     }
 
+    // BUSCAR EL ID DEL PROFESOR POR EMAIL (si se proporcionó)
+    let professorId = null;
+    if (professor_email) {
+      const [profRows] = await pool.query(
+        "SELECT id FROM professors WHERE email = ?", 
+        [professor_email]
+      );
+      if (profRows.length > 0) {
+        professorId = profRows[0].id;
+        console.log("Profesor encontrado con ID:", professorId);
+      } else {
+        console.warn("No se encontró profesor con email:", professor_email);
+      }
+    }
+
     // 4. ACTUALIZAR ESTADO DE PIS ANTERIORES (IMPORTANTE PARA HISTÓRICO)
     await pool.query("UPDATE pis SET estado = 'inactiu' WHERE alumne_ralc = ?", [ralc]);
 
-    // 5. INSERTAR EN LA BASE DE DATOS
+    // 5. INSERTAR EN LA BASE DE DATOS (INCLUYENDO professor_id)
     const query = `
       INSERT INTO pis 
-      (alumne_ralc, ruta_pdf, dificultat, gravetat, justificacio, proposta_educativa, observacio, data_creacio, estado) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 'actiu')
+      (alumne_ralc, professor_id, ruta_pdf, dificultat, gravetat, justificacio, proposta_educativa, observacio, data_creacio, estado) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'actiu')
     `;
 
     const [result] = await pool.execute(query, [
       ralc,
+      professorId, // AGREGAMOS EL ID DEL PROFESOR
       rutaPdf,
       dificultat || null,
       gravetat || null,

@@ -94,10 +94,23 @@ async function submitStudentForm() {
 
     // OBTENER EL CENTRE_ID DEL USUARIO LOGUEADO (profesor o centro)
     let centreId = null;
-    const userCentre = localStorage.getItem('user_centre');
-    if (userCentre) {
-      const centreData = JSON.parse(userCentre);
-      centreId = centreData.id; // El ID del centro (tanto si es profesor como si es centro)
+    
+    // Verificar que estamos en el navegador (client-side)
+    if (import.meta.client) {
+      const userCentre = localStorage.getItem('user_centre');
+      console.log("userCentre desde localStorage:", userCentre);
+      
+      if (userCentre) {
+        try {
+          const centreData = JSON.parse(userCentre);
+          centreId = centreData.id; // El ID del centro (tanto si es profesor como si es centro)
+          console.log("Centre ID obtenido:", centreId);
+        } catch (e) {
+          console.error("Error parseando user_centre:", e);
+        }
+      } else {
+        console.warn("No se encontró user_centre en localStorage");
+      }
     }
 
     const paqueteAEnviar = {
@@ -105,6 +118,8 @@ async function submitStudentForm() {
       ...formData.value,
       centre_procedencia_id: centreId, // AGREGAMOS EL CENTRO
     };
+    
+    console.log("Paquete a enviar al backend:", paqueteAEnviar);
 
     try {
       const respuesta = await createStudent(paqueteAEnviar);
