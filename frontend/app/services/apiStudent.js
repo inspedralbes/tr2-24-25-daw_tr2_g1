@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000";
+const API_URL = "http://edupi.daw.inspedralbes.cat";
 
 export async function getAllStudent() {
   const response = await fetch(`${API_URL}/api/alumnes`);

@@ -29,7 +29,7 @@ const loadStudent = async () => {
   try {
     // Usamos el endpoint existente.
     // Nota: Ajusta la URL base segun entorno o usa useFetch/useNuxtApp si disponible
-    const response = await fetch(`http://localhost:3000/api/alumne/${ralc}`);
+    const response = await fetch(`http://edupi.daw.inspedralbes.cat/api/alumne/${ralc}`);
     const data = await response.json();
     
     if (data.success) {
