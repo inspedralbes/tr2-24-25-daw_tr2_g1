@@ -10,6 +10,9 @@ services:
     container_name: plapi_frontend_prod
     # Usa la imagen construida en el workflow. ${GITHUB_REPOSITORY} se llena desde el .env generado
     image: ghcr.io/${GITHUB_REPOSITORY}-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
     restart: always
     expose:
       - "3000" # Exponemos el puerto interno de Nuxt para que Nginx lo vea
@@ -24,6 +27,9 @@ services:
   backend:
     container_name: plapi_backend_prod
     image: ghcr.io/${GITHUB_REPOSITORY}-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
     restart: always
     expose:
       - "3000"
