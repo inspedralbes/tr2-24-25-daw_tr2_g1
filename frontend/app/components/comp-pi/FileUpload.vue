@@ -148,7 +148,8 @@ const uploadPdfAndSaveData = async (studentRalc, aiData) => {
   try {
     // Ajusta la URL a tu backend (http://localhost:3000/api/save-pi)
     // Si tienes configurado un proxy en nuxt.config, usa solo "/api/save-pi"
-    const response = await fetch("http://edupi.daw.inspedralbes.cat/api/save-pi", {
+    const response = await fetch("http://localhost:3000/api/save-pi", { //dev
+    //const response = await fetch("http://edupi.daw.inspedralbes.cat/api/save-pi", { //prod
       method: "POST",
       body: formData,
       // IMPORTANTE: NO añadir headers de Content-Type manuales.
