@@ -92,22 +92,30 @@ async function submitStudentForm() {
       return { success: false };
     }
 
+    // OBTENER EL CENTRE_ID DEL USUARIO LOGUEADO (profesor o centro)
+    let centreId = null;
+    const userCentre = localStorage.getItem('user_centre');
+    if (userCentre) {
+      const centreData = JSON.parse(userCentre);
+      centreId = centreData.id; // El ID del centro (tanto si es profesor como si es centro)
+    }
+
     const paqueteAEnviar = {
       ralc: inputRalc.value,
       ...formData.value,
+      centre_procedencia_id: centreId, // AGREGAMOS EL CENTRO
     };
 
     try {
       const respuesta = await createStudent(paqueteAEnviar);
       
-      if (respuesta && (respuesta.success || respuesta.id)) { // Adjusted check based on typical API
+      if (respuesta && (respuesta.success || respuesta.id)) {
         return { success: true, data: paqueteAEnviar };
       } else {
         return { success: false };
       }
     } catch (e) {
       console.error(e);
-      // Ideally, don't throw inside a function called by parent, return false or error obj
       return { success: false, error: e.message }; 
     }
   }

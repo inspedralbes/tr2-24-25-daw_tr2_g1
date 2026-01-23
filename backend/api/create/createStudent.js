@@ -3,7 +3,7 @@ import { pool } from "../db.js";
 export async function createStudent(req, res) {
   console.log("--> HE RECIBIDO ESTO EN EL BODY:", req.body);
 
-  const { ralc, name, surname, dni, date, course, group } = req.body;
+  const { ralc, name, surname, dni, date, course, group, centre_procedencia_id } = req.body;
 
   if (!ralc || !name) {
     res
@@ -12,12 +12,19 @@ export async function createStudent(req, res) {
     return;
   }
 
+  // VALIDAR QUE SE ENVIÓ EL CENTRO
+  if (!centre_procedencia_id) {
+    res.status(400).json({ error: "Falta el centre_procedencia_id" });
+    return;
+  }
+
   try {
     const formattedDate = new Date(date).toISOString().slice(0, 10); // Becomes "2024-01-20"
 
+    // AGREGAMOS centre_procedencia_id A LA QUERY
     const [result] = await pool.query(
-      "INSERT INTO alumnes (ralc, nom, cognom, dni, data_naixement, curs, grup) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [ralc, name, surname, dni, formattedDate, course, group],
+      "INSERT INTO alumnes (ralc, nom, cognom, dni, data_naixement, curs, grup, centre_procedencia_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [ralc, name, surname, dni, formattedDate, course, group, centre_procedencia_id],
     );
     console.log("Alumno creado con ID:", result.insertId);
     res.json({
