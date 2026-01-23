@@ -29,7 +29,7 @@ const filteredStudents = computed(() => {
           
           <h1 class="hero-title">Cerca de plans individualitzats per RALC</h1>
           
-          <NuxtLink to="/ajuda/com-fer-cerca" class="help-link">
+          <NuxtLink to="fer-cerca" class="help-link">
             Com fer la cerca?
           </NuxtLink>
           
