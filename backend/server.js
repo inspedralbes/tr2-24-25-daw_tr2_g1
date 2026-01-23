@@ -9,16 +9,26 @@ import { pool } from "./api/db.js";
 
 const app = express();
 
-// --- CORS MANUAL (Mantenemos esta que te funcionaba) ---
-app.use((req, res, next) => {
-   res.header('Access-Control-Allow-Origin', '*'); // Ojo: En producción es mejor poner el dominio real
-   res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
-   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-   res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
-   next();
-});
+// --- CORS CONFIGURATION ---
+const allowedOrigins = [
+  'http://localhost',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://edupi.daw.inspedralbes.cat'
+];
 
-// app.use(cors()); <-- COMENTADO O BORRADO para no duplicar cabeceras
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-KEY', 'Origin', 'X-Requested-With', 'Accept', 'Access-Control-Allow-Request-Method'],
+  credentials: true
+}));
 app.use(express.json());
 
 const PORT = process.env.PORT_BACKEND || 3000;
@@ -27,12 +37,12 @@ const URL = process.env.URL_BACKEND || "http://localhost";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(cors());
+// Duplicate cors removed
 app.use(express.json());
 
 // Routers
 app.get("/", (req, res) => {
- res.send("API funcionando correctamente");
+  res.send("API funcionando correctamente");
 });
 
 app.use("/api", routerLogic);
@@ -42,7 +52,7 @@ app.use("/api/uploads", express.static(path.join(__dirname, "uploads")));
 // Servidor arrancado
 app.listen(PORT, () => {
   console.log(`Servidor backend escuchando en ${URL}:${PORT}`);
-    console.log(`Carpeta de descargas pública en: ${URL}:${PORT}/uploads/`);
+  console.log(`Carpeta de descargas pública en: ${URL}:${PORT}/uploads/`);
 
   // DEBUG: Verificar escritura en uploads
   try {
