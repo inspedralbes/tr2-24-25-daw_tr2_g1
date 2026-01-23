@@ -204,7 +204,7 @@ defineExpose({
 
       <div class="child-form">
         <label for="student-group">Grup</label>
-        <input v-model="formData.grup" type="text" :disabled="blockedInput" />
+        <input v-model="formData.group" type="text" :disabled="blockedInput" />
       </div>
 
     </div>

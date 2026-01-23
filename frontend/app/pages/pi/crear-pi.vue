@@ -93,7 +93,7 @@ async function handleFinalSave(reviewedFormData) {
     <hr />
     
     <div class="content-card fade-in">
-      <div v-if="step === 1">
+      <div v-show="step === 1">
         <RegisterStudent ref="registerStudentRef" />
         <div class="divider"></div>
         <div class="section-block">
@@ -115,8 +115,9 @@ async function handleFinalSave(reviewedFormData) {
         </div>
       </div>
 
-      <div v-if="step === 2">
+      <div v-show="step === 2">
         <ReviewFileResponse
+          v-if="step === 2"
           :student="studentData"
           :aiData="piAnalysisData"
           :fileName="fileUploadRef?.pdfFile?.name"

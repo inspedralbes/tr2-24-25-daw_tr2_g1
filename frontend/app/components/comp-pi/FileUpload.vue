@@ -1,7 +1,17 @@
 <script setup>
-import { ref } from "vue";
+import * as pdfjsLib from 'pdfjs-dist';
+// Configurar el worker de PDF.js (versión coincidente con package.json)
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
+import { useGemini } from "../../composables/useGemini";
+
+// COMPOSABLES
+const { analyzePdfContent, error: aiError, aiResponse } = useGemini();
 
 // ESTADO
+const statusMessage = ref("");
+const errorMsg = ref("");
+const isProcessing = ref(false);
 const pdfFile = ref(null);
 const isDragging = ref(false);
 const fileInput = ref(null);
@@ -52,6 +62,27 @@ function removeFile() {
 // ------------------------------------------------------
 // 2. LÓGICA DE ANÁLISIS (Llamada desde el Padre)
 // ------------------------------------------------------
+
+async function extractTextFromPdf(file) {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const doc = await loadingTask.promise;
+    
+    let fullText = "";
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      const strings = content.items.map((item) => item.str);
+      fullText += strings.join(" ") + "\n";
+    }
+    return fullText;
+  } catch (error) {
+    console.error("Error extracting text from PDF:", error);
+    throw new Error("No s'ha pogut llegir el text del PDF.");
+  }
+}
+
 async function triggerAnalysis(studentNameForContext) {
   if (!pdfFile.value) {
     // Alert user visually
@@ -87,7 +118,6 @@ async function triggerAnalysis(studentNameForContext) {
     isProcessing.value = false;
   }
 }
-
 
 // ---------------------------------------------------------
 // --- NUEVA FUNCION: ENVIAR AL BACKEND (Express/Multer) ---
@@ -164,12 +194,23 @@ defineExpose({
       @click="triggerFileInput"
     >
       <div class="icon-cloud">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
+          />
         </svg>
       </div>
       <p class="drop-text">
-        <span class="highlight">Fes clic per pujar</span> o arrossega el PDF aquí
+        <span class="highlight">Fes clic per pujar</span> o arrossega el PDF
+        aquí
       </p>
       <p class="drop-subtext">Màxim 10MB (PDF)</p>
     </div>
@@ -179,12 +220,23 @@ defineExpose({
         <div class="file-icon">📄</div>
         <div class="file-details">
           <p class="file-name">{{ pdfFile.name }}</p>
-          <p class="file-size">{{ (pdfFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+          <p class="file-size">
+            {{ (pdfFile.size / 1024 / 1024).toFixed(2) }} MB
+          </p>
         </div>
       </div>
       <button @click="removeFile" class="btn-remove" title="Eliminar arxiu">
         ✕
       </button>
+    </div>
+
+    <!-- Feedback messages -->
+    <div v-if="statusMessage" class="status-msg">
+      <span v-if="isProcessing" class="spinner"></span>
+      {{ statusMessage }}
+    </div>
+    <div v-if="errorMsg" class="error-msg">
+      ⚠️ {{ errorMsg }}
     </div>
   </div>
 </template>
@@ -301,5 +353,37 @@ defineExpose({
 .btn-remove:hover {
   background-color: #f1f5f9;
   color: #ef4444;
+}
+
+.status-msg {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.error-msg {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #fecaca;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #0369a1;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: rotation 1s linear infinite;
 }
 </style>
