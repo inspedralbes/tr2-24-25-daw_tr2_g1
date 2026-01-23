@@ -3,15 +3,10 @@ import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { createStudentPI } from "../../services/apiStudent.js";
 
-// NOTA NUXT:
-// Si tu archivo está en la carpeta 'utils/apiStudent.js', NO necesitas importar nada.
-// Si prefieres mantenerlo en 'services/', descomenta la siguiente línea:
-// import { createStudentPI } from "~/services/apiStudent.js";
-
 // --- PROPS ---
 const props = defineProps({
   student: { type: Object, required: true },
-  aiData: { type: Object, default: () => ({}) },
+  aiData: { type: [Object, String], default: () => ({}) }, // Aceptamos String por si viene JSON crudo
   fileName: { type: String, default: "" },
 });
 
@@ -31,29 +26,46 @@ const formData = ref({
 
 // --- FUNCIÓN PARA RELLENAR DATOS ---
 const populateForm = () => {
-  if (props.aiData && Object.keys(props.aiData).length > 0) {
-    formData.value.dificultat = props.aiData.dificultat || "";
+  let data = props.aiData;
 
-    // Normalizar gravedad
-    let g = props.aiData.gravetat || "";
+  // Si viene como string (JSON crudo), intentamos parsear
+  if (typeof data === 'string') {
+    try {
+      const cleanJson = data.replace(/```json/g, '').replace(/```/g, '').trim();
+      data = JSON.parse(cleanJson);
+    } catch (e) {
+      console.error("Error parseando JSON de IA:", e);
+      // Si falla, lo metemos todo en justificación
+      formData.value.justificacio = props.aiData; 
+      return;
+    }
+  }
+
+  if (data && Object.keys(data).length > 0) {
+    // Usamos optional chaining y valores por defecto
+    formData.value.dificultat = data.dificultat || data.Dificultat || "";
+    
+    // Normalizar gravedad si existe
+    let g = data.gravetat || data.Gravetat || "";
     if (g) {
-      formData.value.gravetat =
-        g.charAt(0).toUpperCase() + g.slice(1).toLowerCase();
+      // Capitalizar primera letra (ej: "greu" -> "Greu")
+      formData.value.gravetat = g.charAt(0).toUpperCase() + g.slice(1).toLowerCase();
+    } else {
+        formData.value.gravetat = "";
     }
 
-    formData.value.justificacio = props.aiData.justificacio || "";
-    formData.value.proposta_educativa = props.aiData.proposta_educativa || "";
+    formData.value.justificacio = data.justificacio || data.Justificacio || "";
+    formData.value.proposta_educativa = data.proposta_educativa || data.Proposta || "";
+    // Respetamos si ya viene observación de la IA, si no, vacío
+    formData.value.observacio = data.observacio || data.Observacions || "";
   }
 };
 
 // --- REACTIVIDAD ---
 watch(() => props.aiData, populateForm, { immediate: true });
 
-// --- GUARDADO REAL (CORREGIDO) ---
-// --- REEMPLAZADO POR EMIT para que el padre gestione la subida de archivo ---
+// --- GUARDADO ---
 function handleSavePI() {
-  // Emitimos los datos limpios al padre (crear-pi.vue)
-  // El padre llamará a fileUpload.uploadPdfAndSaveData con estos datos
   const dataToSave = {
     dificultat: formData.value.dificultat,
     gravetat: formData.value.gravetat,
@@ -68,148 +80,297 @@ function handleSavePI() {
 
 <template>
   <div class="review-container">
-    <div class="header-review">
-      <h2>📝 Revisió i Guardat</h2>
-      <p class="subtitle">
-        Revisa les dades extretes per la IA per a l'alumne:
-        <strong>{{ student?.nom }} {{ student?.cognom }}</strong>
-      </p>
+    
+    <div class="summary-card">
+      <div class="summary-header">
+        <h2 class="section-title">Revisió de l'Anàlisi IA</h2>
+        <span class="badge">Esborrany Automàtic</span>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Alumne:</span>
+          <span class="value">{{ student?.name }} {{ student?.surname }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">RALC:</span>
+          <span class="value">{{ student?.ralc }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Arxiu Font:</span>
+          <span class="value highlight">{{ fileName }}</span>
+        </div>
+      </div>
     </div>
 
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Dificultat detectada</label>
-        <input
-          type="text"
-          v-model="formData.dificultat"
-          placeholder="Ex: Dislèxia"
-          class="input-clean"
-        />
+    <div class="form-container">
+      <p class="instruction-text">
+        Si us plau, revisa i edita la informació extreta abans de generar el document final.
+      </p>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label for="dificultat">Tipus de Dificultat</label>
+          <input
+            id="dificultat"
+            type="text"
+            v-model="formData.dificultat"
+            placeholder="Ex: Dislèxia"
+            class="input-field"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="gravetat">Nivell de Gravetat</label>
+          <input 
+            id="gravetat" 
+            v-model="formData.gravetat" 
+            type="text" 
+            class="input-field" 
+            placeholder="Ex: Moderat"
+          />
+        </div>
       </div>
 
       <div class="form-group">
-        <label>Gravetat</label>
-        <select v-model="formData.gravetat" class="form-select">
-          <option value="">Selecciona...</option>
-          <option value="Lleu">Lleu</option>
-          <option value="Moderada">Moderada</option>
-          <option value="Greu">Greu</option>
-        </select>
-      </div>
-
-      <div class="form-group full-width">
-        <label>Justificació (Essència)</label>
+        <label for="justificacio">Justificació</label>
         <textarea
+          id="justificacio"
           v-model="formData.justificacio"
-          rows="3"
-          placeholder="Motiu principal..."
-        ></textarea>
-      </div>
-
-      <div class="form-group full-width">
-        <label>Proposta Educativa (Accions Clau)</label>
-        <textarea
-          v-model="formData.proposta_educativa"
           rows="5"
-          placeholder="Llista d'accions..."
+          class="textarea-field"
         ></textarea>
       </div>
 
-      <div class="form-group full-width highlight-manual">
-        <label>Observacions (A rellenar manualment)</label>
+      <div class="form-group">
+        <label for="proposta">Proposta Educativa / Mesures</label>
         <textarea
+          id="proposta"
+          v-model="formData.proposta_educativa"
+          rows="6"
+          class="textarea-field"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="observacio">Observacions (Opcional)</label>
+        <textarea
+          id="observacio"
           v-model="formData.observacio"
-          rows="2"
+          rows="3"
+          class="textarea-field"
           placeholder="Afegeix aquí les teves observacions personals..."
         ></textarea>
       </div>
     </div>
 
-    <div class="actions">
-      <button class="btn-cancel" @click="$emit('back')">Enrere</button>
+    <div class="buttons-bar">
+      <button class="btn-back" @click="$emit('back')">
+        ← Tornar enrere
+      </button>
+      
       <button class="btn-save" @click="handleSavePI" :disabled="isSaving">
         <span v-if="isSaving">Guardant...</span>
-        <span v-else>✅ Confirmar i Guardar PI</span>
+        <span v-else>Confirmar i Guardar PI</span>
       </button>
     </div>
+
   </div>
 </template>
 
 <style scoped>
-/* Tus estilos (Sin cambios) */
+/* FUENTE Y ANIMACIÓN */
 .review-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 30px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: #333;
+  animation: fadeIn 0.3s ease-in;
 }
-.form-grid {
+
+/* --- TARJETA RESUMEN --- */
+.summary-card {
+  background-color: #f8f8f8;
+  border-left: 5px solid #d9001d; /* Rojo Gencat */
+  padding: 20px 25px;
+  border-radius: 4px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+  font-weight: 700;
+}
+
+.badge {
+  background-color: #e6f4ff;
+  color: #005c99;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  border: 1px solid #b3d9ff;
+  text-transform: uppercase;
+}
+
+.info-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
-  margin-top: 20px;
 }
-.full-width {
-  grid-column: span 2;
+
+.info-item {
+  display: flex;
+  flex-direction: column;
 }
+
+.info-item .label {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.info-item .value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #000;
+}
+
+.info-item .value.highlight {
+  color: #d9001d;
+  font-family: monospace;
+}
+
+/* --- FORMULARIO --- */
+.form-container {
+  background: white;
+  padding: 10px 5px; /* Reducido padding interno */
+}
+
+.instruction-text {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 25px;
+  font-style: italic;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
 label {
   display: block;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: #555;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 8px;
 }
-input,
-textarea,
-select {
+
+/* Inputs Gencat */
+.input-field,
+.textarea-field {
   width: 100%;
   padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  font-family: "Inter", sans-serif;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-  background-color: #fafafa;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background-color: #fff;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
 }
-input:focus,
-textarea:focus,
-select:focus {
+
+.input-field:focus,
+.textarea-field:focus {
   outline: none;
-  border-color: #d00000;
-  background-color: #fff;
-  box-shadow: 0 0 0 3px rgba(208, 0, 0, 0.1);
+  border-color: #d9001d;
+  box-shadow: 0 0 0 3px rgba(217, 0, 29, 0.1);
 }
-.highlight-manual textarea {
-  border-color: #ccc;
-  background-color: #fff;
+
+.textarea-field {
+  resize: vertical;
+  line-height: 1.5;
 }
-.actions {
-  margin-top: 30px;
+
+/* --- BOTONES --- */
+.buttons-bar {
   display: flex;
-  justify-content: flex-end;
-  gap: 15px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
 }
-.btn-save {
-  background-color: #d00000;
-  color: white;
-  border: none;
-  padding: 12px 30px;
-  border-radius: 8px;
+
+.btn-back {
+  background: none;
+  border: 1px solid #ccc;
+  color: #555;
+  padding: 12px 24px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
-.btn-save:hover {
-  background-color: #b00000;
+
+.btn-back:hover {
+  background-color: #f0f0f0;
+  color: #000;
+  border-color: #999;
 }
-.btn-cancel {
-  background: none;
+
+.btn-save {
+  background-color: #d9001d;
+  color: white;
   border: none;
-  color: #666;
+  padding: 12px 32px;
+  font-weight: 700;
   cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: background-color 0.2s;
+}
+
+.btn-save:hover {
+  background-color: #b00018;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .buttons-bar {
+    flex-direction: column-reverse;
+    gap: 15px;
+  }
+  
+  .btn-back, .btn-save {
+    width: 100%;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
