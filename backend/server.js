@@ -14,7 +14,8 @@ const allowedOrigins = [
   'http://localhost',
   'http://localhost:5173',
   'http://localhost:3000',
-  'http://edupi.daw.inspedralbes.cat'
+  'http://edupi.daw.inspedralbes.cat',
+  'https://edupi.daw.inspedralbes.cat'
 ];
 
 app.use(cors({
@@ -37,8 +38,7 @@ const URL = process.env.URL_BACKEND || "http://localhost";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Duplicate cors removed
-app.use(express.json());
+
 
 // Routers
 app.get("/", (req, res) => {
