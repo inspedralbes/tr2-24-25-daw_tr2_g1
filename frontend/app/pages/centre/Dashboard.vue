@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { API_URL } from '../../config/api.js';
 
 const router = useRouter();
 
@@ -33,7 +34,7 @@ const fetchProfessors = async () => {
   if (!currentCentre.value?.id) return;
 
   try {
-    const res = await fetch(`http://localhost:3000/api/centre/${currentCentre.value.id}/users`);
+    const res = await fetch(`${API_URL}/api/centre/${currentCentre.value.id}/users`);
     const data = await res.json();
     if (data.success) {
       professors.value = data.data;
@@ -55,7 +56,7 @@ const addProfessor = async () => {
       centre_id: currentCentre.value.id 
     };
 
-    const res = await fetch('http://localhost:3000/api/admin/create-user', {
+    const res = await fetch(`${API_URL}/api/admin/create-user`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -81,7 +82,7 @@ const deleteProfessor = async (id) => {
   if (!confirm("Segur que vols eliminar l'accés a aquest correu?")) return;
   
   try {
-    await fetch(`http://localhost:3000/api/admin/users/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/api/admin/users/${id}`, { method: 'DELETE' });
     professors.value = professors.value.filter(p => p.id !== id);
   } catch (e) { console.error(e); }
 };

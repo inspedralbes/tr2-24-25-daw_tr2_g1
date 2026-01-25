@@ -49,8 +49,8 @@ const handleGoogleResponse = async (response) => {
 
   try {
     // Usamos el puerto 3000 porque el Backend está ahí
-    const baseURL = 'http://localhost:3000'; //dev
-    //const baseURL = 'http://edupi.daw.inspedralbes.cat'; //prod
+    const { API_URL } = await import('../config/api.js');
+    const baseURL = API_URL;
     
     // Enviamos el token al backend para que verifique contra la DB
     const res = await fetch(`${baseURL}/api/login-google`, {
