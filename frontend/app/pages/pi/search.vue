@@ -1,10 +1,18 @@
 <script setup lang="ts">
+// ============================================
+// PÁGINA: Buscador de Alumnos por RALC
+// ============================================
+// Permite buscar alumnos por código RALC con filtro de centro
+// Solo muestra alumnos del mismo centro que el usuario logueado
 import { ref, computed, onMounted, toRaw, watch } from 'vue'
 
 const searchQuery = ref('')
 const isSearching = ref(false)
 
-// Obtenir el centre de l'usuari logat des de localStorage
+// ============================================
+// PASO 1: Obtener centro del usuario logueado
+// ============================================
+// Necesario para filtrar alumnos del mismo centro
 const userCentre = ref<any>(null)
 
 if (import.meta.client) {
@@ -14,12 +22,16 @@ if (import.meta.client) {
   }
 }
 
+// ============================================
+// PASO 2: Cargar todos los alumnos desde API
+// ============================================
 const { students, columns, isLoading, error, loadStudents } = useTable()
 
 onMounted(() => {
   loadStudents()
 })
 
+// Animación de búsqueda (spinner temporal)
 watch(searchQuery, (newVal) => {
   if (newVal) {
     isSearching.value = true
@@ -29,19 +41,23 @@ watch(searchQuery, (newVal) => {
   }
 })
 
-// --- Lògica de Filtratge ---
-// Cercar per RALC exacte i verificar que el centre de l'alumne coincideix amb el del usuari logat
+// ============================================
+// FUNCIÓN: Filtrar alumnos por RALC y Centro
+// ============================================
+// Solo muestra alumnos que:
+// 1. Tienen coincidencia EXACTA de RALC
+// 2. Pertenecen al mismo centro que el usuario logueado
 const filteredStudents = computed(() => {
   if (!searchQuery.value) return []
   
   const result = toRaw(students.value).filter((s: any) => {
-    // Coincidència exacta del RALC
+    // VALIDACIÓN 1: Coincidencia exacta del RALC
     const ralcMatch = s.ralc === searchQuery.value
     
-    // Si no hi ha usuari logat, no filtrem per centre (per desenvolupament)
+    // VALIDACIÓN 2: Si no hay usuario logado, permitir todos (modo desarrollo)
     if (!userCentre.value) return ralcMatch
     
-    // Verificar que el centre de l'alumne coincideix amb el del usuari logat
+    // VALIDACIÓN 3: Verificar que el centro del alumno coincide con el del usuario
     const centreMatch = s.centre_procedencia_id === userCentre.value.id
     
     return ralcMatch && centreMatch
@@ -74,7 +90,7 @@ const filteredStudents = computed(() => {
             <div v-if="isSearching" class="input-spinner"></div>
           </div>
 
-          <NuxtLink to="/ajuda/com-fer-cerca" class="help-link">
+          <NuxtLink to="com-fer-cerca" class="help-link">
             Com fer la cerca?
           </NuxtLink>
         </div>
@@ -152,7 +168,6 @@ const filteredStudents = computed(() => {
 .search-page {
   background-color: #f4f4f4; /* ANTES ERA #e8e8e8 (MÁS OSCURO) */
   min-height: calc(100vh - 100px);
-  font-family: "Open Sans", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   color: #333;
 }
 

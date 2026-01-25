@@ -1,6 +1,9 @@
+// ============================================
+// SERVIDOR BACKEND - API REST PARA EDUPI
+// ============================================
 import express from "express";
 import cors from "cors";
-import "dotenv/config";
+import "dotenv/config"; // Carga variables de entorno desde .env
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -9,52 +12,48 @@ import { pool } from "./api/db.js";
 
 const app = express();
 
-// --- CORS CONFIGURATION ---
-const allowedOrigins = [
-  'http://localhost',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://edupi.daw.inspedralbes.cat',
-  'https://edupi.daw.inspedralbes.cat'
-];
+// --- CORS MANUAL (Mantenemos esta que te funcionaba) ---
+app.use((req, res, next) => {
+   res.header('Access-Control-Allow-Origin', 'http://edupi.daw.inspedralbes.cat'); // Ojo: En producción es mejor poner el dominio real
+   res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
+   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+   res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
+   next();
+});
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-KEY', 'Origin', 'X-Requested-With', 'Accept', 'Access-Control-Allow-Request-Method'],
-  credentials: true
-}));
+// app.use(cors()); <-- COMENTADO O BORRADO para no duplicar cabeceras
 app.use(express.json());
 
 const PORT = process.env.PORT_BACKEND || 3000;
 const URL = process.env.URL_BACKEND || "http://localhost";
-// Configuración relacionada con guradar el pdf.
+
+// Configuración para servir archivos estáticos (PDFs subidos)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// ============================================
+// RUTAS
+// ============================================
 
-
-
-// Routers
+// Ruta raíz - Verificación de que la API está funcionando
 app.get("/", (req, res) => {
   res.send("API funcionando correctamente");
 });
 
+// Todas las rutas de la aplicación están en routerLogic
 app.use("/api", routerLogic);
 
+// Servir archivos subidos (PDFs) públicamente
+// Accesible en: http://localhost:3000/api/uploads/nombre-archivo.pdf
 app.use("/api/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Servidor arrancado
+// ============================================
+// INICIO DEL SERVIDOR
+// ============================================
 app.listen(PORT, () => {
   console.log(`Servidor backend escuchando en ${URL}:${PORT}`);
   console.log(`Carpeta de descargas pública en: ${URL}:${PORT}/uploads/`);
 
-  // DEBUG: Verificar escritura en uploads
+  // DEBUG: Crear archivo de prueba para verificar que el volumen Docker funciona
   try {
     const testPath = path.join(__dirname, "uploads", "docker_test.txt");
     import("fs").then(fs => {

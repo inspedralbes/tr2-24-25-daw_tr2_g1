@@ -26,13 +26,18 @@ const changeTab = (tab: "ia" | "pdf") => {
   activeTab.value = tab;
 };
 
-// Carregar dades de l'alumne des de l'API
+// ============================================
+// FUNCIÓN: Cargar datos del alumno desde API
+// ============================================
+// Obtiene toda la información del alumno y sus PIs activos
 const loadStudent = async () => {
   try {
     isLoading.value = true;
     error.value = null;
 
-    // Detectar si estem al servidor o al client per usar la URL correcta
+    // IMPORTANTE: Detectar entorno SSR vs Client
+    // - SSR (servidor): usa nombre de servicio Docker "backend:3000"
+    // - Client (navegador): usa "localhost:3000" o dominio público
     const baseURL = import.meta.server
       ? "http://backend:3000"
       : "http://localhost:3000";
@@ -57,15 +62,19 @@ const loadStudent = async () => {
   }
 };
 
-// Funció per parsejar les dades de la IA
+// ============================================
+// FUNCIÓN: Parsear datos de IA (flexible)
+// ============================================
+// La BD puede guardar los datos como JSON string o como objeto
+// Esta función maneja ambos casos automáticamente
 const getParsedData = (dadesIa: any) => {
   if (!dadesIa) return null;
 
   try {
-    // Si ja és un objecte, retornar-lo directament
+    // Caso 1: Ya es un objeto, devolver directamente
     if (typeof dadesIa === "object") return dadesIa;
 
-    // Si és un string, intentar parsejar-lo com JSON
+    // Caso 2: Es un string JSON, parsearlo
     if (typeof dadesIa === "string") {
       return JSON.parse(dadesIa);
     }
@@ -77,41 +86,52 @@ const getParsedData = (dadesIa: any) => {
   }
 };
 
-// Funció per obtenir l'URL del PDF identificat pel RALC
+// ============================================
+// FUNCIÓN: Construir URL del PDF del alumno
+// ============================================
+// Los PDFs se guardan con el nombre del RALC: [RALC].pdf
+// El backend los sirve en /api/pdf/:ralc
 const getPdfUrl = () => {
   if (!student.value?.ralc) return null;
 
   const baseURL = "http://localhost:3000";
 
-  // Utilitzar el RALC de l'alumne per obtenir el seu PDF
+  // URL dinámica basada en el RALC del alumno
   return `${baseURL}/api/pdf/${student.value.ralc}`;
 };
 
-// Funció per descarregar el PDF
+// ============================================
+// FUNCIÓN: Descargar PDF del alumno
+// ============================================
+// Crea un enlace temporal y simula un clic para descargar
 const downloadPDF = () => {
   const pdfUrl = getPdfUrl();
   if (!pdfUrl) return;
 
+  // Crear enlace temporal de descarga
   const link = document.createElement("a");
   link.href = pdfUrl;
   link.download = `${student.value?.ralc}.pdf`;
   link.target = "_blank";
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  document.body.removeChild(link); // Limpiar DOM
 };
 
-// Computed property per ordenar els PIs: primer l'actiu, després per data més recent
+// ============================================
+// COMPUTED: Ordenar PIs (activo primero, luego por fecha)
+// ============================================
+// Algoritmo: 1º activo/inactivo, 2º más reciente primero
 const sortedPis = computed(() => {
   if (!student.value?.pis) return [];
   
   return [...student.value.pis].sort((a, b) => {
-    // 1. Primer ordenar per estat (actiu primer)
+    // PASO 1: Priorizar PIs activos
     const aActiu = a.estado === 'actiu' ? 1 : 0;
     const bActiu = b.estado === 'actiu' ? 1 : 0;
     
     if (aActiu !== bActiu) {
-      return bActiu - aActiu; // Els actius primer
+      return bActiu - aActiu; // Activos primero
     }
     
     // 2. Si tenen el mateix estat, ordenar per data (més recent primer)
@@ -210,7 +230,7 @@ onMounted(() => {
               <div class="pis-section-header">
                 <h2>Plans Individualitzats</h2>
 
-                <NuxtLink :to="`/saveNew/saveNewPi?ralc=${studentRalc}`" class="btn-upload-red">
+                <NuxtLink :to="`/saveNew/saveNewPi?ralc=${studentRalc}`" class="btn-gencat btn-upload-red">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                       <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                       <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
@@ -413,7 +433,6 @@ onMounted(() => {
 }
 
 .loading-text {
-  font-family: "Open Sans", sans-serif;
   color: #333;
   font-size: 20px;
   font-weight: 600;
@@ -444,7 +463,6 @@ onMounted(() => {
 
 /* Ajustamos el h2 para quitarle márgenes que estorben la alineación */
 .pis-section h2 {
-  font-family: "Open Sans", sans-serif;
   font-weight: 600;
   font-size: 22px;
   color: #333;
@@ -460,32 +478,13 @@ onMounted(() => {
   display: none;
 }
 
-/* BOTÓN ROJO GENCAT */
+/* Botón de subida - Usa clase global .btn-gencat del global.css */
 .btn-upload-red {
+  /* Heredamos todo de .btn-gencat, solo ajustamos tamaño */
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px; /* Un poco más compacto */
-  background-color: #c8102e; /* ROJO GENCAT */
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-family: "Open Sans", sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.btn-upload-red:hover:not(:disabled) {
-  background-color: #a00d25; /* Rojo más oscuro al pasar el ratón */
-}
-
-.btn-upload-red:disabled {
-  background-color: #e0e0e0;
-  color: #999;
-  cursor: not-allowed;
+  padding: 8px 16px;
 }
 
 .upload-error-msg {
@@ -513,7 +512,6 @@ onMounted(() => {
   color: #333;
   text-decoration: none;
   border-radius: 4px;
-  font-family: "Open Sans", sans-serif;
   font-size: 15px;
   font-weight: 500;
   transition: all 0.2s ease; /* Transición suave */
@@ -540,10 +538,10 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.loading-state p { font-family: "Open Sans", sans-serif; font-size: 18px; color: #666; margin: 0; }
-.error-state p { font-family: "Open Sans", sans-serif; font-size: 18px; color: #c8102e; margin: 0 0 20px 0; }
+.loading-state p { font-size: 18px; color: #666; margin: 0; }
+.error-state p { font-size: 18px; color: #c8102e; margin: 0 0 20px 0; }
 
-.btn-retry { padding: 10px 24px; background-color: #007a33; color: white; border: none; border-radius: 4px; font-family: "Open Sans", sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
+.btn-retry { padding: 10px 24px; background-color: #007a33; color: white; border: none; border-radius: 4px; font-size: 15px; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
 .btn-retry:hover { background-color: #005a24; }
 
 /* LAYOUT DE GRID ALINEADO */
@@ -575,28 +573,28 @@ onMounted(() => {
 }
 
 .card-header { margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; padding-bottom: 20px; }
-.gencat-logo { font-size: 20px; font-weight: 700; color: #c8102e; font-family: "Open Sans", sans-serif; margin-bottom: 15px; }
-.card-header h1 { font-family: "Open Sans", sans-serif; font-weight: 600; font-size: 28px; color: #333; margin: 0; line-height: 1.3; }
+.gencat-logo { font-size: 20px; font-weight: 700; color: #c8102e; margin-bottom: 15px; }
+.card-header h1 { font-weight: 600; font-size: 28px; color: #333; margin: 0; line-height: 1.3; }
 
 .info-list { display: flex; flex-direction: column; gap: 18px; margin-bottom: 30px; }
 .info-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #e5e7eb; }
 .info-item:last-child { border-bottom: none; }
-.info-label { font-family: "Open Sans", sans-serif; font-weight: 600; font-size: 15px; color: #555; }
-.info-value { font-family: "Open Sans", sans-serif; font-size: 15px; color: #333; font-weight: 500; text-align: right; }
+.info-label { font-weight: 600; font-size: 15px; color: #555; }
+.info-value { font-size: 15px; color: #333; font-weight: 500; text-align: right; }
 
 .pis-section { margin-top: 30px; padding-top: 30px; border-top: 2px solid #e0e0e0; flex-grow: 1; /* Empuja el contenido para llenar espacio si hace falta */ }
-.pis-section h2 { font-family: "Open Sans", sans-serif; font-weight: 600; font-size: 22px; color: #333; margin-bottom: 20px; margin-top: 0; }
+.pis-section h2 { font-weight: 600; font-size: 22px; color: #333; margin-bottom: 20px; margin-top: 0; }
 .pis-list { display: flex; flex-direction: column; gap: 16px; }
 .pi-card { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; }
 .pi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.pi-estat { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-family: "Open Sans", sans-serif; font-weight: 600; text-transform: uppercase; background-color: #e5e7eb; color: #555; }
+.pi-estat { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; background-color: #e5e7eb; color: #555; }
 .pi-estat.estat-actiu { background-color: #d1fae5; color: #065f46; }
 .pi-estat.estat-pendent { background-color: #fef3c7; color: #92400e; }
-.pi-date { font-size: 13px; color: #6b7280; font-family: "Open Sans", sans-serif; }
-.pi-professor { font-size: 14px; color: #374151; font-family: "Open Sans", sans-serif; margin: 8px 0; font-weight: 500; }
-.pi-ia { font-size: 14px; color: #6b7280; font-family: "Open Sans", sans-serif; line-height: 1.5; margin: 8px 0 0 0; }
+.pi-date { font-size: 13px; color: #6b7280; }
+.pi-professor { font-size: 14px; color: #374151; margin: 8px 0; font-weight: 500; }
+.pi-ia { font-size: 14px; color: #6b7280; line-height: 1.5; margin: 8px 0 0 0; }
 .empty-state { padding: 30px 20px; text-align: center; background-color: #f9fafb; border-radius: 6px; margin-top: 30px; }
-.empty-state p { font-family: "Open Sans", sans-serif; font-size: 15px; color: #6b7280; margin: 0; }
+.empty-state p { font-size: 15px; color: #6b7280; margin: 0; }
 
 .detail-right { 
   display: flex; 
@@ -629,7 +627,6 @@ onMounted(() => {
   padding: 16px 24px;
   background: none;
   border: none;
-  font-family: "Open Sans", sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: #666;
@@ -663,19 +660,19 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
 }
-.ia-preview h3 { font-family: "Open Sans", sans-serif; font-size: 20px; font-weight: 600; color: #333; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0; }
+.ia-preview h3 { font-size: 20px; font-weight: 600; color: #333; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0; }
 .ia-content { background-color: #f8f9fa; padding: 25px; border-radius: 6px; border-left: 4px solid #c8102e; flex: 1; }
 .pi-section { background-color: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
 .pi-section:last-child { margin-bottom: 0; }
-.pi-header h4 { font-family: "Open Sans", sans-serif; font-size: 18px; font-weight: 600; color: #333; margin: 0; }
+.pi-header h4 { font-size: 18px; font-weight: 600; color: #333; margin: 0; }
 .pi-info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0; }
 .pi-info-field, .form-field { display: flex; flex-direction: column; }
-.info-label, .field-label { font-family: "Open Sans", sans-serif; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
-.info-value { font-family: "Open Sans", sans-serif; font-size: 15px; color: #333; margin: 0; }
+.info-label, .field-label { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+.info-value { font-size: 15px; color: #333; margin: 0; }
 .pi-form-fields { display: flex; flex-direction: column; gap: 20px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .form-field.half-width { flex: 1; }
-.field-input, .field-textarea { font-family: "Open Sans", sans-serif; font-size: 14px; color: #333; padding: 12px; background-color: #f8f9fa; border: 1px solid #d1d5db; border-radius: 4px; min-height: 44px; display: flex; align-items: center; }
+.field-input, .field-textarea { font-size: 14px; color: #333; padding: 12px; background-color: #f8f9fa; border: 1px solid #d1d5db; border-radius: 4px; min-height: 44px; display: flex; align-items: center; }
 .field-textarea { min-height: 100px; align-items: flex-start; white-space: pre-wrap; }
 
 /* Pestanya PDF */
@@ -694,11 +691,14 @@ onMounted(() => {
   border-bottom: 2px solid #e0e0e0;
 }
 
-.pdf-header h3 { font-family: "Open Sans", sans-serif; font-size: 20px; font-weight: 600; color: #333; margin: 0; }
-.btn-download { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background-color: #c8102e; color: white; border: none; border-radius: 4px; font-family: "Open Sans", sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition:
-    background-color 0.2s,
-    opacity 0.2s; }
-.btn-download:hover:not(:disabled) { background-color: #a00d25; }
+.pdf-header h3 { font-size: 20px; font-weight: 600; color: #333; margin: 0; }
+.btn-download { 
+  /* Heredar de .btn-gencat global */
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  padding: 10px 20px;
+}
 .btn-download:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .pdf-viewer-container {
@@ -714,7 +714,7 @@ onMounted(() => {
 
 .pdf-iframe { width: 100%; height: 100%; border: none; background-color: white; flex: 1; }
 .pdf-viewer-placeholder { background-color: #f5f5f5; padding: 60px 40px; border-radius: 6px; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.placeholder-text { font-family: "Open Sans", sans-serif; font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 15px; }
+.placeholder-text { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 15px; }
 
 
 .status-actiu {

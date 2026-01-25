@@ -1,17 +1,25 @@
 <script setup>
+// ============================================
+// PÁGINA: Contacto e Información de Soporte
+// ============================================
+// Página informativa con contactos para soporte técnico
+// Muestra diferentes canales según el tipo de consulta
 import { computed, onMounted, ref } from 'vue';
 
 const idioma = useIdioma();
 const haySesion = ref(false);
 
+// Verificar si hay sesión para mostrar breadcrumbs
 onMounted(() => {
   if (localStorage.getItem('user_centre')) {
     haySesion.value = true;
   }
 });
 
+// ============================================
+// TRADUCCIONES: Catalán, Español, Inglés
+// ============================================
 const t = computed(() => {
-  // Traducciones básicas
   const textos = {
     ca: {
       breadcrumbs: 'Inici',
@@ -20,7 +28,7 @@ const t = computed(() => {
       intro: "En funció del tipus d'informació que necessiteu, teniu diverses maneres de contactar:",
       dubtes_disseny: 'Per dubtes relacionats amb el **disseny** (plantilles, estructura...):',
       dubtes_dev: 'Per dubtes relacionats amb el **desenvolupament**:',
-      dubtes_incidencia: 'Per dubtes i/o incidències amb **PlaPI**:',
+      dubtes_incidencia: 'Per dubtes i/o incidències amb **EduPI**:',
       data: "Data d'actualització"
     },
     es: {
@@ -30,7 +38,7 @@ const t = computed(() => {
       intro: "En función del tipo de información que necesitéis, tenéis diversas maneras de contactar:",
       dubtes_disseny: 'Para dudas relacionadas con el **diseño** (plantillas, estructura...):',
       dubtes_dev: 'Para dudas relacionadas con el **desarrollo**:',
-      dubtes_incidencia: 'Para dudas y/o incidencias con **PlaPI**:',
+      dubtes_incidencia: 'Para dudas y/o incidencias con **EduPI**:',
       data: "Fecha de actualización"
     },
     en: {
@@ -40,7 +48,7 @@ const t = computed(() => {
       intro: "Depending on the type of information you need, there are several ways to contact:",
       dubtes_disseny: 'For questions related to **design** (templates, structure...):',
       dubtes_dev: 'For questions related to **development**:',
-      dubtes_incidencia: 'For questions and/or incidents with **PlaPI**:',
+      dubtes_incidencia: 'For questions and/or incidents with **EduPI**:',
       data: "Last updated"
     }
   };
@@ -88,7 +96,7 @@ const t = computed(() => {
 </template>
 
 <style scoped>
-.contact-container { background-color: white; min-height: 100vh; padding: 20px; font-family: 'Open Sans', sans-serif; color: #333; }
+.contact-container { background-color: white; min-height: 100vh; padding: 20px; color: #333; }
 .content-wrapper { max-width: 1000px; margin: 0 auto; padding-top: 20px; }
 .breadcrumbs { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
 .breadcrumbs a { color: #333; text-decoration: underline; }

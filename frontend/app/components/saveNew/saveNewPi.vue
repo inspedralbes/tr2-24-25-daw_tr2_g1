@@ -7,19 +7,25 @@ import ReviewFileResponse from "../comp-pi/ReviewFileResponse.vue";
 const route = useRoute();
 const router = useRouter();
 
-// Estado
-const ralc = route.query.ralc;
-const student = ref(null);
-const isLoadingStudent = ref(true);
-const step = ref(1); // 1: Upload, 2: Review
-const isGlobalLoading = ref(false);
-const piAnalysisData = ref(null);
+// ============================================
+// ESTADO DE LA APLICACIÓN
+// ============================================
+const ralc = route.query.ralc;       // RALC del alumno desde URL
+const student = ref(null);           // Datos del alumno
+const isLoadingStudent = ref(true);  // Carga inicial
+const step = ref(1);                 // Paso actual: 1=Upload, 2=Review
+const isGlobalLoading = ref(false);  // Bloqueo durante operaciones
+const piAnalysisData = ref(null);    // Respuesta de Gemini AI
 
-// Refs
+// Referencias a componentes hijos
 const fileUploadRef = ref(null);
 
-// Cargar datos del estudiante (para tener el nombre para la IA)
+// ============================================
+// FUNCIÓN: Cargar datos del alumno
+// ============================================
+// Obtiene información del alumno para mostrar en UI y pasar a IA
 const loadStudent = async () => {
+  // VALIDACIÓN: Verificar que existe RALC en URL
   if (!ralc) {
     alert("Falta el RALC del alumne");
     router.push("/home");
@@ -29,7 +35,9 @@ const loadStudent = async () => {
   try {
     // Usamos el endpoint existente.
     // Nota: Ajusta la URL base segun entorno o usa useFetch/useNuxtApp si disponible
-    const response = await fetch(`http://edupi.daw.inspedralbes.cat/api/alumne/${ralc}`);
+    const response = await fetch(`http://localhost:3000/api/alumne/${ralc}`); //dev
+
+    //const response = await fetch(`http://edupi.daw.inspedralbes.cat/api/alumne/${ralc}`); //prod
     const data = await response.json();
     
     if (data.success) {
@@ -183,24 +191,9 @@ onMounted(() => {
     margin-top: 30px;
 }
 
+/* Heredar de .btn-gencat del global.css */
 .btn-primary {
-    background-color: #d00000;
-    color: white;
-    border: none;
     padding: 12px 30px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.btn-primary:disabled {
-    background-color: #e0e0e0;
-    cursor: not-allowed;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background-color: #b00000;
 }
 
 .btn-cancel {

@@ -1,31 +1,42 @@
 <script setup>
+// ============================================
+// PÁGINA: Crear Nuevo PI (Flujo Completo)
+// ============================================
+// Combina registro de alumno + subida de PDF + análisis IA + guardado
+// Proceso de 2 pasos: 1) Datos y Documentación, 2) Análisis y Revisión
 import { ref } from "vue";
 import RegisterStudent from "../../components/comp-pi/RegisterStudent.vue";
 import FileUpload from "../../components/comp-pi/FileUpload.vue";
 import ReviewFileResponse from "../../components/comp-pi/ReviewFileResponse.vue";
 
-// REFERENCIAS A LOS COMPONENTES HIJOS
-const registerStudentRef = ref(null);
-const fileUploadRef = ref(null);
+// ============================================
+// REFERENCIAS Y ESTADO
+// ============================================
+const registerStudentRef = ref(null);  // Referencia al componente de registro
+const fileUploadRef = ref(null);       // Referencia al componente de subida PDF
 
-// ESTADO GLOBAL
-const step = ref(1);
-const isGlobalLoading = ref(false);
+const step = ref(1);                   // Paso actual (1 o 2)
+const isGlobalLoading = ref(false);    // Bloqueo global durante operaciones asíncronas
 
-// DATOS
-const piAnalysisData = ref(null);
-const studentData = ref(null);
+const piAnalysisData = ref(null);      // Respuesta de Gemini AI
+const studentData = ref(null);         // Datos del alumno recién creado
 
-// FUNCION PRINCIPAL
+// ============================================
+// FUNCIÓN: Guardar Alumno y Analizar PDF (PASO 1)
+// ============================================
+// Combina dos operaciones:
+// 1. Crear alumno en BD
+// 2. Analizar el PDF con IA
 async function handleSaveAndAnalyze() {
   if (isGlobalLoading.value) return;
   isGlobalLoading.value = true;
 
   try {
-    // GUARDAR ALUMNO
+    // PASO 1: Guardar alumno en base de datos
     console.log("Paso 1: Guardando alumno...");
     const studentResult = await registerStudentRef.value.submitStudentForm();
 
+    // VALIDACIÓN: Verificar que el alumno se guardó correctamente
     if (!studentResult || !studentResult.success) {
       return;
     }
@@ -33,12 +44,14 @@ async function handleSaveAndAnalyze() {
     studentData.value = studentResult.data;
     console.log("Alumno guardado:", studentData.value);
 
-    // ANALIZAR PDF
+    // PASO 2: Analizar PDF con IA
     console.log("Paso 2: Analizando PDF...");
     const studentFullName = `${studentData.value.name} ${studentData.value.surname}`;
 
     const analysisResult =
       await fileUploadRef.value.triggerAnalysis(studentFullName);
+    
+    // VALIDACIÓN: Verificar que el análisis fue exitoso
     if (!analysisResult) {
       console.warn(
         "El análisis devolvió null (probablemente falta archivo o error IA)",
@@ -46,6 +59,7 @@ async function handleSaveAndAnalyze() {
       return;
     }
 
+    // PASO 3: Pasar a la pantalla de revisión
     piAnalysisData.value = analysisResult;
     step.value = 2;
   } catch (error) {
@@ -56,16 +70,22 @@ async function handleSaveAndAnalyze() {
   }
 }
 
-// NUEVA FUNCIÓN FINAL
+// ============================================
+// FUNCIÓN: Guardar PI Revisado (PASO 2)
+// ============================================
+// Sube el PDF al servidor y guarda el PI en BD con datos revisados
 async function handleFinalSave(reviewedFormData) {
   isGlobalLoading.value = true;
   try {
      const ralc = studentData.value.ralc;
-     // Llamamos al hijo para que suba el fichero + los datos revisados
+     
+     // PASO 1: Subir PDF y guardar PI en BD
+     // Llama al componente FileUpload que maneja Multer + inserción
      const result = await fileUploadRef.value.uploadPdfAndSaveData(ralc, reviewedFormData);
      
      console.log("Upload result:", result);
      
+     // PASO 2: Redirigir al home tras guardado exitoso
      await navigateTo(`/home`); 
   } catch (err) {
       console.error("Error saving final PI:", err);

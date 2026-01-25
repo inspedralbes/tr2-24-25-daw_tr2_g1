@@ -1,10 +1,18 @@
+// ============================================
+// CONTROLADOR: Obtener Alumno por RALC
+// ============================================
+// Devuelve datos completos del alumno + todos sus PIs asociados
+// Incluye información del centro y profesores que crearon PIs
 import { pool } from "../db.js";
 
 export async function getByRalcStudent(req, res) {
   try {
     const studentRalc = req.params.ralc;
 
-    // A) Obtener datos básicos del alumno
+    // ============================================
+    // PASO 1: Obtener datos básicos del alumno
+    // ============================================
+    // Incluye JOIN con centros para mostrar nombre del centro
     const [alumnes] = await pool.query(
       `
       SELECT 
@@ -23,6 +31,7 @@ export async function getByRalcStudent(req, res) {
       [studentRalc],
     );
 
+    // VALIDACIÓN: Verificar que el alumno existe
     if (alumnes.length === 0) {
       return res
         .status(404)
@@ -31,6 +40,10 @@ export async function getByRalcStudent(req, res) {
 
     const alumne = alumnes[0];
 
+    // ============================================
+    // PASO 2: Obtener todos los PIs del alumno
+    // ============================================
+    // Ordenados por estado (activo primero) y luego por fecha descendente
     const [pis] = await pool.query(
       `
       SELECT 

@@ -1,18 +1,28 @@
 <script setup>
+// ============================================
+// PÁGINA: Dashboard de Gestión de Profesores
+// ============================================
+// Panel de administración para centros educativos
+// Permite autorizar/desautorizar profesores para acceso a la plataforma
+// Solo accesible para cuentas de tipo "centro", no para profesores
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
-const currentCentre = ref(null);
-const professors = ref([]);
-const newEmail = ref('');
-const loading = ref(false);
-const message = ref({ text: '', type: '' });
+const currentCentre = ref(null);  // Datos del centro logueado
+const professors = ref([]);       // Lista de profesores autorizados
+const newEmail = ref('');         // Email del nuevo profesor a autorizar
+const loading = ref(false);       // Estado de carga
+const message = ref({ text: '', type: '' }); // Mensajes de éxito/error
 
+// ============================================
+// INICIALIZACIÓN Y PROTECCIÓN DE RUTA
+// ============================================
 onMounted(() => {
   const session = localStorage.getItem('user_centre');
   
+  // VALIDACIÓN 1: Verificar que hay sesión activa
   if (!session) {
     router.push('/');
     return;
@@ -20,15 +30,21 @@ onMounted(() => {
 
   currentCentre.value = JSON.parse(session);
   
-  // PROTECCIÓN: Si es profesor, redirigir al home (solo centros pueden gestionar docentes)
+  // VALIDACIÓN 2: Solo centros pueden acceder (no profesores)
+  // Si es profesor, redirigir al home
   if (currentCentre.value?.esProfesor) {
     router.push('/home');
     return;
   }
 
+  // Cargar lista de profesores autorizados
   fetchProfessors();
 });
 
+// ============================================
+// FUNCIÓN: Cargar lista de profesores
+// ============================================
+// Obtiene todos los profesores autorizados para el centro actual
 const fetchProfessors = async () => {
   if (!currentCentre.value?.id) return;
 
@@ -43,7 +59,13 @@ const fetchProfessors = async () => {
   }
 };
 
+// ============================================
+// FUNCIÓN: Autorizar nuevo profesor
+// ============================================
+// Crea un registro en BD con email + centre_id
+// El profesor queda "pendiente" hasta su primer login con Google
 const addProfessor = async () => {
+  // VALIDACIÓN: Email obligatorio
   if (!newEmail.value) return;
   
   loading.value = true;
@@ -77,7 +99,12 @@ const addProfessor = async () => {
   }
 };
 
+// ============================================
+// FUNCIÓN: Eliminar profesor
+// ============================================
+// Revoca el acceso de un profesor (elimina de BD)
 const deleteProfessor = async (id) => {
+  // CONFIRMACIÓN: Requiere confirmación del usuario
   if (!confirm("Segur que vols eliminar l'accés a aquest correu?")) return;
   
   try {

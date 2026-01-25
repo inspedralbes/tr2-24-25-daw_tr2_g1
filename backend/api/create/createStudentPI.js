@@ -1,21 +1,27 @@
+// ============================================
+// CONTROLADOR: Crear Plan Individualizado (PI)
+// ============================================
+// Guarda el análisis del PI generado por IA o introducido manualmente
+// Solo puede haber un PI activo por alumno - los anteriores se marcan como inactivos
 import { pool } from "../db.js";
 
 export async function createStudentPI(req, res) {
   console.log("--> HE RECIBIDO ESTO EN EL BODY (PI):", req.body);
 
   const {
-    ralc,
-    professor_id, // Asegúrate de enviar esto desde el front (o hardcodeado por ahora)
-    dificultat,
-    gravetat,
-    justificacio,
-    proposta_educativa,
-    observacio,
-    ruta_pdf, // Puede ser el nombre del archivo si no lo guardas en disco aún
+    ralc,                  // Código RALC del alumno
+    professor_id,          // ID del profesor que crea el PI
+    dificultat,            // Dificultades detectadas
+    gravetat,              // Gravedad de las dificultades
+    justificacio,          // Justificación del PI
+    proposta_educativa,    // Propuesta educativa adaptada
+    observacio,            // Observaciones adicionales
+    ruta_pdf,              // Ruta del PDF generado
   } = req.body;
 
-  // 1. Validación básica.
-  // Nota: Si 'ruta_pdf' no es crítica, quítala de aquí.
+  // ============================================
+  // VALIDACIÓN
+  // ============================================
   if (!ralc) {
     res.status(400).json({
       error: "Falta el RALC del alumno.",
@@ -24,15 +30,18 @@ export async function createStudentPI(req, res) {
   }
 
   try {
-    // 2. Ejecutamos la lógica de actualización e inserción
-
-    // a) Marcar PIs anteriores como 'inactiu'
+    // ============================================
+    // PASO 1: Desactivar PIs anteriores
+    // ============================================
+    // Solo puede haber un PI activo por alumno
     await pool.query(
       "UPDATE pis SET estado = 'inactiu' WHERE alumne_ralc = ?",
       [ralc]
     );
 
-    // b) Insertar el nuevo PI activo
+    // ============================================
+    // PASO 2: Insertar nuevo PI como activo
+    // ============================================
     const query = `
       INSERT INTO pis 
       (alumne_ralc, professor_id, dificultat, gravetat, justificacio, proposta_educativa, observacio, ruta_pdf, data_creacio, estado) 
@@ -41,7 +50,7 @@ export async function createStudentPI(req, res) {
 
     const values = [
       ralc,
-      professor_id || 1, // Fallback: Si no llega ID, asigna el 1 (asegúrate que existe un profe con id 1)
+      professor_id || 1,              // Fallback a ID 1 si no se proporciona
       dificultat || null,
       gravetat || null,
       justificacio || null,

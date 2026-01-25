@@ -1,47 +1,58 @@
+// ============================================
+// CONTROLADOR: Guardar PDF del Plan Individualizado
+// ============================================
+// Gestiona la subida de archivos PDF generados
+// Los PDF se guardan con el nombre del RALC del alumno
+// Utiliza Multer para el manejo de archivos multipart/form-data
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { pool } from "../db.js";
 
-// 1. CONFIGURACIÓN DE MULTER
-// Aseguramos que la carpeta existe usando RUTA ABSOLUTA
-// Asumimos que server.js está en backend/ y uploads/ también en backend/uploads
+// ============================================
+// CONFIGURACIÓN DE MULTER
+// ============================================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadDir = path.resolve(__dirname, "../../uploads");
 
+// Crear carpeta uploads si no existe
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Configuración de almacenamiento
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // 1. Recuperamos el RALC del body
-    // Nota: Es vital que en el FormData del frontend, el campo 'ralc' 
-    // se añada ANTES que el campo del archivo ('file').
+    // Recuperar el RALC del body para usar como nombre de archivo
+    // IMPORTANTE: En el FormData del frontend, 'ralc' debe añadirse ANTES del archivo
     const ralc = req.body.ralc ? req.body.ralc.trim() : "unknown";
 
-    // 2. Definimos el nombre final directamente
-    // Estructura: [RALC].pdf
+    // Guardar con formato: [RALC].pdf
+    // Esto permite recuperar el PDF fácilmente usando el RALC
     cb(null, `${ralc}.pdf`);
   },
 });
 
-// Inicializamos el middleware de subida
+// Middleware exportado para usar en las rutas
 export const uploadMiddleware = multer({ storage: storage });
 
-// 2. CONTROLADOR (Lógica de Base de Datos)
+// ============================================
+// CONTROLADOR: Procesar archivo subido
+// ============================================
 export const savePdfController = async (req, res) => {
   console.log("--- SAVE PDF REQUEST ---");
   console.log("Body:", req.body);
   console.log("File:", req.file);
 
   try {
-    // req.file contiene el archivo subido
+    // ============================================
+    // VALIDACIÓN 1: Verificar que el archivo fue subido
+    // ============================================
     if (!req.file) {
       console.error("Error: No se recibió ningún archivo PDF");
       return res.status(400).json({
@@ -50,14 +61,16 @@ export const savePdfController = async (req, res) => {
       });
     }
 
-    // req.body contiene los campos de texto enviados por FormData
-    const { ralc, dificultat, gravetat, justificacio, proposta, observacio } =
+    // Extraer datos del formulario (FormData del frontend)
+    const { ralc, dificultat, gravetat, justificacio, proposta, observacio, professor_email } =
       req.body;
 
-    // VALIDACIÓN BÁSICA
+    // ============================================
+    // VALIDACIÓN 2: RALC obligatorio (identifica al alumno)
+    // ============================================
     if (!ralc) {
       console.error("Error: Falta el RALC del alumno");
-      // Opcional: Borrar el archivo si no hay RALC, para no dejar basura.
+      // Limpiar: borrar el archivo huérfano del sistema
       if (req.file.path) fs.unlinkSync(req.file.path);
 
       return res
@@ -65,15 +78,21 @@ export const savePdfController = async (req, res) => {
         .json({ success: false, message: "Falta el RALC del alumno" });
     }
 
-    // Normalizar la ruta del PDF (Windows usa backslashes, mejor usar forward slashes para DB/Web)
+    // ============================================
+    // NORMALIZACIÓN: Convertir ruta Windows a formato universal
+    // ============================================
+    // Windows: C:\uploads\file.pdf → C:/uploads/file.pdf
     const rutaPdf = req.file.path.replace(/\\/g, "/");
     console.log("Ruta PDF normalizada:", rutaPdf);
 
-    // VERIFICAR QUE EL ALUMNO EXISTE
+    // ============================================
+    // VALIDACIÓN 3: Verificar que el alumno existe
+    // ============================================
+    // No se puede crear un PI para un alumno que no está registrado
     const [rows] = await pool.query("SELECT ralc FROM alumnes WHERE ralc = ?", [ralc]);
     if (rows.length === 0) {
       console.error(`Error: El alumno con RALC ${ralc} no existe en la BD.`);
-      // Borrar archivo huerfano - DESACTIVADO PARA DEBUG
+      // Opcional: borrar archivo huérfano
       //if (req.file.path) fs.unlinkSync(req.file.path);
 
       return res.status(404).json({
@@ -82,18 +101,42 @@ export const savePdfController = async (req, res) => {
       });
     }
 
-    // 4. ACTUALIZAR ESTADO DE PIS ANTERIORES (IMPORTANTE PARA HISTÓRICO)
+    // ============================================
+    // VALIDACIÓN 4: Buscar ID del profesor por email
+    // ============================================
+    // El frontend envía el email, necesitamos el ID para la BD
+    let professorId = null;
+    if (professor_email) {
+      const [profRows] = await pool.query(
+        "SELECT id FROM professors WHERE email = ?", 
+        [professor_email]
+      );
+      if (profRows.length > 0) {
+        professorId = profRows[0].id;
+        console.log("Profesor encontrado con ID:", professorId);
+      } else {
+        console.warn("No se encontró profesor con email:", professor_email);
+      }
+    }
+
+    // ============================================
+    // PASO 1: Desactivar PIs anteriores (histórico)
+    // ============================================
+    // Solo puede haber 1 PI activo por alumno
     await pool.query("UPDATE pis SET estado = 'inactiu' WHERE alumne_ralc = ?", [ralc]);
 
-    // 5. INSERTAR EN LA BASE DE DATOS
+    // ============================================
+    // PASO 2: Insertar nuevo PI como activo
+    // ============================================
     const query = `
       INSERT INTO pis 
-      (alumne_ralc, ruta_pdf, dificultat, gravetat, justificacio, proposta_educativa, observacio, data_creacio, estado) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 'actiu')
+      (alumne_ralc, professor_id, ruta_pdf, dificultat, gravetat, justificacio, proposta_educativa, observacio, data_creacio, estado) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'actiu')
     `;
 
     const [result] = await pool.execute(query, [
       ralc,
+      professorId, // AGREGAMOS EL ID DEL PROFESOR
       rutaPdf,
       dificultat || null,
       gravetat || null,

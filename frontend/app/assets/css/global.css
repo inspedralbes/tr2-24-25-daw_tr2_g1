@@ -1,0 +1,357 @@
+/* ============================================
+   ESTILOS GLOBALES - APLICACIÓN EDUPI
+   ============================================ */
+
+/* ------------------
+   VARIABLES CSS
+   ------------------ */
+:root {
+  /* Colores principales */
+  --color-gencat-red: #c8102e;
+  --color-gencat-red-dark: #a00d25;
+  --color-gencat-red-hover: #a80016;
+  --color-green: #007a33;
+  --color-green-dark: #005a24;
+  
+  /* Colores de texto */
+  --color-text-primary: #333;
+  --color-text-secondary: #555;
+  --color-text-muted: #666;
+  --color-text-light: #6b7280;
+  --color-text-dark: #374151;
+  
+  /* Colores de fondo */
+  --color-bg-light: #f4f4f4;
+  --color-bg-page: #e8e8e8;
+  --color-bg-card: #f8f9fa;
+  --color-bg-gray: #f9fafb;
+  --color-bg-hover: #f0f0f0;
+  
+  /* Colores de bordes */
+  --color-border-light: #e5e7eb;
+  --color-border-medium: #d1d5db;
+  --color-border-dark: #e0e0e0;
+  
+  /* Tipografía */
+  --font-family-primary: "Open Sans", sans-serif;
+  
+  /* Espaciados */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 40px;
+  
+  /* Bordes redondeados */
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ------------------
+   RESET Y BASE
+   ------------------ */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-primary);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: 0;
+}
+
+/* ------------------
+   TIPOGRAFÍA
+   ------------------ */
+.text-primary {
+  font-family: var(--font-family-primary);
+  color: var(--color-text-primary);
+}
+
+.text-secondary {
+  font-family: var(--font-family-primary);
+  color: var(--color-text-secondary);
+}
+
+.text-muted {
+  font-family: var(--font-family-primary);
+  color: var(--color-text-muted);
+}
+
+/* ------------------
+   BOTONES GENCAT
+   ------------------ */
+
+/* Botón primario rojo Gencat */
+.btn-gencat,
+.btn-primary-gencat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: 10px 20px;
+  background-color: var(--color-gencat-red);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+}
+
+.btn-gencat:hover:not(:disabled),
+.btn-primary-gencat:hover:not(:disabled) {
+  background-color: var(--color-gencat-red-dark);
+  transform: translateY(-1px);
+}
+
+.btn-gencat:disabled,
+.btn-primary-gencat:disabled {
+  background-color: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Botón secundario verde */
+.btn-success {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px 24px;
+  background-color: var(--color-green);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: var(--color-green-dark);
+}
+
+/* Botón con borde blanco */
+.btn-white {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: white;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-md);
+  border: 1px solid transparent;
+}
+
+.btn-white:hover {
+  background-color: #e2e2e2;
+  border-color: var(--color-gencat-red);
+  color: var(--color-gencat-red);
+  transform: translateY(-1px);
+}
+
+/* ------------------
+   TARJETAS (CARDS)
+   ------------------ */
+.card {
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+  margin-bottom: 30px;
+  border-bottom: 2px solid var(--color-border-dark);
+  padding-bottom: 20px;
+}
+
+.card-title {
+  font-family: var(--font-family-primary);
+  font-weight: 600;
+  font-size: 28px;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* ------------------
+   LOGOS Y MARCAS
+   ------------------ */
+.gencat-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-gencat-red);
+  font-family: var(--font-family-primary);
+  margin-bottom: 15px;
+}
+
+/* ------------------
+   SPINNERS Y CARGA
+   ------------------ */
+.spinner-large {
+  width: 60px;
+  height: 60px;
+  border: 5px solid #ddd;
+  border-top: 5px solid var(--color-gencat-red);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-family: var(--font-family-primary);
+  color: var(--color-text-primary);
+  font-size: 20px;
+  font-weight: 600;
+  animation: fadeInText 1s ease-in;
+}
+
+@keyframes fadeInText {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ------------------
+   ESTADOS Y MENSAJES
+   ------------------ */
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.loading-state p {
+  font-family: var(--font-family-primary);
+  font-size: 18px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.error-state p {
+  font-family: var(--font-family-primary);
+  font-size: 18px;
+  color: var(--color-gencat-red);
+  margin: 0 0 20px 0;
+}
+
+.empty-state {
+  padding: 30px 20px;
+  text-align: center;
+  background-color: var(--color-bg-gray);
+  border-radius: var(--border-radius-md);
+  margin-top: 30px;
+}
+
+.empty-state p {
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+/* ------------------
+   LISTAS DE INFORMACIÓN
+   ------------------ */
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 30px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-family: var(--font-family-primary);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+
+.info-value {
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  text-align: right;
+}
+
+/* ------------------
+   ANIMACIONES
+   ------------------ */
+.fade-in {
+  animation: fadeInContent 0.6s ease-out;
+}
+
+@keyframes fadeInContent {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ------------------
+   UTILIDADES
+   ------------------ */
+.text-center {
+  text-align: center;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.transition-all {
+  transition: all 0.2s ease;
+}

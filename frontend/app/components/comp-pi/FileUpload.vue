@@ -1,37 +1,45 @@
 <script setup>
+// ============================================
+// COMPONENTE: Subida y Análisis de PDF
+// ============================================
+// Permite subir un archivo PDF con drag & drop o click
+// Extrae el texto del PDF usando pdf.js
+// Envía el texto a Gemini AI para análisis del PI
 import * as pdfjsLib from 'pdfjs-dist';
-// Configurar el worker de PDF.js (versión coincidente con package.json)
+
+// Configurar el worker de PDF.js (debe coincidir con la versión instalada)
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 import { useGemini } from "../../composables/useGemini";
 
-// COMPOSABLES
+// ============================================
+// COMPOSABLES Y ESTADO
+// ============================================
 const { analyzePdfContent, error: aiError, aiResponse } = useGemini();
 
-// ESTADO
-const statusMessage = ref("");
-const errorMsg = ref("");
-const isProcessing = ref(false);
-const pdfFile = ref(null);
-const isDragging = ref(false);
-const fileInput = ref(null);
+const statusMessage = ref("");  // Mensaje de estado durante el procesamiento
+const errorMsg = ref("");       // Mensajes de error
+const isProcessing = ref(false); // Estado de carga
+const pdfFile = ref(null);       // Archivo PDF seleccionado
+const isDragging = ref(false);   // Estado visual del drag & drop
+const fileInput = ref(null);     // Referencia al input oculto
 
-// ------------------------------------------------------
-// 1. MANEJO DE ARCHIVOS (Click y Drag & Drop)
-// ------------------------------------------------------
+// ============================================
+// MANEJO DE ARCHIVOS - Click y Drag & Drop
+// ============================================
 
-// Click en el botón -> Abre el selector nativo
+// Abrir el selector de archivos nativo
 function triggerFileInput() {
   fileInput.value.click();
 }
 
-// Cambio en el input nativo
+// Manejar selección mediante el input
 function handleFileSelect(event) {
   const file = event.target.files[0];
   processFile(file);
 }
 
-// Eventos Drag & Drop
+// Eventos de Drag & Drop
 function onDragOver() {
   isDragging.value = true;
 }
@@ -44,48 +52,61 @@ function onDrop(event) {
   processFile(file);
 }
 
-// Validación y asignación común
+// Validar y asignar el archivo
 function processFile(file) {
   if (!file) return;
+  
+  // Solo aceptar PDFs
   if (file.type !== "application/pdf") {
     alert("Si us plau, puja només arxius PDF.");
     return;
   }
+  
   pdfFile.value = file;
 }
 
+// Eliminar archivo seleccionado
 function removeFile() {
   pdfFile.value = null;
   if (fileInput.value) fileInput.value.value = ""; // Limpiar input
 }
 
-// ------------------------------------------------------
-// 2. LÓGICA DE ANÁLISIS (Llamada desde el Padre)
-// ------------------------------------------------------
-
+// ============================================
+// FUNCIÓN: Extraer texto del PDF (OCR)
+// ============================================
+// Usa pdf.js para leer el contenido textual de cada página
+// Devuelve todo el texto concatenado para enviarlo a la IA
 async function extractTextFromPdf(file) {
   try {
+    // PASO 1: Convertir archivo a ArrayBuffer (formato que entiende pdf.js)
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
     const doc = await loadingTask.promise;
     
     let fullText = "";
+    
+    // PASO 2: Iterar todas las páginas del PDF
     for (let i = 1; i <= doc.numPages; i++) {
       const page = await doc.getPage(i);
       const content = await page.getTextContent();
+      // Extraer solo el texto de cada elemento
       const strings = content.items.map((item) => item.str);
       fullText += strings.join(" ") + "\n";
     }
-    return fullText;
+    
+    return fullText; // Texto completo del PDF
   } catch (error) {
     console.error("Error extracting text from PDF:", error);
     throw new Error("No s'ha pogut llegir el text del PDF.");
   }
 }
 
+// ============================================
+// ANÁLISIS CON IA (Llamado desde el componente padre)
+// ============================================
 async function triggerAnalysis(studentNameForContext) {
+  // Verificar que hay un archivo seleccionado
   if (!pdfFile.value) {
-    // Alert user visually
     alert("Atenció: No has seleccionat cap fitxer PDF per analitzar.");
     errorMsg.value = "Si us plau, selecciona un arxiu PDF abans de continuar.";
     return null;
@@ -96,6 +117,7 @@ async function triggerAnalysis(studentNameForContext) {
   errorMsg.value = "";
 
   try {
+    // Extraer texto del PDF
     const text = await extractTextFromPdf(pdfFile.value);
 
     if (!text || text.trim().length < 10) {
@@ -127,11 +149,23 @@ const uploadPdfAndSaveData = async (studentRalc, aiData) => {
     throw new Error("No s'ha trobat l'arxiu PDF per pujar.");
   }
 
+  // OBTENER DATOS DEL USUARIO LOGUEADO (profesor o centro)
+  let professorId = null;
+  let professorEmail = null;
+  const userCentre = localStorage.getItem('user_centre');
+  if (userCentre) {
+    const centreData = JSON.parse(userCentre);
+    professorEmail = centreData.email; // Email del profesor/centro
+    // Si es profesor, podemos buscar su ID en el backend o enviarlo si lo tenemos
+    // Por ahora enviamos el email que es único
+  }
+
   // 1. Creamos un FormData para enviar archivo binario + texto
   const formData = new FormData();
 
   // Datos obligatorios - IMPORTANTE: Añadir antes del archivo para que Multer pueda leerlo en el filename
   formData.append("ralc", studentRalc);
+  formData.append("professor_email", professorEmail || ""); // AGREGAMOS EL EMAIL DEL PROFESOR
 
   // 'pdfFile' debe coincidir con upload.single('pdfFile') en tu backend
   formData.append("pdfFile", pdfFile.value);
@@ -148,7 +182,8 @@ const uploadPdfAndSaveData = async (studentRalc, aiData) => {
   try {
     // Ajusta la URL a tu backend (http://localhost:3000/api/save-pi)
     // Si tienes configurado un proxy en nuxt.config, usa solo "/api/save-pi"
-    const response = await fetch("http://edupi.daw.inspedralbes.cat/api/save-pi", {
+    const response = await fetch("http://localhost:3000/api/save-pi", { //dev
+    //const response = await fetch("http://edupi.daw.inspedralbes.cat/api/save-pi", { //prod
       method: "POST",
       body: formData,
       // IMPORTANTE: NO añadir headers de Content-Type manuales.

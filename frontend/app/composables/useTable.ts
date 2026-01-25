@@ -1,4 +1,12 @@
+// ============================================
+// COMPOSABLE: Gestión de Tabla de Alumnos
+// ============================================
+// Maneja la carga y visualización de la lista de alumnos
+// Define columnas, estado de carga y funciones para obtener datos de la API
 import { ref } from 'vue'
+// ============================================
+// INTERFACES TYPESCRIPT
+// ============================================
 interface ApiResponse {
   success: boolean
   data?: Student[]
@@ -18,7 +26,10 @@ interface Student {
 export const useTable = () => {
   const students = ref<Student[]>([])
 
-  // Columnas de la tabla
+  // ============================================
+  // CONFIGURACIÓN DE COLUMNAS
+  // ============================================
+  // Define qué campos mostrar en la tabla y si son ordenables
   const columns = [
     {
       key: 'ralc',
@@ -48,15 +59,19 @@ export const useTable = () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // Función para cargar datos de la BD
+  // ============================================
+  // FUNCIÓN: Cargar alumnos desde API
+  // ============================================
+  // Detecta si está en SSR o cliente para usar la URL correcta
   const loadStudents = async () => {
     isLoading.value = true
     error.value = null
 
     try {
+      // DETECCIÓN DE ENTORNO: SSR usa 'backend:3000', cliente usa 'localhost:3000'
       const baseURL = import.meta.server ? 'http://backend:3000' : 'http://localhost:3000'
       const response = await $fetch<ApiResponse>(`${baseURL}/api/alumnes`)
-      
+      // VALIDACIÓN: Verificar que la respuesta fue exitosa
       if (response.success) {
         students.value = response.data || []
       } else {

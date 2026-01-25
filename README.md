@@ -20,7 +20,7 @@ L'aplicació permetrà als docents importar documents, analitzar-los automàtica
 ## 🔗 Enllaços d'Interès
 * **Gestió del projecte:** [Taiga](https://tree.taiga.io/project/a24jauhurgon-tr2-plans-individuals/backlog)
 * **Prototipatge UI/UX:** [Figma](https://www.figma.com/design/RFnK1qmbGQKqaRA4oTsH3B/Projecte-2-Transversal?node-id=0-1&p=f&t=3JlQVbeog2CsNQfD-0)
-* **Entorn de Producció:** [PI App](http://edupi.daw.inspedralbes.cat/)
+* **Entorn de Producció:** [PI App](http://edupi.daw.inspedralbes.cat)
 
 ---
 

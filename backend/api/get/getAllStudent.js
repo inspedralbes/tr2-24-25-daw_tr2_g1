@@ -1,7 +1,16 @@
+// ============================================
+// CONTROLADOR: Listar Todos los Alumnos
+// ============================================
+// Obtiene todos los alumnos con información del centro asociado
+// Utiliza LEFT JOIN para incluir alumnos sin centro asignado
 import { pool } from "../db.js";
 
 export async function getAllStudent(req, res) {
   try {
+    // ============================================
+    // CONSULTA: Obtener todos los alumnos
+    // ============================================
+    // LEFT JOIN permite incluir alumnos sin centro asignado (NULL)
     const [rows] = await pool.query(`
       SELECT 
         a.ralc,

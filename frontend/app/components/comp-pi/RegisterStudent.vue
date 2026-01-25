@@ -3,9 +3,12 @@ import { getByRalcStudent, createStudent } from "../../services/apiStudent.js";
 
 const router = useRouter();
 
-const inputRalc = ref("");
-const blockedInput = ref(true);
-const dniError = ref(false);
+// ============================================
+// ESTADO DEL COMPONENTE
+// ============================================
+const inputRalc = ref("");           // RALC introducido por usuario
+const blockedInput = ref(true);      // Bloquea campos si alumno ya existe
+const dniError = ref(false);         // Validación de formato DNI
 const formData = ref({
   name: "",
   surname: "",
@@ -15,7 +18,11 @@ const formData = ref({
   group: "",
 });
 
-// Función para comprobar si el estudiante existe.
+// ============================================
+// FUNCIÓN: Buscar alumno por RALC
+// ============================================
+// Si existe: redirige a su página de detalle
+// Si NO existe: desbloquea formulario para registrarlo
 async function fetchStudentByRalc() {
   console.log("--- INICIO BÚSQUEDA ---");
   // ... logs ...
@@ -49,10 +56,14 @@ async function fetchStudentByRalc() {
   }
 }
 
-// Función para validar el DNI
+// ============================================
+// FUNCIÓN: Validar formato DNI español
+// ============================================
+// Formato: 8 números + 1 letra (ej: 12345678Z)
 function isValidDNIFormat(dni) {
   if (!dni) return false;
 
+  // Regex: 8 dígitos seguidos de una letra
   const regex = /^\d{8}[A-Za-z]$/;
   
 
@@ -72,16 +83,20 @@ function handleDniInput() {
   }
 }
 
-// Función para enviar datos al padre.
+// ============================================
+// FUNCIÓN: Enviar formulario de registro
+// ============================================
+// Valida datos y crea el alumno en la base de datos
 async function submitStudentForm() {
-  // 1. Basic validation
+  // VALIDACIÓN 1: RALC obligatorio
   if (!inputRalc.value) {
     alert("Has d'introduir un RALC vàlid.");
     return { success: false };
   }
 
-  // 2. Creation Logic (Only if form is unblocked)
+  // VALIDACIÓN 2: Solo crear si formulario está desbloqueado
   if (!blockedInput.value) {
+    // VALIDACIÓN 3: Nombre obligatorio
     if (!formData.value.name) {
       alert("El nom és obligatori.");
       return { success: false };
@@ -92,22 +107,45 @@ async function submitStudentForm() {
       return { success: false };
     }
 
+    // OBTENER EL CENTRE_ID DEL USUARIO LOGUEADO (profesor o centro)
+    let centreId = null;
+    
+    // Verificar que estamos en el navegador (client-side)
+    if (import.meta.client) {
+      const userCentre = localStorage.getItem('user_centre');
+      console.log("userCentre desde localStorage:", userCentre);
+      
+      if (userCentre) {
+        try {
+          const centreData = JSON.parse(userCentre);
+          centreId = centreData.id; // El ID del centro (tanto si es profesor como si es centro)
+          console.log("Centre ID obtenido:", centreId);
+        } catch (e) {
+          console.error("Error parseando user_centre:", e);
+        }
+      } else {
+        console.warn("No se encontró user_centre en localStorage");
+      }
+    }
+
     const paqueteAEnviar = {
       ralc: inputRalc.value,
       ...formData.value,
+      centre_procedencia_id: centreId, // AGREGAMOS EL CENTRO
     };
+    
+    console.log("Paquete a enviar al backend:", paqueteAEnviar);
 
     try {
       const respuesta = await createStudent(paqueteAEnviar);
       
-      if (respuesta && (respuesta.success || respuesta.id)) { // Adjusted check based on typical API
+      if (respuesta && (respuesta.success || respuesta.id)) {
         return { success: true, data: paqueteAEnviar };
       } else {
         return { success: false };
       }
     } catch (e) {
       console.error(e);
-      // Ideally, don't throw inside a function called by parent, return false or error obj
       return { success: false, error: e.message }; 
     }
   }

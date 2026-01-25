@@ -1,11 +1,20 @@
 <script setup>
+// ============================================
+// PÁGINA HOME - Panel Principal
+// ============================================
+// Página principal después del login
+// Muestra opciones para crear PI, buscar alumnos y gestionar profesores
+// Diferencia entre centros educativos y profesores (los profesores no ven gestión)
 import { useRouter } from "vue-router";
 import { ref, computed, onMounted } from 'vue';
 
 const idioma = useIdioma();
 const router = useRouter();
-const centre = ref(null);
+const centre = ref(null); // Datos del centro o profesor logueado
 
+// ============================================
+// TRADUCCIONES MULTIIDIOMA
+// ============================================
 const t = computed(() => {
   const textos = {
     ca: {
@@ -39,10 +48,14 @@ const t = computed(() => {
   return textos[idioma.value];
 });
 
+// ============================================
+// VERIFICACIÓN DE LOGIN AL CARGAR
+// ============================================
+// Si no hay sesión, redirigir al login
 onMounted(() => {
   const savedCentre = localStorage.getItem("user_centre");
   if (!savedCentre) {
-    router.push("/");
+    router.push("/"); // Volver a login
   } else {
     centre.value = JSON.parse(savedCentre);
   }
@@ -124,7 +137,6 @@ onMounted(() => {
   gap: 15px;
 }
 .intro h1 {
-  font-family: "Open Sans", sans-serif;
   font-weight: 700;
   font-size: 32px;
   color: #333;
@@ -136,7 +148,6 @@ onMounted(() => {
 }
 
 .subtitle {
-  font-family: "Open Sans", sans-serif;
   color: #555;
   font-size: 18px;
   line-height: 1.6;
