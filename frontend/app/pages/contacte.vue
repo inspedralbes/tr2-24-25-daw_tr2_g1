@@ -28,7 +28,7 @@ const t = computed(() => {
       intro: "En funció del tipus d'informació que necessiteu, teniu diverses maneres de contactar:",
       dubtes_disseny: 'Per dubtes relacionats amb el **disseny** (plantilles, estructura...):',
       dubtes_dev: 'Per dubtes relacionats amb el **desenvolupament**:',
-      dubtes_incidencia: 'Per dubtes i/o incidències amb **PlaPI**:',
+      dubtes_incidencia: 'Per dubtes i/o incidències amb **EduPI**:',
       data: "Data d'actualització"
     },
     es: {
@@ -38,7 +38,7 @@ const t = computed(() => {
       intro: "En función del tipo de información que necesitéis, tenéis diversas maneras de contactar:",
       dubtes_disseny: 'Para dudas relacionadas con el **diseño** (plantillas, estructura...):',
       dubtes_dev: 'Para dudas relacionadas con el **desarrollo**:',
-      dubtes_incidencia: 'Para dudas y/o incidencias con **PlaPI**:',
+      dubtes_incidencia: 'Para dudas y/o incidencias con **EduPI**:',
       data: "Fecha de actualización"
     },
     en: {
@@ -48,7 +48,7 @@ const t = computed(() => {
       intro: "Depending on the type of information you need, there are several ways to contact:",
       dubtes_disseny: 'For questions related to **design** (templates, structure...):',
       dubtes_dev: 'For questions related to **development**:',
-      dubtes_incidencia: 'For questions and/or incidents with **PlaPI**:',
+      dubtes_incidencia: 'For questions and/or incidents with **EduPI**:',
       data: "Last updated"
     }
   };

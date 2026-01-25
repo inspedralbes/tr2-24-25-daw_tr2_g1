@@ -90,7 +90,7 @@ const filteredStudents = computed(() => {
             <div v-if="isSearching" class="input-spinner"></div>
           </div>
 
-          <NuxtLink to="/ajuda/com-fer-cerca" class="help-link">
+          <NuxtLink to="com-fer-cerca" class="help-link">
             Com fer la cerca?
           </NuxtLink>
         </div>

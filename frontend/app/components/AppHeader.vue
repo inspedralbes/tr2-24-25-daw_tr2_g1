@@ -118,7 +118,7 @@ const tituloDinamico = computed(() => {
     '/temporal/formPage': { ca: 'Registrar Nou PI', es: 'Registrar Nuevo PI', en: 'Register New IP' },
     '/pi/new': { ca: 'Crear PI', es: 'Crear PI', en: 'Create IP' },
   };
-  return titulos[ruta] ? titulos[ruta][idioma.value] : 'PlaPI - Generalitat de Catalunya';
+  return titulos[ruta] ? titulos[ruta][idioma.value] : 'EduPI - Generalitat de Catalunya';
 });
 
 const menuItems = [{ nombre: 'Inici', path: '/home' }];
