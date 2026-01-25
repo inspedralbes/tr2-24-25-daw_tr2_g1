@@ -25,45 +25,39 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Construir y subir imagen del Frontend (Incluyendo variables de construcción)
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./nuxt-project-piapp
-          file: ./nuxt-project-piapp/Dockerfile.prod
+          context: ./frontend
+          file: ./frontend/Dockerfile.prod
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
           build-args: |
             NODE_ENV=production
-            VITE_SOCKET_URL=${{ secrets.API_URL }}
+            VITE_SOCKET_URL=${{ secrets.FRONTEND_URL }}
 
       # Construir y subir imagen del Backend
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./back
-          file: ./back/Dockerfile.prod
+          context: ./backend
+          file: ./backend/docker/Dockerfile.prod
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    permissions:
-      packages: read
     steps:
       - name: Deploy to server
         uses: appleboy/ssh-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USERNAME: ${{ github.actor }}
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          envs: GITHUB_TOKEN,USERNAME
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Login en GHCR para poder descargar las imágenes privadas
-            echo $GITHUB_TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
-
             # Configuración de rutas
             PROJECT_PATH="/var/www/html/tr2-24-25-daw_tr2_g1"
             REPO_URL="https://github.com/${{ github.repository }}.git"
@@ -92,7 +86,6 @@ jobs:
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
             echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
             echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
-            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
             
             # Variable crítica para que Docker encuentre tus imágenes en GHCR
             echo "GITHUB_REPOSITORY=${{ github.repository }}" >> .env
