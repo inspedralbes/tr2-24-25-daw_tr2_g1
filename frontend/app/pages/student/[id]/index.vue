@@ -15,10 +15,6 @@ interface ApiResponse {
 const route = useRoute();
 const studentRalc = route.params.id;
 
-// Get API URL from runtime config
-const config = useRuntimeConfig();
-const API_URL = config.public.apiBase || 'http://localhost:3000';
-
 // Estat de càrrega de dades
 const isLoading = ref(true);
 const error = ref<string | null>(null);
