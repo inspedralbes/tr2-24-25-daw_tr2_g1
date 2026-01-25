@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { API_URL } from '~/config/api';
 
 // --- ESTADO ANIMACIÓN INTRO ---
 const showIntroAnimation = ref(true); // Controla la intro de carga
