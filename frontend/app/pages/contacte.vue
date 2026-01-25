@@ -20,6 +20,7 @@ onMounted(() => {
 // TRADUCCIONES: Catalán, Español, Inglés
 // ============================================
 const t = computed(() => {
+  const textos = {
     ca: {
       breadcrumbs: 'Inici',
       titulo: 'Contacte',
