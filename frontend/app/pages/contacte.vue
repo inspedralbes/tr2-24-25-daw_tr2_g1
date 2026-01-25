@@ -88,7 +88,7 @@ const t = computed(() => {
 </template>
 
 <style scoped>
-.contact-container { background-color: white; min-height: 100vh; padding: 20px; font-family: 'Open Sans', sans-serif; color: #333; }
+.contact-container { background-color: white; min-height: 100vh; padding: 20px; color: #333; }
 .content-wrapper { max-width: 1000px; margin: 0 auto; padding-top: 20px; }
 .breadcrumbs { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
 .breadcrumbs a { color: #333; text-decoration: underline; }

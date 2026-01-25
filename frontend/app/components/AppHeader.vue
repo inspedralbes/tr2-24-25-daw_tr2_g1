@@ -1,49 +1,74 @@
 <script setup>
+// ============================================
+// COMPONENTE: Header de la Aplicación
+// ============================================
+// Header reutilizable con:
+// - Logo de Gencat
+// - Selector de idioma (CA/ES/EN)
+// - Buscador de contenido
+// - Botón de login/logout
 import { computed, ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const idioma = useIdioma();
 const route = useRoute();
 const router = useRouter();
-const estaLogueado = ref(false);
-const cercadorObert = ref(false); 
-const textBusqueda = ref(''); 
+const estaLogueado = ref(false); // Estado de autenticación
+const cercadorObert = ref(false); // Estado del buscador
+const textBusqueda = ref(''); // Texto del buscador
 
-// --- LÓGICA DE SESIÓN ---
+// ============================================
+// GESTIÓN DE SESIÓN
+// ============================================
+// Verificar si hay usuario logueado en localStorage
 const checkLogin = () => {
   if (typeof window !== 'undefined') {
     estaLogueado.value = !!localStorage.getItem('user_centre');
   }
 };
+
+// Actualizar estado al cambiar de ruta
 watch(() => route.path, checkLogin);
 onMounted(checkLogin);
 
-// --- LÓGICA DEL BUSCADOR ---
+// ============================================
+// FUNCIONALIDAD DEL BUSCADOR
+// ============================================
 const toggleCercador = () => {
   cercadorObert.value = !cercadorObert.value;
-  if (!cercadorObert.value) textBusqueda.value = '';
+  if (!cercadorObert.value) textBusqueda.value = ''; // Limpiar al cerrar
 };
 
 const realizarBusqueda = () => {
   console.log("Buscando:", textBusqueda.value);
+  // TODO: Implementar lógica de búsqueda
 };
 
-// --- IDIOMAS ---
+// ============================================
+// SELECTOR DE IDIOMA
+// ============================================
 const cambiarIdioma = (nuevoIdioma) => {
   idioma.value = nuevoIdioma;
+  // Cerrar el dropdown
   const checkbox = document.getElementById('check-idioma');
   if (checkbox) checkbox.checked = false;
 };
 
-// Acciones del botón derecho (Login/Logout)
+// ============================================
+// BOTÓN LOGIN/LOGOUT
+// ============================================
 const accionBoton = () => {
   if (estaLogueado.value) {
+    // Cerrar sesión: limpiar localStorage
     localStorage.removeItem('user_centre');
   }
+  // Redirigir a login
   router.push('/');
 };
 
-// --- TRADUCCIONES Y DATOS ---
+// ============================================
+// TRADUCCIONES Y ENLACES
+// ============================================
 const t = computed(() => {
   const i = idioma.value;
   return {
@@ -52,7 +77,7 @@ const t = computed(() => {
     cercador_titulo: { ca: 'Cercador', es: 'Buscador', en: 'Search' }[i],
     placeholder: { ca: 'Pots cercar tràmits, departaments, serveis...', es: 'Puedes buscar trámites, departamentos, servicios...', en: 'Search procedures, departments, services...' }[i],
     
-    // AQUÍ ESTÁN TODOS LOS ENLACES Y TEXTOS ACTUALIZADOS
+    // Enlaces rápidos a documentación de GECO+
     chips: [
       { 
         label: { ca: 'Novetats de GECO+', es: 'Novedades de GECO+', en: 'GECO+ News' },

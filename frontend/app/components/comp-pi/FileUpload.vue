@@ -1,37 +1,45 @@
 <script setup>
+// ============================================
+// COMPONENTE: Subida y Análisis de PDF
+// ============================================
+// Permite subir un archivo PDF con drag & drop o click
+// Extrae el texto del PDF usando pdf.js
+// Envía el texto a Gemini AI para análisis del PI
 import * as pdfjsLib from 'pdfjs-dist';
-// Configurar el worker de PDF.js (versión coincidente con package.json)
+
+// Configurar el worker de PDF.js (debe coincidir con la versión instalada)
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 import { useGemini } from "../../composables/useGemini";
 
-// COMPOSABLES
+// ============================================
+// COMPOSABLES Y ESTADO
+// ============================================
 const { analyzePdfContent, error: aiError, aiResponse } = useGemini();
 
-// ESTADO
-const statusMessage = ref("");
-const errorMsg = ref("");
-const isProcessing = ref(false);
-const pdfFile = ref(null);
-const isDragging = ref(false);
-const fileInput = ref(null);
+const statusMessage = ref("");  // Mensaje de estado durante el procesamiento
+const errorMsg = ref("");       // Mensajes de error
+const isProcessing = ref(false); // Estado de carga
+const pdfFile = ref(null);       // Archivo PDF seleccionado
+const isDragging = ref(false);   // Estado visual del drag & drop
+const fileInput = ref(null);     // Referencia al input oculto
 
-// ------------------------------------------------------
-// 1. MANEJO DE ARCHIVOS (Click y Drag & Drop)
-// ------------------------------------------------------
+// ============================================
+// MANEJO DE ARCHIVOS - Click y Drag & Drop
+// ============================================
 
-// Click en el botón -> Abre el selector nativo
+// Abrir el selector de archivos nativo
 function triggerFileInput() {
   fileInput.value.click();
 }
 
-// Cambio en el input nativo
+// Manejar selección mediante el input
 function handleFileSelect(event) {
   const file = event.target.files[0];
   processFile(file);
 }
 
-// Eventos Drag & Drop
+// Eventos de Drag & Drop
 function onDragOver() {
   isDragging.value = true;
 }
@@ -44,25 +52,29 @@ function onDrop(event) {
   processFile(file);
 }
 
-// Validación y asignación común
+// Validar y asignar el archivo
 function processFile(file) {
   if (!file) return;
+  
+  // Solo aceptar PDFs
   if (file.type !== "application/pdf") {
     alert("Si us plau, puja només arxius PDF.");
     return;
   }
+  
   pdfFile.value = file;
 }
 
+// Eliminar archivo seleccionado
 function removeFile() {
   pdfFile.value = null;
   if (fileInput.value) fileInput.value.value = ""; // Limpiar input
 }
 
-// ------------------------------------------------------
-// 2. LÓGICA DE ANÁLISIS (Llamada desde el Padre)
-// ------------------------------------------------------
-
+// ============================================
+// EXTRACCIÓN DE TEXTO DEL PDF
+// ============================================
+// Usa pdf.js para leer todo el texto del PDF página por página
 async function extractTextFromPdf(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -70,6 +82,7 @@ async function extractTextFromPdf(file) {
     const doc = await loadingTask.promise;
     
     let fullText = "";
+    // Iterar por todas las páginas
     for (let i = 1; i <= doc.numPages; i++) {
       const page = await doc.getPage(i);
       const content = await page.getTextContent();
@@ -83,9 +96,12 @@ async function extractTextFromPdf(file) {
   }
 }
 
+// ============================================
+// ANÁLISIS CON IA (Llamado desde el componente padre)
+// ============================================
 async function triggerAnalysis(studentNameForContext) {
+  // Verificar que hay un archivo seleccionado
   if (!pdfFile.value) {
-    // Alert user visually
     alert("Atenció: No has seleccionat cap fitxer PDF per analitzar.");
     errorMsg.value = "Si us plau, selecciona un arxiu PDF abans de continuar.";
     return null;
@@ -96,6 +112,7 @@ async function triggerAnalysis(studentNameForContext) {
   errorMsg.value = "";
 
   try {
+    // Extraer texto del PDF
     const text = await extractTextFromPdf(pdfFile.value);
 
     if (!text || text.trim().length < 10) {

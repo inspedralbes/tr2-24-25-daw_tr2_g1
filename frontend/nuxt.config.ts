@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01", // Actualizado a fecha estable
 
-  // 1. CARGA GLOBAL DEL SCRIPT DE GOOGLE
+  // 1. CARGA GLOBAL DEL SCRIPT DE GOOGLE Y CSS GLOBAL
   app: {
     head: {
       script: [
@@ -14,6 +14,9 @@ export default defineNuxtConfig({
       ]
     }
   },
+
+  // 2. IMPORTAR CSS GLOBAL
+  css: ['~/assets/css/global.css'],
 
   components: {
     dirs: ["~/components", "~/components/comp-pi"],

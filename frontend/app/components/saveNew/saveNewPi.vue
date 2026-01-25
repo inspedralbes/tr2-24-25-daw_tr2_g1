@@ -185,24 +185,9 @@ onMounted(() => {
     margin-top: 30px;
 }
 
+/* Heredar de .btn-gencat del global.css */
 .btn-primary {
-    background-color: #d00000;
-    color: white;
-    border: none;
     padding: 12px 30px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.btn-primary:disabled {
-    background-color: #e0e0e0;
-    cursor: not-allowed;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background-color: #b00000;
 }
 
 .btn-cancel {

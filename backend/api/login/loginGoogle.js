@@ -1,8 +1,13 @@
+// ============================================
+// AUTENTICACIÓN CON GOOGLE OAUTH
+// ============================================
+// Sistema de login dual: centros educativos y profesores
+// Primero busca en la tabla 'centres', luego en 'professors'
 import { OAuth2Client } from 'google-auth-library';
 import { pool } from '../../api/db.js';
 import 'dotenv/config';
 
-// Asegúrate de que este ID coincide con el del frontend
+// Client ID de Google OAuth - debe coincidir con el del frontend
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '182669171058-e7grkc62veee2a4t7k00dfqb450vo6j3.apps.googleusercontent.com';
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
@@ -14,16 +19,19 @@ export const loginGoogle = async (req, res) => {
   }
 
   try {
-    // 1. Verificar el token con Google
+    // ============================================
+    // PASO 1: Verificar el token con Google
+    // ============================================
     const ticket = await client.verifyIdToken({ 
       idToken: id_token, 
       audience: GOOGLE_CLIENT_ID 
     });
     
+    // Extraer información del usuario de Google
     const payload = ticket.getPayload();
     const email = payload?.email;
-    const googleName = payload?.name; // OBTENER NOMBRE DE GOOGLE
-    const googlePicture = payload?.picture; // OBTENER FOTO DE PERFIL
+    const googleName = payload?.name; // Nombre del usuario
+    const googlePicture = payload?.picture; // Foto de perfil
 
     if (!email) {
       return res.status(400).json({ error: 'No se pudo obtener el email del token' });
@@ -32,11 +40,13 @@ export const loginGoogle = async (req, res) => {
     console.log("Intentando login con Google para:", email);
     console.log("Nombre de Google:", googleName);
 
-    // 2. BUSCAR PRIMERO EN LA TABLA CENTRES (para centros educativos)
+    // ============================================
+    // PASO 2: Buscar en tabla CENTRES (centros educativos)
+    // ============================================
     const queryCentre = 'SELECT * FROM centres WHERE email_centre = ? LIMIT 1';
     const [rowsCentre] = await pool.query(queryCentre, [email]);
 
-    // Si encontramos el email en CENTRES, login como centro
+    // Si el email pertenece a un centro educativo
     if (rowsCentre && rowsCentre.length > 0) {
       const centre = rowsCentre[0];
       console.log("✅ Login como CENTRO:", centre.denominacio_completa);
@@ -53,7 +63,10 @@ export const loginGoogle = async (req, res) => {
       });
     }
 
-    // 3. SI NO ESTÁ EN CENTRES, BUSCAR EN LA TABLA PROFESSORS (para profesores autorizados)
+    // ============================================
+    // PASO 3: Buscar en tabla PROFESSORS (profesores)
+    // ============================================
+    // Si no es un centro, buscar si es un profesor autorizado
     const queryProf = `
       SELECT p.id, p.nom, p.email, p.centre_id, c.denominacio_completa as centre_nom, c.codi_centre
       FROM professors p 
@@ -63,19 +76,20 @@ export const loginGoogle = async (req, res) => {
     `;
     const [rowsProf] = await pool.query(queryProf, [email]);
 
-    // Si encontramos el email en PROFESSORS, login como profesor
+    // Si el email pertenece a un profesor autorizado
     if (rowsProf && rowsProf.length > 0) {
       const profesor = rowsProf[0];
       console.log("✅ Login como PROFESOR del centre:", profesor.centre_nom);
       
-      // ACTUALIZAR NOMBRE SI TODAVÍA ES "Pendent de registre"
+      // Actualizar nombre si es la primera vez que inicia sesión
+      // Los profesores pre-registrados tienen "Pendent de registre" como nombre
       if (profesor.nom === "Pendent de registre" && googleName) {
         console.log("Actualizando nombre del profesor a:", googleName);
         await pool.query(
           "UPDATE professors SET nom = ? WHERE id = ?",
           [googleName, profesor.id]
         );
-        // Actualizar el objeto para devolverlo con el nombre correcto
+        // Actualizar el objeto para devolverlo con el nombre real
         profesor.nom = googleName;
       }
       

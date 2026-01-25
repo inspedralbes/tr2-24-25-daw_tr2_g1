@@ -338,19 +338,9 @@ label {
 }
 
 .btn-save {
-  background-color: #d9001d;
-  color: white;
-  border: none;
+  /* Heredar de .btn-gencat global */
   padding: 12px 32px;
-  font-weight: 700;
-  cursor: pointer;
-  border-radius: 4px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  transition: background-color 0.2s;
-}
-
-.btn-save:hover {
-  background-color: #b00018;
 }
 
 /* RESPONSIVE */

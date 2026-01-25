@@ -1,3 +1,8 @@
+// ============================================
+// CONTROLADOR: Crear Nuevo Alumno
+// ============================================
+// Registra un alumno en la base de datos
+// Vincula al alumno con el centro educativo que lo crea
 import { pool } from "../db.js";
 
 export async function createStudent(req, res) {
@@ -5,6 +10,9 @@ export async function createStudent(req, res) {
 
   const { ralc, name, surname, dni, date, course, group, centre_procedencia_id } = req.body;
 
+  // ============================================
+  // VALIDACIÓN DE DATOS OBLIGATORIOS
+  // ============================================
   if (!ralc || !name) {
     res
       .status(400)
@@ -12,7 +20,7 @@ export async function createStudent(req, res) {
     return;
   }
 
-  // VALIDAR QUE SE ENVIÓ EL CENTRO (es obligatorio)
+  // El centro es obligatorio - identifica quién creó al alumno
   if (!centre_procedencia_id) {
     console.error("ERROR: No se recibió centre_procedencia_id");
     console.error("Body completo:", req.body);
@@ -25,7 +33,10 @@ export async function createStudent(req, res) {
   console.log("Centre ID a guardar:", centre_procedencia_id);
 
   try {
-    // Manejar fecha: si no hay fecha o es inválida, usar null
+    // ============================================
+    // FORMATEO DE FECHA DE NACIMIENTO
+    // ============================================
+    // Convertir a formato MySQL (YYYY-MM-DD) o usar NULL si no es válida
     let formattedDate = null;
     if (date) {
       try {
@@ -35,7 +46,9 @@ export async function createStudent(req, res) {
       }
     }
 
-    // AGREGAMOS centre_procedencia_id A LA QUERY
+    // ============================================
+    // INSERCIÓN EN BASE DE DATOS
+    // ============================================
     const [result] = await pool.query(
       "INSERT INTO alumnes (ralc, nom, cognom, dni, data_naixement, curs, grup, centre_procedencia_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       [ralc, name, surname || '', dni || '', formattedDate, course || '', group || '', centre_procedencia_id],

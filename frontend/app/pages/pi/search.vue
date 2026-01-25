@@ -152,7 +152,6 @@ const filteredStudents = computed(() => {
 .search-page {
   background-color: #f4f4f4; /* ANTES ERA #e8e8e8 (MÁS OSCURO) */
   min-height: calc(100vh - 100px);
-  font-family: "Open Sans", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   color: #333;
 }
 

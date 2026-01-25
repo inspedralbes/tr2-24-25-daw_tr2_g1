@@ -1,47 +1,56 @@
+// ============================================
+// CONTROLADOR: Guardar PDF del Plan Individualizado
+// ============================================
+// Gestiona la subida de archivos PDF generados
+// Los PDF se guardan con el nombre del RALC del alumno
+// Utiliza Multer para el manejo de archivos multipart/form-data
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { pool } from "../db.js";
 
-// 1. CONFIGURACIÓN DE MULTER
-// Aseguramos que la carpeta existe usando RUTA ABSOLUTA
-// Asumimos que server.js está en backend/ y uploads/ también en backend/uploads
+// ============================================
+// CONFIGURACIÓN DE MULTER
+// ============================================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadDir = path.resolve(__dirname, "../../uploads");
 
+// Crear carpeta uploads si no existe
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Configuración de almacenamiento
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // 1. Recuperamos el RALC del body
-    // Nota: Es vital que en el FormData del frontend, el campo 'ralc' 
-    // se añada ANTES que el campo del archivo ('file').
+    // Recuperar el RALC del body para usar como nombre de archivo
+    // IMPORTANTE: En el FormData del frontend, 'ralc' debe añadirse ANTES del archivo
     const ralc = req.body.ralc ? req.body.ralc.trim() : "unknown";
 
-    // 2. Definimos el nombre final directamente
-    // Estructura: [RALC].pdf
+    // Guardar con formato: [RALC].pdf
+    // Esto permite recuperar el PDF fácilmente usando el RALC
     cb(null, `${ralc}.pdf`);
   },
 });
 
-// Inicializamos el middleware de subida
+// Middleware exportado para usar en las rutas
 export const uploadMiddleware = multer({ storage: storage });
 
-// 2. CONTROLADOR (Lógica de Base de Datos)
+// ============================================
+// CONTROLADOR: Procesar archivo subido
+// ============================================
 export const savePdfController = async (req, res) => {
   console.log("--- SAVE PDF REQUEST ---");
   console.log("Body:", req.body);
   console.log("File:", req.file);
 
   try {
-    // req.file contiene el archivo subido
+    // Verificar que se recibió el archivo
     if (!req.file) {
       console.error("Error: No se recibió ningún archivo PDF");
       return res.status(400).json({

@@ -1,17 +1,24 @@
 <script setup>
+// ============================================
+// PÁGINA DE LOGIN - AUTENTICACIÓN CON GOOGLE
+// ============================================
+// Componente principal de autenticación para centros educativos
+// Utiliza Google OAuth con botón oficial de Google Sign-In
 import { useRouter } from "vue-router";
 import { onMounted, ref, computed } from "vue";
 
-// ID DE CLIENTE
+// Client ID de Google OAuth - debe coincidir con el backend
 const GOOGLE_CLIENT_ID = "182669171058-e7grkc62veee2a4t7k00dfqb450vo6j3.apps.googleusercontent.com";
 
-const idioma = useIdioma(); // Asumo que tienes este composable
+const idioma = useIdioma(); // Composable para gestión multiidioma
 const router = useRouter();
 
-const errorMessage = ref("");
-const loading = ref(false);
+const errorMessage = ref(""); // Mensajes de error para el usuario
+const loading = ref(false); // Estado de carga durante la validación
 
-// Traducciones
+// ============================================
+// TRADUCCIONES - Catalán, Español, Inglés
+// ============================================
 const t = computed(() => {
   const textos = {
     ca: {
@@ -42,17 +49,21 @@ const t = computed(() => {
   return textos[idioma.value] || textos.ca;
 });
 
-// Respuesta de Google
+// ============================================
+// FUNCIÓN: Manejar respuesta de Google OAuth
+// ============================================
+// Recibe el token de Google y lo envía al backend para validación
+// El backend verifica el token y busca el usuario en la base de datos
 const handleGoogleResponse = async (response) => {
   loading.value = true;
   errorMessage.value = "";
 
   try {
-    // Usamos el puerto 3000 porque el Backend está ahí
-    const baseURL = 'http://localhost:3000'; //dev
-    //const baseURL = 'http://edupi.daw.inspedralbes.cat'; //prod
+    // URL del backend (cambiar según entorno)
+    const baseURL = 'http://localhost:3000'; // Desarrollo local
+    //const baseURL = 'http://edupi.daw.inspedralbes.cat'; // Producción
     
-    // Enviamos el token al backend para que verifique contra la DB
+    // Enviar token al backend para verificación
     const res = await fetch(`${baseURL}/api/login-google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -61,12 +72,14 @@ const handleGoogleResponse = async (response) => {
 
     const data = await res.json();
 
+    // Si el login es exitoso
     if (res.ok && data.success) {
-      // Login correcto: Guardamos datos y redirigimos
+      // Guardar datos del centro en localStorage
       localStorage.setItem('user_centre', JSON.stringify(data.centre));
+      // Redirigir a la página principal
       router.push('/home');
     } else {
-      // Errores controlados (404, etc)
+      // Mostrar mensaje de error específico
       if (res.status === 404) {
         errorMessage.value = t.value.error_no_centre;
       } else {
@@ -81,23 +94,29 @@ const handleGoogleResponse = async (response) => {
   }
 };
 
+// ============================================
+// MONTAJE DEL COMPONENTE
+// ============================================
+// Inicializar el botón de Google Sign-In cuando la página carga
 onMounted(() => {
-  // Función recursiva para asegurar que el botón se pinta cuando Google carga
+  // Función recursiva para esperar a que el SDK de Google se cargue
   const renderGoogleButton = () => {
     if (window.google && window.google.accounts) {
+      // Inicializar la librería de Google
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleGoogleResponse,
-        auto_select: false,
-        cancel_on_tap_outside: false
+        auto_select: false, // No seleccionar automáticamente una cuenta
+        cancel_on_tap_outside: false // No cancelar si se hace clic fuera
       });
 
+      // Renderizar el botón oficial de Google
       window.google.accounts.id.renderButton(
         document.getElementById('google-signin-button'),
         { theme: 'outline', size: 'large', width: 320, locale: idioma.value }
       );
     } else {
-      // Si el script aun no ha bajado, reintentamos en 200ms
+      // Si el SDK no ha cargado, reintentar en 200ms
       setTimeout(renderGoogleButton, 200);
     }
   };
