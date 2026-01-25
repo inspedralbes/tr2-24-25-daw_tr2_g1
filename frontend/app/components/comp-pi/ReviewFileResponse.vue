@@ -15,7 +15,9 @@ const emit = defineEmits(["back", "save"]);
 const router = useRouter();
 const isSaving = ref(false);
 
-// --- FORM STATE ---
+// ============================================
+// ESTADO DEL FORMULARIO
+// ============================================
 const formData = ref({
   dificultat: "",
   gravetat: "",
@@ -24,11 +26,14 @@ const formData = ref({
   observacio: "",
 });
 
-// --- FUNCIÓN PARA RELLENAR DATOS ---
+// ============================================
+// FUNCIÓN: Rellenar formulario con datos de IA
+// ============================================
+// Parsea la respuesta de Gemini (puede venir como objeto o string JSON)
 const populateForm = () => {
   let data = props.aiData;
 
-  // Si viene como string (JSON crudo), intentamos parsear
+  // PASO 1: Parsear JSON si viene como string
   if (typeof data === 'string') {
     try {
       const cleanJson = data.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -42,10 +47,11 @@ const populateForm = () => {
   }
 
   if (data && Object.keys(data).length > 0) {
-    // Usamos optional chaining y valores por defecto
+    // PASO 2: Mapear campos con diferentes variaciones de nombre (minúsculas/mayúsculas)
     formData.value.dificultat = data.dificultat || data.Dificultat || "";
     
-    // Normalizar gravedad si existe
+    // PASO 3: Normalizar gravedad (capitalizar primera letra)
+    // Convierte "greu" -> "Greu", "moderada" -> "Moderada"
     let g = data.gravetat || data.Gravetat || "";
     if (g) {
       // Capitalizar primera letra (ej: "greu" -> "Greu")
@@ -64,7 +70,10 @@ const populateForm = () => {
 // --- REACTIVIDAD ---
 watch(() => props.aiData, populateForm, { immediate: true });
 
-// --- GUARDADO ---
+// ============================================
+// FUNCIÓN: Guardar PI revisado
+// ============================================
+// Emite los datos editados al componente padre para guardar en BD
 function handleSavePI() {
   const dataToSave = {
     dificultat: formData.value.dificultat,

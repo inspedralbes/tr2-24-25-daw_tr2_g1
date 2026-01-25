@@ -7,19 +7,25 @@ import ReviewFileResponse from "../comp-pi/ReviewFileResponse.vue";
 const route = useRoute();
 const router = useRouter();
 
-// Estado
-const ralc = route.query.ralc;
-const student = ref(null);
-const isLoadingStudent = ref(true);
-const step = ref(1); // 1: Upload, 2: Review
-const isGlobalLoading = ref(false);
-const piAnalysisData = ref(null);
+// ============================================
+// ESTADO DE LA APLICACIÓN
+// ============================================
+const ralc = route.query.ralc;       // RALC del alumno desde URL
+const student = ref(null);           // Datos del alumno
+const isLoadingStudent = ref(true);  // Carga inicial
+const step = ref(1);                 // Paso actual: 1=Upload, 2=Review
+const isGlobalLoading = ref(false);  // Bloqueo durante operaciones
+const piAnalysisData = ref(null);    // Respuesta de Gemini AI
 
-// Refs
+// Referencias a componentes hijos
 const fileUploadRef = ref(null);
 
-// Cargar datos del estudiante (para tener el nombre para la IA)
+// ============================================
+// FUNCIÓN: Cargar datos del alumno
+// ============================================
+// Obtiene información del alumno para mostrar en UI y pasar a IA
 const loadStudent = async () => {
+  // VALIDACIÓN: Verificar que existe RALC en URL
   if (!ralc) {
     alert("Falta el RALC del alumne");
     router.push("/home");

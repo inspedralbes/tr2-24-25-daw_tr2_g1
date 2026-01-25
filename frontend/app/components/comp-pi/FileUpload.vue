@@ -72,24 +72,29 @@ function removeFile() {
 }
 
 // ============================================
-// EXTRACCIÓN DE TEXTO DEL PDF
+// FUNCIÓN: Extraer texto del PDF (OCR)
 // ============================================
-// Usa pdf.js para leer todo el texto del PDF página por página
+// Usa pdf.js para leer el contenido textual de cada página
+// Devuelve todo el texto concatenado para enviarlo a la IA
 async function extractTextFromPdf(file) {
   try {
+    // PASO 1: Convertir archivo a ArrayBuffer (formato que entiende pdf.js)
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
     const doc = await loadingTask.promise;
     
     let fullText = "";
-    // Iterar por todas las páginas
+    
+    // PASO 2: Iterar todas las páginas del PDF
     for (let i = 1; i <= doc.numPages; i++) {
       const page = await doc.getPage(i);
       const content = await page.getTextContent();
+      // Extraer solo el texto de cada elemento
       const strings = content.items.map((item) => item.str);
       fullText += strings.join(" ") + "\n";
     }
-    return fullText;
+    
+    return fullText; // Texto completo del PDF
   } catch (error) {
     console.error("Error extracting text from PDF:", error);
     throw new Error("No s'ha pogut llegir el text del PDF.");

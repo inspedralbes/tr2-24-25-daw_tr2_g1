@@ -50,7 +50,9 @@ export const savePdfController = async (req, res) => {
   console.log("File:", req.file);
 
   try {
-    // Verificar que se recibió el archivo
+    // ============================================
+    // VALIDACIÓN 1: Verificar que el archivo fue subido
+    // ============================================
     if (!req.file) {
       console.error("Error: No se recibió ningún archivo PDF");
       return res.status(400).json({
@@ -59,14 +61,16 @@ export const savePdfController = async (req, res) => {
       });
     }
 
-    // req.body contiene los campos de texto enviados por FormData
+    // Extraer datos del formulario (FormData del frontend)
     const { ralc, dificultat, gravetat, justificacio, proposta, observacio, professor_email } =
       req.body;
 
-    // VALIDACIÓN BÁSICA
+    // ============================================
+    // VALIDACIÓN 2: RALC obligatorio (identifica al alumno)
+    // ============================================
     if (!ralc) {
       console.error("Error: Falta el RALC del alumno");
-      // Opcional: Borrar el archivo si no hay RALC, para no dejar basura.
+      // Limpiar: borrar el archivo huérfano del sistema
       if (req.file.path) fs.unlinkSync(req.file.path);
 
       return res
@@ -74,15 +78,21 @@ export const savePdfController = async (req, res) => {
         .json({ success: false, message: "Falta el RALC del alumno" });
     }
 
-    // Normalizar la ruta del PDF (Windows usa backslashes, mejor usar forward slashes para DB/Web)
+    // ============================================
+    // NORMALIZACIÓN: Convertir ruta Windows a formato universal
+    // ============================================
+    // Windows: C:\uploads\file.pdf → C:/uploads/file.pdf
     const rutaPdf = req.file.path.replace(/\\/g, "/");
     console.log("Ruta PDF normalizada:", rutaPdf);
 
-    // VERIFICAR QUE EL ALUMNO EXISTE
+    // ============================================
+    // VALIDACIÓN 3: Verificar que el alumno existe
+    // ============================================
+    // No se puede crear un PI para un alumno que no está registrado
     const [rows] = await pool.query("SELECT ralc FROM alumnes WHERE ralc = ?", [ralc]);
     if (rows.length === 0) {
       console.error(`Error: El alumno con RALC ${ralc} no existe en la BD.`);
-      // Borrar archivo huerfano - DESACTIVADO PARA DEBUG
+      // Opcional: borrar archivo huérfano
       //if (req.file.path) fs.unlinkSync(req.file.path);
 
       return res.status(404).json({
@@ -91,7 +101,10 @@ export const savePdfController = async (req, res) => {
       });
     }
 
-    // BUSCAR EL ID DEL PROFESOR POR EMAIL (si se proporcionó)
+    // ============================================
+    // VALIDACIÓN 4: Buscar ID del profesor por email
+    // ============================================
+    // El frontend envía el email, necesitamos el ID para la BD
     let professorId = null;
     if (professor_email) {
       const [profRows] = await pool.query(
@@ -106,10 +119,15 @@ export const savePdfController = async (req, res) => {
       }
     }
 
-    // 4. ACTUALIZAR ESTADO DE PIS ANTERIORES (IMPORTANTE PARA HISTÓRICO)
+    // ============================================
+    // PASO 1: Desactivar PIs anteriores (histórico)
+    // ============================================
+    // Solo puede haber 1 PI activo por alumno
     await pool.query("UPDATE pis SET estado = 'inactiu' WHERE alumne_ralc = ?", [ralc]);
 
-    // 5. INSERTAR EN LA BASE DE DATOS (INCLUYENDO professor_id)
+    // ============================================
+    // PASO 2: Insertar nuevo PI como activo
+    // ============================================
     const query = `
       INSERT INTO pis 
       (alumne_ralc, professor_id, ruta_pdf, dificultat, gravetat, justificacio, proposta_educativa, observacio, data_creacio, estado) 

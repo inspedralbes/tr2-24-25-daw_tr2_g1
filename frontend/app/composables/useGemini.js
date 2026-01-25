@@ -1,33 +1,42 @@
-// composables/useGemini.js
+// ============================================
+// COMPOSABLE: Integración con Gemini AI (Google)
+// ============================================
+// Analiza PDFs y extrae información estructurada para PIs
+// Usa el modelo gemini-2.5-flash con respuesta JSON estructurada
 import { ref } from "vue";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const useGemini = () => {
-  const aiResponse = ref(null);
-  const isGenerating = ref(false);
-  const error = ref(null);
+  const aiResponse = ref(null);    // Respuesta parseada de la IA
+  const isGenerating = ref(false); // Estado de carga
+  const error = ref(null);         // Error si falla la llamada
 
+  // ============================================
+  // FUNCIÓN: Analizar contenido de PDF con IA
+  // ============================================
   const analyzePdfContent = async (pdfText, studentName) => {
     isGenerating.value = true;
     error.value = null;
     aiResponse.value = null;
 
     try {
+      // PASO 1: Obtener API Key desde variables de entorno
       const apiKey = import.meta.env.VITE_GEMINI_KEY;
       if (!apiKey) throw new Error("Falta la API Key");
 
       const genAI = new GoogleGenerativeAI(apiKey);
 
-      // CAMBIO 1: Usamos un modelo estable y rápido
+      // PASO 2: Configurar modelo para respuesta JSON estructurada
       const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash",
         generationConfig: {
           responseMimeType: "application/json",
-          temperature: 0.2, // Baja temperatura para ser más preciso y menos "creativo"
+          temperature: 0.2, // Baja temperatura = respuestas más precisas y menos creativas
         },
       });
 
-      // CAMBIO 2: Prompt optimizado para respuestas concisas y separadas
+      // PASO 3: Construir prompt con instrucciones estructuradas
+      // El prompt define el esquema JSON exacto que debe devolver la IA
       const prompt = `
         Actúa como un psicopedagogo experto. Analiza el siguiente informe de ${studentName}.
         
@@ -51,14 +60,16 @@ export const useGemini = () => {
         "${pdfText.substring(0, 30000)}"
       `;
 
+      // PASO 4: Enviar texto del PDF a Gemini
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
 
+      // PASO 5: Parsear respuesta JSON
       aiResponse.value = JSON.parse(text);
     } catch (e) {
       console.error("Gemini Error:", e);
-      // Fallback por si falla el parseo o la API
+      // FALLBACK: Si falla la IA, devolver estructura vacía para que el usuario complete manualmente
       aiResponse.value = {
         dificultat: "Error analitzant",
         gravetat: "",

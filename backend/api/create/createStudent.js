@@ -54,22 +54,30 @@ export async function createStudent(req, res) {
       [ralc, name, surname || '', dni || '', formattedDate, course || '', group || '', centre_procedencia_id],
     );
     console.log("Alumno creado con ID:", result.insertId);
+    
+    // Respuesta exitosa
     res.json({
       success: true,
       id: result.insertId,
       message: "Alumno creado correctamente",
     });
   } catch (error) {
+    // ============================================
+    // MANEJO DE ERRORES ESPECÍFICOS
+    // ============================================
+    
+    // ERROR 1: RALC duplicado (clave única en BD)
     if (error.code === "ER_DUP_ENTRY") {
       res.status(409).json({ error: "Ya existe un alumno con este RALC" });
     } else {
-      // LOGS DETALLADOS PARA DEBUG
+      // ERROR 2: Otros errores de BD (sintaxis, conexión, etc.)
       console.error("Error al crear alumno:", error);
       console.error("Error code:", error.code);
       console.error("Error sqlMessage:", error.sqlMessage);
+      
       res.status(500).json({ 
         error: "Error al guardar en la base de datos",
-        details: error.sqlMessage || error.message // Enviar más info al frontend
+        details: error.sqlMessage || error.message
       });
     }
   }

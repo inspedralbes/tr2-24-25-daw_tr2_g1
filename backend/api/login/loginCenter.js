@@ -1,14 +1,22 @@
+// ============================================
+// CONTROLADOR: Login de Centros
+// ============================================
+// Valida que el email corresponda a un centro registrado
+// Devuelve información básica del centro si existe
 import { pool } from "../db.js";
 
 export async function loginCenter(req, res) {
   const { email } = req.body;
 
+  // ============================================
+  // PASO 1: Buscar centro por email
+  // ============================================
   const [rows] = await pool.query(
     "SELECT * FROM centres WHERE email_centre = ?",
     [email]
   );
 
- 
+  // VALIDACIÓN: Verificar que el centro existe
   if (rows.length === 0) {
     res
       .status(404)

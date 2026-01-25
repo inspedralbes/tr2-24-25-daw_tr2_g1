@@ -1,18 +1,25 @@
 <script setup>
+// ============================================
+// PÁGINA: Contacto e Información de Soporte
+// ============================================
+// Página informativa con contactos para soporte técnico
+// Muestra diferentes canales según el tipo de consulta
 import { computed, onMounted, ref } from 'vue';
 
 const idioma = useIdioma();
 const haySesion = ref(false);
 
+// Verificar si hay sesión para mostrar breadcrumbs
 onMounted(() => {
   if (localStorage.getItem('user_centre')) {
     haySesion.value = true;
   }
 });
 
+// ============================================
+// TRADUCCIONES: Catalán, Español, Inglés
+// ============================================
 const t = computed(() => {
-  // Traducciones básicas
-  const textos = {
     ca: {
       breadcrumbs: 'Inici',
       titulo: 'Contacte',

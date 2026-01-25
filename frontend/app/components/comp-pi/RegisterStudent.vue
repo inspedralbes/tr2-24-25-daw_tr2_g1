@@ -3,9 +3,12 @@ import { getByRalcStudent, createStudent } from "../../services/apiStudent.js";
 
 const router = useRouter();
 
-const inputRalc = ref("");
-const blockedInput = ref(true);
-const dniError = ref(false);
+// ============================================
+// ESTADO DEL COMPONENTE
+// ============================================
+const inputRalc = ref("");           // RALC introducido por usuario
+const blockedInput = ref(true);      // Bloquea campos si alumno ya existe
+const dniError = ref(false);         // Validación de formato DNI
 const formData = ref({
   name: "",
   surname: "",
@@ -15,7 +18,11 @@ const formData = ref({
   group: "",
 });
 
-// Función para comprobar si el estudiante existe.
+// ============================================
+// FUNCIÓN: Buscar alumno por RALC
+// ============================================
+// Si existe: redirige a su página de detalle
+// Si NO existe: desbloquea formulario para registrarlo
 async function fetchStudentByRalc() {
   console.log("--- INICIO BÚSQUEDA ---");
   // ... logs ...
@@ -49,10 +56,14 @@ async function fetchStudentByRalc() {
   }
 }
 
-// Función para validar el DNI
+// ============================================
+// FUNCIÓN: Validar formato DNI español
+// ============================================
+// Formato: 8 números + 1 letra (ej: 12345678Z)
 function isValidDNIFormat(dni) {
   if (!dni) return false;
 
+  // Regex: 8 dígitos seguidos de una letra
   const regex = /^\d{8}[A-Za-z]$/;
   
 
@@ -72,16 +83,20 @@ function handleDniInput() {
   }
 }
 
-// Función para enviar datos al padre.
+// ============================================
+// FUNCIÓN: Enviar formulario de registro
+// ============================================
+// Valida datos y crea el alumno en la base de datos
 async function submitStudentForm() {
-  // 1. Basic validation
+  // VALIDACIÓN 1: RALC obligatorio
   if (!inputRalc.value) {
     alert("Has d'introduir un RALC vàlid.");
     return { success: false };
   }
 
-  // 2. Creation Logic (Only if form is unblocked)
+  // VALIDACIÓN 2: Solo crear si formulario está desbloqueado
   if (!blockedInput.value) {
+    // VALIDACIÓN 3: Nombre obligatorio
     if (!formData.value.name) {
       alert("El nom és obligatori.");
       return { success: false };

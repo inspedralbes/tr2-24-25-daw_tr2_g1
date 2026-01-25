@@ -47,10 +47,12 @@ export const loginGoogle = async (req, res) => {
     const [rowsCentre] = await pool.query(queryCentre, [email]);
 
     // Si el email pertenece a un centro educativo
+    // Si encontramos el email, devolver los datos del centro
     if (rowsCentre && rowsCentre.length > 0) {
       const centre = rowsCentre[0];
       console.log("✅ Login como CENTRO:", centre.denominacio_completa);
       
+      // Devolver datos del centro para guardar en localStorage del frontend
       return res.json({ 
         success: true,
         message: "Login correcte com a centre",
@@ -76,20 +78,21 @@ export const loginGoogle = async (req, res) => {
     `;
     const [rowsProf] = await pool.query(queryProf, [email]);
 
-    // Si el email pertenece a un profesor autorizado
+    // Si encontramos el email en profesores, procesar login
     if (rowsProf && rowsProf.length > 0) {
       const profesor = rowsProf[0];
       console.log("✅ Login como PROFESOR del centre:", profesor.centre_nom);
       
-      // Actualizar nombre si es la primera vez que inicia sesión
-      // Los profesores pre-registrados tienen "Pendent de registre" como nombre
+      // AUTO-UPDATE: Primera vez que inicia sesión, actualizar nombre desde Google
+      // Esto evita tener que pedirle al profesor que complete un registro manual
       if (profesor.nom === "Pendent de registre" && googleName) {
         console.log("Actualizando nombre del profesor a:", googleName);
+        // Actualizar en BD
         await pool.query(
           "UPDATE professors SET nom = ? WHERE id = ?",
           [googleName, profesor.id]
         );
-        // Actualizar el objeto para devolverlo con el nombre real
+        // Actualizar en memoria para la respuesta
         profesor.nom = googleName;
       }
       
@@ -108,7 +111,11 @@ export const loginGoogle = async (req, res) => {
       });
     }
 
-    // 4. Si no existe ni en centres ni en professors, error 404
+    // ============================================
+    // PASO 4: Usuario no autorizado (404)
+    // ============================================
+    // Si llegamos aquí, el email de Google no está ni en centres ni en professors
+    // El usuario debe contactar con su centro para que le den de alta
     return res.status(404).json({ 
       error: 'Aquest correu no està autoritzat. Contacta amb el teu centre per obtenir accés.' 
     });

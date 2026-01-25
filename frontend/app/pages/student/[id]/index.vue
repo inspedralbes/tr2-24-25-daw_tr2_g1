@@ -26,13 +26,18 @@ const changeTab = (tab: "ia" | "pdf") => {
   activeTab.value = tab;
 };
 
-// Carregar dades de l'alumne des de l'API
+// ============================================
+// FUNCIÓN: Cargar datos del alumno desde API
+// ============================================
+// Obtiene toda la información del alumno y sus PIs activos
 const loadStudent = async () => {
   try {
     isLoading.value = true;
     error.value = null;
 
-    // Detectar si estem al servidor o al client per usar la URL correcta
+    // IMPORTANTE: Detectar entorno SSR vs Client
+    // - SSR (servidor): usa nombre de servicio Docker "backend:3000"
+    // - Client (navegador): usa "localhost:3000" o dominio público
     const baseURL = import.meta.server
       ? "http://backend:3000"
       : "http://localhost:3000";
@@ -57,15 +62,19 @@ const loadStudent = async () => {
   }
 };
 
-// Funció per parsejar les dades de la IA
+// ============================================
+// FUNCIÓN: Parsear datos de IA (flexible)
+// ============================================
+// La BD puede guardar los datos como JSON string o como objeto
+// Esta función maneja ambos casos automáticamente
 const getParsedData = (dadesIa: any) => {
   if (!dadesIa) return null;
 
   try {
-    // Si ja és un objecte, retornar-lo directament
+    // Caso 1: Ya es un objeto, devolver directamente
     if (typeof dadesIa === "object") return dadesIa;
 
-    // Si és un string, intentar parsejar-lo com JSON
+    // Caso 2: Es un string JSON, parsearlo
     if (typeof dadesIa === "string") {
       return JSON.parse(dadesIa);
     }
@@ -77,41 +86,52 @@ const getParsedData = (dadesIa: any) => {
   }
 };
 
-// Funció per obtenir l'URL del PDF identificat pel RALC
+// ============================================
+// FUNCIÓN: Construir URL del PDF del alumno
+// ============================================
+// Los PDFs se guardan con el nombre del RALC: [RALC].pdf
+// El backend los sirve en /api/pdf/:ralc
 const getPdfUrl = () => {
   if (!student.value?.ralc) return null;
 
   const baseURL = "http://localhost:3000";
 
-  // Utilitzar el RALC de l'alumne per obtenir el seu PDF
+  // URL dinámica basada en el RALC del alumno
   return `${baseURL}/api/pdf/${student.value.ralc}`;
 };
 
-// Funció per descarregar el PDF
+// ============================================
+// FUNCIÓN: Descargar PDF del alumno
+// ============================================
+// Crea un enlace temporal y simula un clic para descargar
 const downloadPDF = () => {
   const pdfUrl = getPdfUrl();
   if (!pdfUrl) return;
 
+  // Crear enlace temporal de descarga
   const link = document.createElement("a");
   link.href = pdfUrl;
   link.download = `${student.value?.ralc}.pdf`;
   link.target = "_blank";
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  document.body.removeChild(link); // Limpiar DOM
 };
 
-// Computed property per ordenar els PIs: primer l'actiu, després per data més recent
+// ============================================
+// COMPUTED: Ordenar PIs (activo primero, luego por fecha)
+// ============================================
+// Algoritmo: 1º activo/inactivo, 2º más reciente primero
 const sortedPis = computed(() => {
   if (!student.value?.pis) return [];
   
   return [...student.value.pis].sort((a, b) => {
-    // 1. Primer ordenar per estat (actiu primer)
+    // PASO 1: Priorizar PIs activos
     const aActiu = a.estado === 'actiu' ? 1 : 0;
     const bActiu = b.estado === 'actiu' ? 1 : 0;
     
     if (aActiu !== bActiu) {
-      return bActiu - aActiu; // Els actius primer
+      return bActiu - aActiu; // Activos primero
     }
     
     // 2. Si tenen el mateix estat, ordenar per data (més recent primer)

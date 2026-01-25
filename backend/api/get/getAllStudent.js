@@ -7,7 +7,10 @@ import { pool } from "../db.js";
 
 export async function getAllStudent(req, res) {
   try {
-    // Consulta con JOIN para obtener el nombre del centro
+    // ============================================
+    // CONSULTA: Obtener todos los alumnos
+    // ============================================
+    // LEFT JOIN permite incluir alumnos sin centro asignado (NULL)
     const [rows] = await pool.query(`
       SELECT 
         a.ralc,
