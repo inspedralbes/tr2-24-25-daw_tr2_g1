@@ -19,4 +19,4 @@ EXPOSE 3000
 # Usuario no-root por seguridad
 USER node
 
-CMD ["node", "index.js"]
+CMD ["node", "server.js"]
