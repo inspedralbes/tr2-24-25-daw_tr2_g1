@@ -35,7 +35,7 @@ jobs:
           build-args: |
             NODE_ENV=production
             VITE_SOCKET_URL=${{ secrets.API_URL }}
-            GEMINI_KEY=${{ secrets.VITE_GEMINI_KEY }}
+            VITE_GEMINI_KEY=${{ secrets.VITE_GEMINI_KEY }}
 
       # Construir y subir imagen del Backend
       - name: Build and push Backend
