@@ -46,4 +46,4 @@ Thumbs.db
 
 # Coverage
 **/coverage/
-**/.nyc_output/
+**/.nyc_output/n/nginx/certs/
