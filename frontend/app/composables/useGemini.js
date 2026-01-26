@@ -20,9 +20,12 @@ export const useGemini = () => {
     aiResponse.value = null;
 
     try {
-      // PASO 1: Obtener API Key desde variables de entorno
-      const apiKey = import.meta.env.VITE_GEMINI_KEY;
-      if (!apiKey) throw new Error("Falta la API Key");
+      // PASO 1: Obtener API Key desde variables de entorno (Runtime Config)
+      // Esto asegura que funcione en Docker/Producción, donde .env no está bundleado
+      const config = useRuntimeConfig();
+      const apiKey = config.public.GEMINI_KEY;
+
+      if (!apiKey) throw new Error("Falta la API Key (GEMINI_KEY)");
 
       const genAI = new GoogleGenerativeAI(apiKey);
 
