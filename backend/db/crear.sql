@@ -4,8 +4,8 @@ SET foreign_key_checks = 0;
 SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
 -- Crear la base de datos si no existe
-CREATE DATABASE IF NOT EXISTS `db_plapi_dev`;
-USE `db_plapi_dev`;
+-- CREATE DATABASE IF NOT EXISTS `db_plapi_dev`;
+-- USE `db_plapi_dev`;
 
 -- Borramos tablas antiguas para limpiar
 DROP TABLE IF EXISTS `pis`;
