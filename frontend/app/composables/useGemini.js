@@ -20,9 +20,10 @@ export const useGemini = () => {
     aiResponse.value = null;
 
     try {
-      // PASO 1: Obtener API Key desde variables de entorno
-      const apiKey = import.meta.env.VITE_GEMINI_KEY;
-      if (!apiKey) throw new Error("Falta la API Key");
+      // PASO 1: Obtener API Key desde la configuración de Nuxt
+      const config = useRuntimeConfig();
+      const apiKey = config.public.GEMINI_KEY;
+      if (!apiKey) throw new Error("Falta la API Key de Gemini");
 
       const genAI = new GoogleGenerativeAI(apiKey);
 
