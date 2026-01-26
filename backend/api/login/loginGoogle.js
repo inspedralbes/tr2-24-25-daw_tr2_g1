@@ -11,9 +11,12 @@ import 'dotenv/config';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '182669171058-e7grkc62veee2a4t7k00dfqb450vo6j3.apps.googleusercontent.com';
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
+console.log("DEBUG: Google Client ID configurado:", GOOGLE_CLIENT_ID);
+console.log("DEBUG: Iniciando loginGoogle...");
+
 export const loginGoogle = async (req, res) => {
   const { id_token } = req.body;
-  
+
   if (!id_token) {
     return res.status(400).json({ error: 'Falta el token de Google' });
   }
@@ -22,11 +25,11 @@ export const loginGoogle = async (req, res) => {
     // ============================================
     // PASO 1: Verificar el token con Google
     // ============================================
-    const ticket = await client.verifyIdToken({ 
-      idToken: id_token, 
-      audience: GOOGLE_CLIENT_ID 
+    const ticket = await client.verifyIdToken({
+      idToken: id_token,
+      audience: GOOGLE_CLIENT_ID
     });
-    
+
     // Extraer información del usuario de Google
     const payload = ticket.getPayload();
     const email = payload?.email;
@@ -51,9 +54,9 @@ export const loginGoogle = async (req, res) => {
     if (rowsCentre && rowsCentre.length > 0) {
       const centre = rowsCentre[0];
       console.log("✅ Login como CENTRO:", centre.denominacio_completa);
-      
+
       // Devolver datos del centro para guardar en localStorage del frontend
-      return res.json({ 
+      return res.json({
         success: true,
         message: "Login correcte com a centre",
         centre: {
@@ -82,7 +85,7 @@ export const loginGoogle = async (req, res) => {
     if (rowsProf && rowsProf.length > 0) {
       const profesor = rowsProf[0];
       console.log("✅ Login como PROFESOR del centre:", profesor.centre_nom);
-      
+
       // AUTO-UPDATE: Primera vez que inicia sesión, actualizar nombre desde Google
       // Esto evita tener que pedirle al profesor que complete un registro manual
       if (profesor.nom === "Pendent de registre" && googleName) {
@@ -95,8 +98,8 @@ export const loginGoogle = async (req, res) => {
         // Actualizar en memoria para la respuesta
         profesor.nom = googleName;
       }
-      
-      return res.json({ 
+
+      return res.json({
         success: true,
         message: "Login correcte com a professor",
         centre: {
@@ -116,12 +119,16 @@ export const loginGoogle = async (req, res) => {
     // ============================================
     // Si llegamos aquí, el email de Google no está ni en centres ni en professors
     // El usuario debe contactar con su centro para que le den de alta
-    return res.status(404).json({ 
-      error: 'Aquest correu no està autoritzat. Contacta amb el teu centre per obtenir accés.' 
+    return res.status(404).json({
+      error: 'Aquest correu no està autoritzat. Contacta amb el teu centre per obtenir accés.'
     });
 
   } catch (err) {
-    console.error('Error en loginGoogle:', err);
-    return res.status(500).json({ error: 'Error verificando la identidad con Google' });
+    console.error('ERROR CRÍTICO en loginGoogle:', err);
+    console.error('Detalles del error:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+    return res.status(500).json({
+      error: 'Error verificando la identidad con Google',
+      details: process.env.NODE_ENV === 'development' ? err.message : 'Consulte los logs del servidor'
+    });
   }
 };
