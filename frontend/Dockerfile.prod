@@ -11,6 +11,11 @@ RUN npm install
 # Copia el código fuente
 COPY . .
 
+# Declara el argumento de build
+ARG GEMINI_KEY
+# Lo establece como variable de entorno para el proceso de build
+ENV GEMINI_KEY=$GEMINI_KEY
+
 # Build de Nuxt para producción
 RUN npm run build
 
