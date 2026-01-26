@@ -11,6 +11,9 @@ RUN npm install --production
 # Copia el código fuente
 COPY . .
 
+# Da permisos al usuario node sobre la carpeta de uploads
+RUN chown -R node:node /usr/src/app/uploads
+
 ENV NODE_ENV=production
 ENV PORT=3000
 
