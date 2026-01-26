@@ -159,7 +159,7 @@ onMounted(() => {
 }
 
 .header h1 {
-    color: #333;
+    color: #333333;
     margin-bottom: 10px;
 }
 

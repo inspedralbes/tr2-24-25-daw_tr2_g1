@@ -726,7 +726,6 @@ onMounted(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: all 0.2s ease;
 }
 
 .status-actiu {
