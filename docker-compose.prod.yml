@@ -15,7 +15,7 @@ services:
       dockerfile: Dockerfile.prod
     restart: always
     environment:
-      - GEMINI_KEY=${GEMINI_KEY}
+      - NUXT_PUBLIC_GEMINI_KEY=${GEMINI_KEY}
     expose:
       - "3000" # Exponemos el puerto interno de Nuxt para que Nginx lo vea
     depends_on:
