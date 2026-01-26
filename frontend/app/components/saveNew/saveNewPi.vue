@@ -121,8 +121,8 @@ onMounted(() => {
             <FileUpload ref="fileUploadRef" :studentName="student ? `${student.nom} ${student.cognoms}` : ''" />
             
             <div class="actions">
-                <button @click="router.go(-1)" class="btn-cancel">Cancel·lar</button>
-                <button @click="handleAnalyze" class="btn-primary" :disabled="isGlobalLoading">
+                <button @click="router.go(-1)" class="btn-white">Cancel·lar</button>
+                <button @click="handleAnalyze" class="btn-gencat" :disabled="isGlobalLoading">
                     <span v-if="isGlobalLoading">Analitzant...</span>
                     <span v-else>Analitzar Document</span>
                 </button>
@@ -176,7 +176,7 @@ onMounted(() => {
 }
 
 .steps-indicator .active {
-    color: #d00000;
+    color: var(--color-gencat-red);
     font-weight: bold;
 }
 
@@ -189,25 +189,6 @@ onMounted(() => {
     justify-content: center;
     gap: 20px;
     margin-top: 30px;
-}
-
-/* Heredar de .btn-gencat del global.css */
-.btn-primary {
-    padding: 12px 30px;
-}
-
-.btn-cancel {
-    background: none;
-    border: 1px solid #ccc;
-    padding: 12px 30px;
-    border-radius: 6px;
-    cursor: pointer;
-    color: #555;
-    transition: background 0.3s;
-}
-
-.btn-cancel:hover {
-    background-color: #e0e0e0;
 }
 
 .loading {
