@@ -95,6 +95,7 @@ jobs:
             echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
             echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
             echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+            echo "VITE_GEMINI_KEY=${{ secrets.VITE_GEMINI_KEY }}" >> .env
             
             # Variable crítica para que Docker encuentre tus imágenes en GHCR
             echo "GITHUB_REPOSITORY=${{ github.repository }}" >> .env
