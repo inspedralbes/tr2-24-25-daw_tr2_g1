@@ -14,11 +14,22 @@ const app = express();
 
 // --- CORS MANUAL (Mantenemos esta que te funcionaba) ---
 app.use((req, res, next) => {
-   res.header('Access-Control-Allow-Origin', 'http://edupi.daw.inspedralbes.cat'); // Ojo: En producción es mejor poner el dominio real
-   res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
-   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-   res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
-   next();
+  // Permitir solicitudes desde el origen específico (producción y local para pruebas)
+  const allowedOrigins = ['http://edupi.daw.inspedralbes.cat', 'https://edupi.daw.inspedralbes.cat', 'http://localhost:3000', 'http://localhost:5173'];
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+
+  res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+  res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
+
+  // Solución para "Cross-Origin-Opener-Policy policy would block the window.postMessage call."
+  res.header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+
+  next();
 });
 
 // app.use(cors()); <-- COMENTADO O BORRADO para no duplicar cabeceras
