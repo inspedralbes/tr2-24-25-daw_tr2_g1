@@ -14,6 +14,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
     restart: always
+    environment:
+      - GEMINI_KEY=${VITE_GEMINI_KEY}
     expose:
       - "3000" # Exponemos el puerto interno de Nuxt para que Nginx lo vea
     depends_on:
