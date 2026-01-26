@@ -717,14 +717,28 @@ onMounted(() => {
 .placeholder-text { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 15px; }
 
 
+/* Badges de estado del PI */
+.pi-status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
 .status-actiu {
   background-color: #d1fae5;
   color: #065f46;
+  border: 1px solid #a7f3d0;
 }
 
 .status-inactiu {
   background-color: #f3f4f6;
   color: #6b7280;
+  border: 1px solid #e5e7eb;
 }
 
 .active-pi {
