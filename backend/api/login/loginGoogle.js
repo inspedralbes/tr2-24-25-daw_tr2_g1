@@ -122,6 +122,6 @@ export const loginGoogle = async (req, res) => {
 
   } catch (err) {
     console.error('Error en loginGoogle:', err);
-    return res.status(500).json({ error: 'Error verificando la identidad con Google' });
+    return res.status(500).json({ error: 'Error verificando la identidad con Google', details: err.message });
   }
 };
