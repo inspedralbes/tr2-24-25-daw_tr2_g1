@@ -60,7 +60,7 @@ const handleGoogleResponse = async (response) => {
 
   try {
     // URL del backend (cambiar según entorno)
-    const baseURL = 'http://localhost:3000'; // Desarrollo local
+    const baseURL = ''; // Desarrollo local
     //const baseURL = 'http://edupi.daw.inspedralbes.cat'; // Producción
     
     // Enviar token al backend para verificación

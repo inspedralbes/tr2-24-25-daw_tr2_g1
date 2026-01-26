@@ -40,7 +40,7 @@ const loadStudent = async () => {
     // - Client (navegador): usa "localhost:3000" o dominio público
     const baseURL = import.meta.server
       ? "http://backend:3000"
-      : "http://localhost:3000";
+      : "";
     const response = await $fetch<ApiResponse>(
       `${baseURL}/api/alumne/${studentRalc}`,
     );
@@ -94,7 +94,7 @@ const getParsedData = (dadesIa: any) => {
 const getPdfUrl = () => {
   if (!student.value?.ralc) return null;
 
-  const baseURL = "http://localhost:3000";
+  const baseURL = "";
 
   // URL dinámica basada en el RALC del alumno
   return `${baseURL}/api/pdf/${student.value.ralc}`;

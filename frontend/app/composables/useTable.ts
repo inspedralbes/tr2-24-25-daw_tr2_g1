@@ -69,7 +69,7 @@ export const useTable = () => {
 
     try {
       // DETECCIÓN DE ENTORNO: SSR usa 'backend:3000', cliente usa 'localhost:3000'
-      const baseURL = import.meta.server ? 'http://backend:3000' : 'http://localhost:3000'
+      const baseURL = import.meta.server ? 'http://backend:3000' : ''
       const response = await $fetch<ApiResponse>(`${baseURL}/api/alumnes`)
       // VALIDACIÓN: Verificar que la respuesta fue exitosa
       if (response.success) {

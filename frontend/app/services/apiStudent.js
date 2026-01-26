@@ -5,7 +5,7 @@
 // Operaciones CRUD para alumnos y Planes Individualizados (PI)
 
 // URL del backend (cambiar según entorno)
-const API_URL = "http://localhost:3000"; // Desarrollo local
+const API_URL = ""; // Desarrollo local
 //const API_URL = "http://edupi.daw.inspedralbes.cat"; // Producción
 
 // ============================================
