@@ -13,6 +13,7 @@ const props = defineProps({
 const emit = defineEmits(["back", "save"]);
 
 const router = useRouter();
+const demoMode = useRuntimeConfig().public.demoMode;
 const isSaving = ref(false);
 
 // ============================================
@@ -41,7 +42,7 @@ const populateForm = () => {
     } catch (e) {
       console.error("Error parseando JSON de IA:", e);
       // Si falla, lo metemos todo en justificación
-      formData.value.justificacio = props.aiData; 
+      formData.value.justificacio = props.aiData;
       return;
     }
   }
@@ -49,7 +50,7 @@ const populateForm = () => {
   if (data && Object.keys(data).length > 0) {
     // PASO 2: Mapear campos con diferentes variaciones de nombre (minúsculas/mayúsculas)
     formData.value.dificultat = data.dificultat || data.Dificultat || "";
-    
+
     // PASO 3: Normalizar gravedad (capitalizar primera letra)
     // Convierte "greu" -> "Greu", "moderada" -> "Moderada"
     let g = data.gravetat || data.Gravetat || "";
@@ -82,20 +83,20 @@ function handleSavePI() {
     proposta_educativa: formData.value.proposta_educativa,
     observacio: formData.value.observacio,
   };
-  
+
   emit("save", dataToSave);
 }
 </script>
 
 <template>
   <div class="review-container">
-    
+
     <div class="summary-card">
       <div class="summary-header">
         <h2 class="section-title">Revisió de l'Anàlisi IA</h2>
-        <span class="badge">Esborrany Automàtic</span>
+        <span class="badge">{{ demoMode ? 'Exemple precalculat' : 'Esborrany Automàtic' }}</span>
       </div>
-      
+
       <div class="info-grid">
         <div class="info-item">
           <span class="label">Alumne:</span>
@@ -114,7 +115,7 @@ function handleSavePI() {
 
     <div class="form-container">
       <p class="instruction-text">
-        Si us plau, revisa i edita la informació extreta abans de generar el document final.
+        {{ demoMode ? 'Revisa aquest exemple fictici i confirma per veure com es guarda el PI. En aquesta demo no es recullen dades personals.' : 'Si us plau, revisa i edita la informació extreta abans de generar el document final.' }}
       </p>
 
       <div class="form-row-2">
@@ -123,7 +124,7 @@ function handleSavePI() {
           <input
             id="dificultat"
             type="text"
-            v-model="formData.dificultat"
+            :readonly="demoMode" v-model="formData.dificultat"
             placeholder="Ex: Dislèxia"
             class="input-field"
           />
@@ -131,11 +132,11 @@ function handleSavePI() {
 
         <div class="form-group">
           <label for="gravetat">Nivell de Gravetat</label>
-          <input 
-            id="gravetat" 
-            v-model="formData.gravetat" 
-            type="text" 
-            class="input-field" 
+          <input
+            id="gravetat"
+            :readonly="demoMode" v-model="formData.gravetat"
+            type="text"
+            class="input-field"
             placeholder="Ex: Moderat"
           />
         </div>
@@ -145,7 +146,7 @@ function handleSavePI() {
         <label for="justificacio">Justificació</label>
         <textarea
           id="justificacio"
-          v-model="formData.justificacio"
+          :readonly="demoMode" v-model="formData.justificacio"
           rows="5"
           class="textarea-field"
         ></textarea>
@@ -155,7 +156,7 @@ function handleSavePI() {
         <label for="proposta">Proposta Educativa / Mesures</label>
         <textarea
           id="proposta"
-          v-model="formData.proposta_educativa"
+          :readonly="demoMode" v-model="formData.proposta_educativa"
           rows="6"
           class="textarea-field"
         ></textarea>
@@ -165,7 +166,7 @@ function handleSavePI() {
         <label for="observacio">Observacions (Opcional)</label>
         <textarea
           id="observacio"
-          v-model="formData.observacio"
+          :readonly="demoMode" v-model="formData.observacio"
           rows="3"
           class="textarea-field"
           placeholder="Afegeix aquí les teves observacions personals..."
@@ -177,7 +178,7 @@ function handleSavePI() {
       <button class="btn-back" @click="$emit('back')">
         ← Tornar enrere
       </button>
-      
+
       <button class="btn-save" @click="handleSavePI" :disabled="isSaving">
         <span v-if="isSaving">Guardant...</span>
         <span v-else>Confirmar i Guardar PI</span>
@@ -357,12 +358,12 @@ label {
   .form-row-2 {
     grid-template-columns: 1fr;
   }
-  
+
   .buttons-bar {
     flex-direction: column-reverse;
     gap: 15px;
   }
-  
+
   .btn-back, .btn-save {
     width: 100%;
   }

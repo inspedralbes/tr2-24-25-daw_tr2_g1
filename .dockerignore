@@ -1,0 +1,15 @@
+.git
+**/node_modules
+**/.nuxt
+**/.output
+**/.npm-cache
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+nginx/certs
+backend/uploads
+backend/db/insertar.sql
+artifacts
+.playwright-cli
+doc

@@ -17,6 +17,15 @@ import { useGemini } from "../../composables/useGemini";
 // ============================================
 const { analyzePdfContent, error: aiError, aiResponse } = useGemini();
 
+const demoMode = useRuntimeConfig().public.demoMode;
+onMounted(async () => {
+  if (!demoMode) return;
+  try {
+    const response = await fetch('/demo/informe-demo.pdf');
+    if (!response.ok) throw new Error('sample');
+    pdfFile.value = new File([await response.blob()], 'informe-demo.pdf', {type:'application/pdf'});
+  } catch { errorMsg.value = 'No es pot carregar el document de demostració.'; }
+});
 const statusMessage = ref("");  // Mensaje de estado durante el procesamiento
 const errorMsg = ref("");       // Mensajes de error
 const isProcessing = ref(false); // Estado de carga
@@ -118,7 +127,7 @@ async function triggerAnalysis(studentNameForContext) {
 
   try {
     // Extraer texto del PDF
-    const text = await extractTextFromPdf(pdfFile.value);
+    const text = demoMode ? 'Document fictici de demostració. Resposta precalculada.' : await extractTextFromPdf(pdfFile.value);
 
     if (!text || text.trim().length < 10) {
       throw new Error("El PDF sembla buit.");
@@ -211,8 +220,9 @@ defineExpose({
 
 <template>
   <div class="upload-wrapper">
+    <p v-if="demoMode">Document fictici inclòs. La resposta és un exemple precalculat; no s’envia informació a cap IA.</p>
     <input
-      type="file"
+      v-if="!demoMode" type="file"
       ref="fileInput"
       accept="application/pdf"
       class="hidden-input"
@@ -220,7 +230,7 @@ defineExpose({
     />
 
     <div
-      v-if="!pdfFile"
+      v-if="!pdfFile && !demoMode"
       class="drop-zone"
       :class="{ 'active-drag': isDragging }"
       @dragover.prevent="onDragOver"
@@ -250,7 +260,7 @@ defineExpose({
       <p class="drop-subtext">Màxim 10MB (PDF)</p>
     </div>
 
-    <div v-else class="file-preview">
+    <div v-else-if="pdfFile" class="file-preview">
       <div class="file-info">
         <div class="file-icon">📄</div>
         <div class="file-details">
@@ -260,7 +270,7 @@ defineExpose({
           </p>
         </div>
       </div>
-      <button @click="removeFile" class="btn-remove" title="Eliminar arxiu">
+      <button v-if="!demoMode" @click="removeFile" class="btn-remove" title="Eliminar arxiu">
         ✕
       </button>
     </div>

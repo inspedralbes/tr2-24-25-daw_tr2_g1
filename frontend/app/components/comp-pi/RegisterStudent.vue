@@ -1,21 +1,22 @@
 <script setup>
 import { getByRalcStudent, createStudent } from "../../services/apiStudent.js";
 
+const demoMode = useRuntimeConfig().public.demoMode;
 const router = useRouter();
 
 // ============================================
 // ESTADO DEL COMPONENTE
 // ============================================
-const inputRalc = ref("");           // RALC introducido por usuario
-const blockedInput = ref(true);      // Bloquea campos si alumno ya existe
+const inputRalc = ref(demoMode ? '99' + Math.floor(Math.random()*1000000).toString().padStart(6,'0') : '');           // RALC introducido por usuario
+const blockedInput = ref(!demoMode);      // Bloquea campos si alumno ya existe
 const dniError = ref(false);         // Validación de formato DNI
 const formData = ref({
-  name: "",
-  surname: "",
-  dni: "",
-  date: "",
-  course: "",
-  group: "",
+  name: demoMode ? 'Alumne Demo' : '',
+  surname: demoMode ? 'Exemple Fictici' : '',
+  dni: demoMode ? '00000000T' : '',
+  date: demoMode ? '2012-01-01' : '',
+  course: demoMode ? "1r d'ESO" : '',
+  group: demoMode ? 'A' : '',
 });
 
 // ============================================
@@ -159,7 +160,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="form">
+  <div class="form" :inert="demoMode || undefined">
     <h3>Dades alumne</h3>
 
     <div class="child-form">

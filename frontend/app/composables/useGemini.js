@@ -20,6 +20,10 @@ export const useGemini = () => {
     aiResponse.value = null;
 
     try {
+      if (useRuntimeConfig().public.demoMode) {
+        aiResponse.value = await $fetch('/demo/analysis.json');
+        return;
+      }
       // PASO 1: Obtener API Key desde variables de entorno (Runtime Config)
       // Esto asegura que funcione en Docker/Producción, donde .env no está bundleado
       const config = useRuntimeConfig();

@@ -355,3 +355,5 @@ body {
 .transition-all {
   transition: all 0.2s ease;
 }
+
+.demo-notice { padding:10px 16px; background:#fff1d5; color:#573600; text-align:center; font-size:13px; line-height:1.5; }

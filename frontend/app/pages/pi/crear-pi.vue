@@ -5,6 +5,7 @@
 // Combina registro de alumno + subida de PDF + análisis IA + guardado
 // Proceso de 2 pasos: 1) Datos y Documentación, 2) Análisis y Revisión
 import { ref } from "vue";
+const demoMode = useRuntimeConfig().public.demoMode;
 import RegisterStudent from "../../components/comp-pi/RegisterStudent.vue";
 import FileUpload from "../../components/comp-pi/FileUpload.vue";
 import ReviewFileResponse from "../../components/comp-pi/ReviewFileResponse.vue";
@@ -130,7 +131,7 @@ async function handleFinalSave(reviewedFormData) {
             :disabled="isGlobalLoading"
           >
             <span v-if="isGlobalLoading" class="loader"></span>
-            <span v-else>Guardar i Analitzar amb IA</span>
+            <span v-else>{{ demoMode ? 'Guardar i Mostrar Exemple' : 'Guardar i Analitzar amb IA' }}</span>
           </button>
         </div>
       </div>
@@ -140,7 +141,7 @@ async function handleFinalSave(reviewedFormData) {
           v-if="step === 2"
           :student="studentData"
           :aiData="piAnalysisData"
-          :fileName="fileUploadRef?.pdfFile?.name"
+          :fileName="demoMode ? 'informe-demo.pdf' : fileUploadRef?.pdfFile?.name"
           @back="step = 1"
           @save="handleFinalSave"
         />

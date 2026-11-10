@@ -10,6 +10,8 @@ dotenv.config();
 
 // Configuración de conexión con fallback a variables locales
 const localdbConfig = {
+  port: Number(process.env.DB_PORT || 3306),
+  ...(process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: true, minVersion: 'TLSv1.2' } } : {}),
   host: process.env.DB_HOST || process.env.DB_HOST_LOCAL,
   user: process.env.DB_USER || process.env.DB_USER_LOCAL,
   password: process.env.DB_PASSWORD || process.env.DB_PASSWORD_LOCAL,

@@ -8,6 +8,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
+const demoMode = useRuntimeConfig().public.demoMode;
 const router = useRouter();
 
 const currentCentre = ref(null);  // Datos del centro logueado
@@ -65,6 +66,7 @@ const fetchProfessors = async () => {
 // Crea un registro en BD con email + centre_id
 // El profesor queda "pendiente" hasta su primer login con Google
 const addProfessor = async () => {
+  if (demoMode) return;
   // VALIDACIÓN: Email obligatorio
   if (!newEmail.value) return;
   
@@ -104,6 +106,7 @@ const addProfessor = async () => {
 // ============================================
 // Revoca el acceso de un profesor (elimina de BD)
 const deleteProfessor = async (id) => {
+  if (demoMode) return;
   // CONFIRMACIÓN: Requiere confirmación del usuario
   if (!confirm("Segur que vols eliminar l'accés a aquest correu?")) return;
   
@@ -116,6 +119,7 @@ const deleteProfessor = async (id) => {
 </script>
 
 <template>
+  <p v-if="demoMode" role="note" class="demo-notice">Gestió de professors de només lectura en aquesta demo.</p>
   <div class="dashboard-container">
     
     <div class="header-title" v-if="currentCentre">
@@ -138,7 +142,7 @@ const deleteProfessor = async (id) => {
             placeholder="Ex: m.garcia@xtec.cat" 
             required
           />
-          <button type="submit" :disabled="loading">
+          <button type="submit" :disabled="demoMode || loading">
             {{ loading ? 'Guardant...' : '+ Autoritzar' }}
           </button>
         </form>
@@ -162,7 +166,7 @@ const deleteProfessor = async (id) => {
               <tr v-for="prof in professors" :key="prof.id">
                 <td class="email">{{ prof.email }}</td>
                 <td style="text-align: right;">
-                  <button @click="deleteProfessor(prof.id)" class="btn-delete">Eliminar</button>
+                  <button :disabled="demoMode" @click="deleteProfessor(prof.id)" class="btn-delete">Eliminar</button>
                 </td>
               </tr>
               <tr v-if="professors.length === 0">

@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import routerLogic from "./router/routerLogic.js";
+import { demoRouter } from "./demo/router.js";
 import { pool } from "./api/db.js";
 
 const app = express();
@@ -34,6 +35,14 @@ app.use((req, res, next) => {
 
 // app.use(cors()); <-- COMENTADO O BORRADO para no duplicar cabeceras
 app.use(express.json());
+app.set('trust proxy', 1);
+app.get('/up', async (req, res) => {
+  try { await pool.query('SELECT 1'); res.json({status:'ok'}); }
+  catch { res.status(503).json({status:'database_unavailable'}); }
+});
+if (process.env.DEMO_MODE === 'true') {
+  app.use('/api', demoRouter);
+}
 
 const PORT = process.env.PORT_BACKEND || 3000;
 const URL = process.env.URL_BACKEND || "http://localhost";

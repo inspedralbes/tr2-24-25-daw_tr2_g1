@@ -10,6 +10,16 @@ import { onMounted, ref, computed } from "vue";
 // Client ID de Google OAuth - debe coincidir con el backend
 const GOOGLE_CLIENT_ID = "182669171058-e7grkc62veee2a4t7k00dfqb450vo6j3.apps.googleusercontent.com";
 
+const demoMode = useRuntimeConfig().public.demoMode;
+const loginDemo = async role => {
+  loading.value = true; errorMessage.value = '';
+  try {
+    const data = await $fetch('/api/demo/profile', { query: { role } });
+    localStorage.setItem('user_centre', JSON.stringify(data.centre));
+    await router.push('/home');
+  } catch { errorMessage.value = 'No es pot iniciar la demo. Torna-ho a provar.'; }
+  finally { loading.value = false; }
+};
 const idioma = useIdioma(); // Composable para gestión multiidioma
 const router = useRouter();
 
@@ -99,6 +109,7 @@ const handleGoogleResponse = async (response) => {
 // ============================================
 // Inicializar el botón de Google Sign-In cuando la página carga
 onMounted(() => {
+  if (demoMode) return;
   // Función recursiva para esperar a que el SDK de Google se cargue
   const renderGoogleButton = () => {
     if (window.google && window.google.accounts) {
@@ -135,7 +146,12 @@ onMounted(() => {
       <p class="subtitle">{{ t.subtitle }}</p>
 
       <div class="login-container">
-        <div id="google-signin-button" class="google-btn-wrapper"></div>
+        <template v-if="demoMode">
+          <p>Explora PlaPI amb un centre i alumnes ficticis. L’anàlisi mostra un exemple precalculat.</p>
+          <button class="demo-access" :disabled="loading" @click="loginDemo('centre')">Entrar com a centre demo</button>
+          <button class="demo-access secondary" :disabled="loading" @click="loginDemo('professor')">Entrar com a professor demo</button>
+        </template>
+        <div v-if="!demoMode" id="google-signin-button" class="google-btn-wrapper"></div>
         
         <div v-if="loading" class="loading-state">
           <p>{{ t.btn_loading }}</p>
@@ -223,4 +239,9 @@ h1 {
   font-size: 0.75rem;
   color: #888;
 }
+</style>
+<style scoped>
+.demo-access { background:#b8001c; color:white; border:1px solid #b8001c; padding:12px 18px; border-radius:6px; cursor:pointer; width:100%; font-weight:600; }
+.demo-access.secondary { background:white; color:#a4001a; }
+.demo-access:focus-visible { outline:3px solid #264e97; outline-offset:3px; }
 </style>

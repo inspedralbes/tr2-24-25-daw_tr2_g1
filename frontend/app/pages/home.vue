@@ -10,6 +10,7 @@ import { ref, computed, onMounted } from 'vue';
 
 const idioma = useIdioma();
 const router = useRouter();
+const demoMode = useRuntimeConfig().public.demoMode;
 const centre = ref(null); // Datos del centro o profesor logueado
 
 // ============================================
@@ -73,6 +74,7 @@ onMounted(() => {
           </h1>
         </div>
         <p class="subtitle">{{ t.intro }}</p>
+        <p v-if="demoMode" class="subtitle">Pots provar la cerca amb el RALC fictici <strong>99000001</strong>, o crear un PI amb l’alumne i document d’exemple ja preparats.</p>
       </section>
 
       <div v-else class="loading">Carregant...</div>

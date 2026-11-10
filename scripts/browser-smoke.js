@@ -1,0 +1,60 @@
+async original => {
+ const base=new URL(original.url()).origin;
+ const ctx=await original.context().browser().newContext({viewport:{width:1440,height:1000}});
+ const page=await ctx.newPage();
+ const errors=[], externalCalls=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ page.on('request',request=>{if(/accounts\.google\.com|generativelanguage\.googleapis\.com/.test(request.url()))externalCalls.push(request.url())});
+ let checks=0;
+ const check=(value,message)=>{if(!value)throw new Error(message);checks++};
+ const shot=name=>page.screenshot({path:'artifacts/'+(base.includes('onrender')?'render-':'')+name+'.png',fullPage:true,animations:'disabled'});
+ try {
+  await page.goto(base+'/');
+  await page.getByRole('button',{name:'Entrar com a centre demo'}).waitFor();
+  await shot('access-desktop');
+  await page.setViewportSize({width:390,height:900});await shot('access-mobile');
+  check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Login overflow');
+  await page.setViewportSize({width:1440,height:1000});
+  await page.getByRole('button',{name:'Entrar com a centre demo'}).click();
+  await page.waitForURL('**/home');
+  await page.getByRole('heading',{name:/Benvingut/}).waitFor();
+  await shot('home-desktop');
+  await page.locator('a[href="/pi/search"]').click();
+  await page.getByPlaceholder("Introdueix el RALC de l'alumne...").fill('99000001');
+  await page.getByRole('link',{name:'Veure pla individualitzat complet'}).click();
+  await page.getByRole('heading',{name:/Alumne Demo 1/}).waitFor();
+  await shot('student-desktop');
+  await page.getByRole('button',{name:'PDF Original',exact:true}).click();
+  await page.locator('iframe[src="/api/pdf/99000001"]').waitFor();
+  const pdf=await page.request.get(base+'/api/pdf/99000001');
+  check(pdf.status()===200,'PDF status');
+  check((await pdf.body()).subarray(0,4).toString()==='%PDF','PDF signature');
+  await page.goto(base+'/pi/crear-pi');
+  const ralc=await page.getByPlaceholder('Introduce RALC + Enter').inputValue();
+  await page.getByText('informe-demo.pdf',{exact:true}).waitFor();
+  await shot('create-desktop');
+  await page.getByRole('button',{name:/Guardar i (Mostrar Exemple|Analitzar amb IA)/}).click();
+  await page.getByText('Exemple precalculat',{exact:true}).waitFor();
+  check(await page.getByLabel('Justificació',{exact:true}).inputValue().then(s=>s.includes('precalculada')),'Example response');
+  await page.setViewportSize({width:390,height:900});await shot('review-mobile');
+  await page.setViewportSize({width:1440,height:1000});await shot('review-desktop');
+  await page.getByRole('button',{name:'Confirmar i Guardar PI',exact:true}).click();
+  await page.waitForURL('**/home');
+  const saved=await (await page.request.get(base+'/api/alumne/'+ralc)).json();
+  check(saved.data.pis.length>0,'PI saved');
+  check(saved.data.nom==='Alumne Demo','Synthetic student');
+  await page.goto(base+'/centre/dashboard');
+  await page.getByRole('heading',{name:/Gestió Docents/}).waitFor();
+  check(await page.getByRole('button',{name:'+ Autoritzar',exact:true}).isDisabled(),'Admin write disabled');
+  await shot('teachers-desktop');
+  await page.goto(base+'/');
+  await page.getByRole('button',{name:'Entrar com a professor demo'}).click();
+  await page.waitForURL('**/home');
+  check(await page.locator('a[href="/centre/dashboard"]').count()===0,'Teacher permissions');
+  await page.setViewportSize({width:390,height:900});await shot('home-mobile');
+  check(externalCalls.length===0,'Google or Gemini requests: '+externalCalls.join(','));
+  check(errors.length===0,'JavaScript errors: '+errors.join(';'));
+  return {base,result:'PASS',checks,errors,externalCalls};
+ } catch(error) { await shot('failure');throw error; }
+ finally {await ctx.close();}
+}

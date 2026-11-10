@@ -39,7 +39,7 @@ const loadStudent = async () => {
     // - SSR (servidor): usa nombre de servicio Docker "backend:3000"
     // - Client (navegador): usa "localhost:3000" o dominio público
     const baseURL = import.meta.server
-      ? "http://backend:3000"
+      ? useRuntimeConfig().apiOrigin
       : "";
     const response = await $fetch<ApiResponse>(
       `${baseURL}/api/alumne/${studentRalc}`,
